@@ -1,0 +1,4 @@
+interface:
+  display_name: "UI Concept Director"
+  short_description: "대화로 템플릿·색 조합·코드 시안을 골라 UI 결정"
+  default_prompt: "Use $ui-design-director to guide me step by step through choosing templates, colors, and coded UI previews, then turn my approved choices into DESIGN.md."
