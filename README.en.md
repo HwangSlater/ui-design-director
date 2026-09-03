@@ -11,11 +11,13 @@ Its purpose is to replace vague requests such as “make it feel like Linear” 
 ## Features
 
 - Research real candidates from Framer, Webflow, and curated design galleries
+- Establish each candidate and recommended dependency's licence from its published text, and rule out commercially unusable options before taste enters
 - Select the overall design format and color palette independently
 - Compare 3–4 color combinations from sources such as Coolors, Color Hunt, Adobe Color, and Huemint
 - Explain semantic UI roles, distribution, and contrast risks for each palette
 - Compare 2–3 finalists using the same content in small coded UI previews
 - Convert the approved design language into project-root `DESIGN.md`
+- Fix on-screen wording and terminology as rules pitched at the audience's expertise
 - Guide later implementation toward shared tokens and components
 - Accumulate feedback as durable design rules instead of one-off CSS
 - Review responsive behavior, focus, error, loading, empty states, and accessibility
@@ -112,6 +114,7 @@ Do not modify files; report findings with severity and evidence.
 - Format, palette, and typography remain identifiable decisions.
 - Selecting a format does not silently approve its default colors.
 - Original 3–4 color swatches remain distinct from accessible semantic UI tokens.
+- For commercially operated products, licence precedes taste. A candidate that forbids or charges for commercial use is a disqualification, not a footnote.
 - Delegated choices are recorded as delegated, with the selection rationale.
 - `DESIGN.md` is approved only after format, palette, high-impact adaptations, and requested preview feedback are resolved.
 - Coded previews are comparison artifacts, not production implementation or an approved design system.

@@ -36,6 +36,11 @@ from the reference; preview combination approved by the user.
 ## Principles
 Three to five testable rules with “do” and “avoid” guidance.
 
+## Voice and terminology
+The audience expertise these choices assume, product vocabulary as banned/
+preferred term pairs, fixed status labels, and message patterns for validation,
+error, empty, confirmation, and undo states.
+
 ## Tokens
 ### Color
 Original 3–4 color selection, derived ramps/neutrals, semantic roles,
@@ -81,6 +86,7 @@ Only unresolved decisions that materially affect implementation, with provisiona
 - Use a small intentional scale and consolidate browser-computed noise.
 - Include units, modes, responsive conditions, and state mappings where relevant.
 - Pair unusual values and exceptions with rationale or evidence.
+- Record on-screen wording as rules, not samples. Colour and spacing survive in one token file, but words live in every component and drift back toward the data model’s vocabulary on the next screen; only a term table and message patterns prevent that.
 - Keep product requirements distinct from reference observations.
 - Preserve the original selected palette separately from derived accessible UI tokens, so later agents do not confuse inspiration swatches with usable semantic colors.
 - Do not claim `approved` status without explicit user approval.

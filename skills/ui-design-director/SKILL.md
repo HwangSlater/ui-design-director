@@ -33,7 +33,7 @@ If a request spans modes, advance only to the next decision gate that is authori
 
 ## Non-negotiable behavior
 
-- Research current sources when offering candidates; verify preview links and inspection claims.
+- Verify every candidate before presenting it: open the link, and state prices, licences, page coverage, and responsiveness only from what you actually inspected. If something is inaccessible, unverifiable, or live research is unavailable, say so and ask for user-provided references — never fabricate a candidate or imply you inspected one.
 - Keep format, palette, and typography identifiable as separate choices. Do not let a template's default colors silently decide the user's palette.
 - Do not mark the concept approved until format, palette, any high-impact adaptation, and requested preview feedback are resolved. Approval of one axis does not imply approval of another.
 - Prefer one coherent primary reference. Borrow from secondary references only by named trait; do not create a collage of unrelated trends.
@@ -41,9 +41,8 @@ If a request spans modes, advance only to the next decision gate that is authori
 - Preserve existing brand and product constraints unless the user explicitly approves changing them.
 - Treat accessibility as a baseline across every candidate: visible focus, sufficient contrast, non-color cues, usable targets, semantic controls, reflow/zoom, and reduced motion.
 - Avoid generic AI decoration such as gratuitous gradients, glass effects, excessive pills, and oversized hero text unless the chosen reference and product rationale support them.
-- Do not copy protected logos, illustrations, text, or a distinctive composition verbatim. Record template licensing or reuse constraints when known.
-- When evidence is inaccessible or incomplete, say so and request screenshots/content or choose another reference. Never pretend to have inspected it.
-- If live research is unavailable, do not fabricate current candidates; use user-provided references or pause the shortlist until verifiable browsing is possible.
+- Do not copy protected logos, illustrations, text, or a distinctive composition verbatim.
+- Establish the licence of every candidate and recommended dependency from its published licence text, not from memory. When the product will be operated commercially, a licence that forbids or charges for commercial use is a disqualifier, not a footnote — filter on it before taste, name what you verified, and flag what still needs legal review.
 - The user may explicitly delegate a design choice. Treat that as authorization to select, but record the delegated decision and rationale rather than presenting it as the user's personal preference.
 - Do not turn concept discovery into a long questionnaire or require design vocabulary. Translate abstract choices into visible product consequences and let the user answer with a candidate number, a reaction, or plain language.
 

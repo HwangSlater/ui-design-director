@@ -51,6 +51,7 @@ Before marking the document ready for approval, verify it defines:
 - type hierarchy and content measure;
 - spacing/grid/container system;
 - component patterns relevant to the actual product;
+- product vocabulary and message patterns pitched at the audience's expertise;
 - responsive behavior and density rules;
 - focus, loading, empty, error, disabled, and reduced-motion behavior;
 - implementation mapping or clearly listed open questions.
