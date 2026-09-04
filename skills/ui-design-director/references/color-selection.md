@@ -54,6 +54,6 @@ If the user delegates the palette choice, select using product fit and accessibl
 
 ## Accessibility gate
 
-Before approval, test intended foreground/background pairs rather than judging swatches in isolation. Compute each ratio from the hex values; never recall or eyeball one. A pair can miss AA by hundredths, and 4.46:1 is indistinguishable from 4.5:1 on screen, so a remembered verdict is a guess that then gets frozen into a token. If computation is unavailable, mark the pair unverified instead of asserting a result. Report pass/fail for normal text, large text, and essential controls as relevant. Adjust the role mapping or derive an accessible shade when the chosen raw color fails; preserve the user's selected color as an accent if appropriate.
+Before approval, test intended foreground/background pairs rather than judging swatches in isolation. Compute each ratio from the hex values rather than recalling or eyeballing it; a pair can miss AA by hundredths. If computation is unavailable, mark the pair unverified instead of asserting a result. Report pass/fail for normal text, large text, and essential controls as relevant. Adjust the role mapping or derive an accessible shade when the chosen raw color fails; preserve the user's selected color as an accent if appropriate.
 
 Record the selected source URL, original colors, derived colors, semantic roles, distribution, user modifications, and accessibility adjustments in the pending selection record. Add it to `DESIGN.md` together with the approved format record.

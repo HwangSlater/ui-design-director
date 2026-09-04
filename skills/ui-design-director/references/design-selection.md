@@ -28,7 +28,7 @@ Use live web research because catalogs and links change. Search multiple relevan
 - published design-system documentation and its component gallery when the archetype is a tool or application rather than a site;
 - a better current domain-specific marketplace/gallery when the product warrants it.
 
-Let the archetype pick the sources. Template marketplaces overwhelmingly sell marketing pages, so searching them for an editing tool or a dense workflow returns landing pages wearing the wrong clothes; design-system documentation is where the component, density, and state coverage such products need is actually visible.
+Let the archetype pick the sources. Template marketplaces overwhelmingly sell marketing pages; for a tool or a dense workflow, design-system documentation is where component, density, and state coverage is actually visible.
 
 Use template sources when adopting page structure is plausible. Use showcases when only visual language or interaction patterns are needed. Never imply that an inspiration item can be copied or purchased.
 
