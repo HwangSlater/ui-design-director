@@ -10,12 +10,12 @@ Its purpose is to replace vague requests such as “make it feel like Linear” 
 
 ## Features
 
-- Research real candidates from Framer, Webflow, and curated design galleries
+- Research real template and design-system candidates from sources matched to the product archetype: marketing site, dashboard, editing tool, form workflow, or content reader
 - Establish each candidate and recommended dependency's licence from its published text, and rule out commercially unusable options before taste enters
 - Select the overall design format and color palette independently
 - Compare 3–4 color combinations from sources such as Coolors, Color Hunt, Adobe Color, and Huemint
-- Explain semantic UI roles, distribution, and contrast risks for each palette
-- Compare 2–3 finalists using the same content in small coded UI previews
+- Explain semantic UI roles and distribution for each palette, with contrast ratios computed from hex values rather than eyeballed
+- Compare 2–3 finalists using the same content in small coded UI previews, self-checked for overflow, wrapping, and states before they are shown
 - Convert the approved design language into project-root `DESIGN.md`
 - Fix on-screen wording and terminology as rules pitched at the audience's expertise
 - Guide later implementation toward shared tokens and components
@@ -154,16 +154,16 @@ Do not modify files; report findings with severity and evidence.
 
 ## Context footprint
 
-The complete skill instructions are approximately 33.5KB, but they are not loaded all at once. Codex reads the base `SKILL.md` and only the references needed for the active mode.
+The complete skill instructions are approximately 35.5KB, but they are not loaded all at once. Codex reads the base `SKILL.md` and only the references needed for the active mode.
 
 | Mode | Approximate load | Assessment |
 |---|---:|---|
-| Base entry point | 7.2KB | Light to moderate |
-| Full guided selection | 20.3KB | Moderate |
-| Concept and color selection | 16KB | Moderate |
-| Coded preview | 10.1KB | Light to moderate |
-| DESIGN.md extraction | 15.7KB | Moderate |
-| UI review | 9KB | Light |
+| Base entry point | 7.6KB | Light to moderate |
+| Full guided selection | 21.4KB | Moderate |
+| Concept and color selection | 17.1KB | Moderate |
+| Coded preview | 10.8KB | Light to moderate |
+| DESIGN.md extraction | 16.5KB | Moderate |
+| UI review | 9.3KB | Light |
 
 Progressive disclosure keeps the skill from consuming unnecessary project context.
 

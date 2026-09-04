@@ -6,7 +6,7 @@ This phase helps the user select the overall visual structure and component char
 
 Derive what is safe from the repository and conversation, then confirm only consequential unknowns:
 
-- product type, primary user, and main job;
+- product type, primary user, main job, and interaction archetype: marketing site, dashboard, editing tool, form workflow, or content reader;
 - essential page types and the most information-dense screen;
 - desired brand traits and emotions;
 - trust, familiarity, distinctiveness, and conversion needs;
@@ -25,7 +25,10 @@ Use live web research because catalogs and links change. Search multiple relevan
 - Webflow Templates and Made in Webflow for responsive multi-page structures and cloneable community work;
 - Landbook for curated websites and landing-page directions;
 - SaaSFrame for SaaS marketing pages, product UI, onboarding, pricing, and dashboard flows;
+- published design-system documentation and its component gallery when the archetype is a tool or application rather than a site;
 - a better current domain-specific marketplace/gallery when the product warrants it.
+
+Let the archetype pick the sources. Template marketplaces overwhelmingly sell marketing pages, so searching them for an editing tool or a dense workflow returns landing pages wearing the wrong clothes; design-system documentation is where the component, density, and state coverage such products need is actually visible.
 
 Use template sources when adopting page structure is plausible. Use showcases when only visual language or interaction patterns are needed. Never imply that an inspiration item can be copied or purchased.
 

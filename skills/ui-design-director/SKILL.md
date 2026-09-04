@@ -23,7 +23,7 @@ If a request spans modes, advance only to the next decision gate that is authori
 
 ## Required gates
 
-1. **Context gate:** Establish a compact concept brief from repository evidence and user input: product/job, audience, essential screens, content density, brand traits, constraints, and anti-preferences. Ask only for missing information that would materially change the shortlist; label inferred items.
+1. **Context gate:** Establish a compact concept brief from repository evidence and user input: product/job, audience, interaction archetype, essential screens, content density, brand traits, constraints, and anti-preferences. Name the archetype explicitly — marketing site, dashboard, editing tool, form workflow, or content reader — because it decides which sources are worth searching, and getting it wrong wastes the entire shortlist rather than one candidate. Ask only for missing information that would materially change the shortlist; label inferred items.
 2. **Format gate:** Present direct links to individual live template/showcase candidates. Let the user choose a primary structural/visual reference, reject candidates, and optionally select exact secondary traits.
 3. **Palette gate:** Present linked 3–4 color palette candidates independently from the format. Explain intended UI roles and contrast risks. Let the user select, modify, or reject them; a palette's original swatches are inspiration, not yet complete semantic UI tokens.
 4. **Preview gate:** Offer a coded comparison when visual judgment would benefit; create it when the user requests or accepts. Combine only finalists using identical content and component coverage. Preview code is disposable evidence, not approval or production implementation.
