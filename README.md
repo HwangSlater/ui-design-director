@@ -2,7 +2,7 @@
 
 [English](README.en.md)
 
-`ui-design-director`는 프로젝트의 전체 UI 컨셉을 결정하기 위한 Codex 스킬입니다. 실제 템플릿과 3~4색 팔레트를 조사하고, 사용자가 디자인 형식과 색상을 직접 선택하도록 돕습니다. 선택한 후보는 간단한 코드 시안으로 비교한 뒤 재사용 가능한 `DESIGN.md`로 정리합니다.
+`ui-design-director`는 프로젝트의 전체 UI 컨셉을 결정하기 위한 스킬입니다. Codex와 Claude Code에서 모두 동작합니다. 실제 템플릿과 3~4색 팔레트를 조사하고, 사용자가 디자인 형식과 색상을 직접 선택하도록 돕습니다. 선택한 후보는 간단한 코드 시안으로 비교한 뒤 재사용 가능한 `DESIGN.md`로 정리합니다.
 
 사용자는 디자인 용어나 전체 요구사항을 미리 알 필요가 없습니다. “디자인을 선정하고 싶어”라고 시작하면 스킬이 한 번에 하나씩 중요한 질문을 하고, 구체적인 선택지와 추천을 제공하며 다음 단계로 안내합니다.
 
@@ -40,7 +40,7 @@
 
 ## 설치
 
-### 가장 쉬운 방법: GitHub URL로 설치
+### Codex: GitHub URL로 설치
 
 이 저장소를 GitHub에 올린 뒤 Codex 채팅에서 다음처럼 요청합니다.
 
@@ -62,10 +62,31 @@ repository/skills/ui-design-director/
 
 동일한 이름의 디렉터리가 이미 있다면 덮어쓰지 말고 기존 설치를 먼저 확인하세요. 설치 후 스킬이 목록에 나타나지 않으면 Codex를 다시 시작하거나 새 세션을 여세요.
 
-현재 이 작업 환경에서는 다음 경로로 연결되어 있습니다.
+### Claude Code: 개인 스킬 디렉터리에 연결
+
+`skills/ui-design-director` 디렉터리를 `~/.claude/skills/` 아래에 두면 됩니다. `SKILL.md`의 frontmatter가 그대로 호환되므로 파일은 수정할 필요가 없고, `agents/openai.yaml`이 함께 있어도 무해합니다.
+
+저장소에서 계속 스킬을 고칠 예정이라면 복사보다 링크가 낫습니다. 저장소를 고치면 설치본에 바로 반영됩니다.
+
+```bash
+# macOS · Linux
+ln -s "$PWD/skills/ui-design-director" ~/.claude/skills/ui-design-director
+```
+
+```powershell
+# Windows (관리자 권한 없이 동작하는 정션)
+New-Item -ItemType Junction `
+  -Path  "$env:USERPROFILE\.claude\skills\ui-design-director" `
+  -Target "$PWD\skills\ui-design-director"
+```
+
+연결만으로 같은 세션에서 즉시 인식되며, 다음 턴부터 `$ui-design-director` 또는 `/ui-design-director`로 호출할 수 있습니다. 링크 대신 복사해도 동작하지만, 그 경우 저장소를 고칠 때마다 다시 복사해야 합니다.
+
+두 환경의 설치 경로는 각각 다음과 같습니다.
 
 ```text
 ~/.codex/skills/ui-design-director
+~/.claude/skills/ui-design-director
 ```
 
 ## 사용법

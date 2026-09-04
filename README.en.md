@@ -2,7 +2,7 @@
 
 [한국어](README.md)
 
-`ui-design-director` is a Codex skill for establishing the overall UI concept of a project. It researches real templates and 3–4 color palettes, helps the user choose the visual format and color direction independently, compares finalists through small coded previews, and turns approved decisions into a reusable `DESIGN.md`.
+`ui-design-director` is a skill for establishing the overall UI concept of a project, working in both Codex and Claude Code. It researches real templates and 3–4 color palettes, helps the user choose the visual format and color direction independently, compares finalists through small coded previews, and turns approved decisions into a reusable `DESIGN.md`.
 
 The user does not need to know design terminology or provide a complete brief. Starting with “I want to choose a design” makes the skill ask one consequential question at a time, offer concrete choices and recommendations, and guide the user to the next decision.
 
@@ -40,7 +40,7 @@ The skill does not finalize the design system or production UI before the user m
 
 ## Installation
 
-### Easiest method: install from a GitHub URL
+### Codex: install from a GitHub URL
 
 After publishing this repository to GitHub, ask Codex:
 
@@ -62,10 +62,31 @@ repository/skills/ui-design-director/
 
 Do not overwrite an existing directory with the same name without inspecting it first. If the skill does not appear after installation, restart Codex or open a new session.
 
-In the current development environment, it is linked at:
+### Claude Code: link it into the personal skills directory
+
+Place the `skills/ui-design-director` directory under `~/.claude/skills/`. The `SKILL.md` frontmatter is already compatible, so no file needs editing, and the accompanying `agents/openai.yaml` is harmless.
+
+If you intend to keep editing the skill in this repository, link rather than copy so repository edits apply to the installation immediately.
+
+```bash
+# macOS and Linux
+ln -s "$PWD/skills/ui-design-director" ~/.claude/skills/ui-design-director
+```
+
+```powershell
+# Windows (a junction works without administrator rights)
+New-Item -ItemType Junction `
+  -Path  "$env:USERPROFILE\.claude\skills\ui-design-director" `
+  -Target "$PWD\skills\ui-design-director"
+```
+
+The link is picked up within the same session; `$ui-design-director` or `/ui-design-director` works from the next turn. Copying also works, but then every repository edit has to be copied again.
+
+The installation paths for the two environments are:
 
 ```text
 ~/.codex/skills/ui-design-director
+~/.claude/skills/ui-design-director
 ```
 
 ## Usage
@@ -154,7 +175,7 @@ Do not modify files; report findings with severity and evidence.
 
 ## Context footprint
 
-The complete skill instructions are approximately 35.4KB, but they are not loaded all at once. Codex reads the base `SKILL.md` and only the references needed for the active mode.
+The complete skill instructions are approximately 35.4KB, but they are not loaded all at once. The agent reads the base `SKILL.md` and only the references needed for the active mode.
 
 | Mode | Approximate load | Assessment |
 |---|---:|---|
