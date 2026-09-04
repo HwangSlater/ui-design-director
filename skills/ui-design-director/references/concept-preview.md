@@ -37,7 +37,7 @@ Avoid adding a new framework or heavyweight dependency solely for the preview. R
 
 ## Presentation
 
-Run or render the preview when tools permit. Before showing it, open it at the intended size and check it against the coverage list in `ui-review.md`: scrolling and overflow, wrapping at the longest realistic label, and every state you claimed to include. A preview that breaks there spends the user's turn on a bug report instead of the design judgement you asked for. Provide clickable local files/routes and screenshots at comparable dimensions; raw source code alone is not an adequate visual comparison. Label A/B/C neutrally and list only the intentional differences.
+Run or render the preview when tools permit. Before showing it, check the three places previews break: every scroll container has a constrained height, the longest realistic label wraps or truncates deliberately, and the states you claimed to include are present. Render it if a renderer is available; if not, say the check was structural rather than visual. A preview that breaks there spends the user's turn on a bug report instead of the design judgement you asked for. Provide clickable local files/routes and screenshots at comparable dimensions; raw source code alone is not an adequate visual comparison. Label A/B/C neutrally and list only the intentional differences.
 
 Ask the user to judge:
 

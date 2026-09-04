@@ -154,14 +154,14 @@ Do not modify files; report findings with severity and evidence.
 
 ## Context footprint
 
-The complete skill instructions are approximately 35.5KB, but they are not loaded all at once. Codex reads the base `SKILL.md` and only the references needed for the active mode.
+The complete skill instructions are approximately 35.6KB, but they are not loaded all at once. Codex reads the base `SKILL.md` and only the references needed for the active mode.
 
 | Mode | Approximate load | Assessment |
 |---|---:|---|
 | Base entry point | 7.6KB | Light to moderate |
 | Full guided selection | 21.4KB | Moderate |
 | Concept and color selection | 17.1KB | Moderate |
-| Coded preview | 10.8KB | Light to moderate |
+| Coded preview | 10.9KB | Light to moderate |
 | DESIGN.md extraction | 16.5KB | Moderate |
 | UI review | 9.3KB | Light |
 
