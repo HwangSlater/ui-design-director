@@ -15,7 +15,7 @@ import { join } from "node:path";
 import { createServer } from "node:net";
 
 // 설치 위치는 운영체제가 알려 주는 폴더에서 찾는다
-const SCREEN_SLICES = 4; // 맨 위부터 한 화면씩 잘라 따로 저장할 수(screens/ 폴더)
+const SCREEN_SLICES = 16; // 맨 위부터 한 화면씩 잘라 따로 저장할 최대 수(screens/ 폴더). 4장만 자르면 페이지 아래쪽(시간표·질문·오시는 길)을 못 봤다
 const WIN_DIRS = [process.env["ProgramFiles(x86)"], process.env.ProgramFiles, process.env.LOCALAPPDATA].filter(Boolean);
 const BROWSERS = [
   process.env.CAPTURE_BROWSER,

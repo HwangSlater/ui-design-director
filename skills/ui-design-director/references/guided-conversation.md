@@ -11,6 +11,9 @@ Use this protocol when the user wants help selecting a design but has not suppli
 - Use plain language before design terminology. For example, say “more information visible at once” before “high density.”
 - Give a recommendation when evidence supports one, but label it as a recommendation and keep every subjective choice with the user.
 - End each turn with one clear action the user can take next.
+- Talk in results, not in file names. Summarise a `DESIGN.md` or `SITE-PLAN.md` in a few plain lines in the message and give the path only as a reference; names like "DESIGN.md" mean nothing to most users.
+- When the user gives schedules, prices, capacities or rules, check them against each other at once — overlapping times for a one-person business, totals that do not add up, a rule that contradicts another — and ask before drawing them. A client deliberately gave an overlapping Saturday timetable; it was caught only when they saw it laid out.
+- Every preview that carries content (palette preview, layout options, mockups) follows the same fact rule as mockups: only facts the user gave; anything filled in is marked as unconfirmed and listed in the message ("제가 채워 넣은 것: …").
 - Welcome real content whenever the user offers it (prices, hours, rules, answers to common questions) even before it is asked for, and record it in the brief under the facts that will appear on the pages. Users often want to hand over content first; it also decides page structure and real-length layout.
 
 Do not dump the entire workflow, a large questionnaire, or all unresolved choices into one message. Do not ask the user to repeat facts found in the project.
