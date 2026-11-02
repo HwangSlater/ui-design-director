@@ -1,6 +1,8 @@
 /* 팔레트 바꿔 보기 — 막대 모양과 값은 dock.css, 여기는 팔레트 전용 부분만 */
 
-/* 후보 칩 — 썸네일 자리에 팔레트 색 띠 */
+/* 후보 칩 — 썸네일 자리에 팔레트 색 띠. 사진이 아니라 색이라 좁아도 충분하다 */
+:root { --ps-chip-w: 44px; }
+.ps-chip { width: var(--ps-chip-w); }
 .ps-sw { display: flex; width: 100%; height: 100%; border-radius: var(--v-r-xs); overflow: hidden; }
 .ps-sw span { flex: 1; }
 .ps-chip:not([aria-current="true"]) .ps-sw { opacity: 0.7; }
@@ -8,14 +10,28 @@
 
 /* 명암비 — 막대 가운데, 화면 탭 자리 */
 .ps-checks { display: flex; min-width: 0; margin: 0; padding: 3px; gap: 2px; list-style: none; border-radius: 10px; background: var(--v-raise); }
-.ps-check { display: flex; align-items: center; gap: 6px; min-width: 0; height: calc(var(--v-ctl) - 6px); padding: 0 var(--v-3); border-radius: 7px; font-size: var(--v-sm); color: var(--v-muted); white-space: nowrap; overflow: hidden; }
+.ps-check { display: flex; flex-direction: column; justify-content: center; min-width: 0; height: calc(var(--v-ctl) - 6px); padding: 0 var(--v-3); border-radius: 7px; font-size: var(--v-xs); line-height: 1.2; color: var(--v-muted); white-space: nowrap; }
+.ps-check-top { display: flex; gap: 6px; }
 .ps-check b { color: var(--v-ink); font-weight: 600; font-variant-numeric: tabular-nums; }
 .ps-check:hover { background: var(--v-hover); }
 .ps-check:focus-visible { outline: 2px solid var(--v-focus); outline-offset: 2px; }
-@media (max-width: 900px) { /* 좁으면 판정 글자를 아래 줄로 내려 셋이 한 줄에 들어가게 */
+@media (max-width: 900px) { /* 좁으면 셋이 폭을 나눠 쓴다 */
   .ps-checks { width: 100%; }
-  .ps-check { flex: 1 1 0; flex-direction: column; align-items: flex-start; justify-content: center; gap: 0; height: auto; padding: var(--v-1) var(--v-2); line-height: 1.3; }
+  .ps-check { flex: 1 1 0; padding: 0 var(--v-2); }
 }
+
+/* 글꼴 — 막대 오른쪽 단추, 누르면 막대 위로 목록이 열린다(항목마다 그 글꼴로 보여 줌) */
+.ps-font-btn .ps-aa { font-weight: 700; color: var(--v-ink); }
+.ps-font-btn[aria-expanded="true"] { background: var(--v-hover); color: var(--v-ink); }
+.ps-font-menu { position: fixed; z-index: 30; display: grid; gap: 2px; width: min(360px, calc(100vw - 2 * var(--v-bottom))); max-height: calc(100vh - 160px); overflow-y: auto; padding: var(--v-2); border: 1px solid var(--v-bar-edge); border-radius: var(--v-r-bar); background: var(--v-bar); color: var(--v-ink); box-shadow: var(--v-shadow); font-family: var(--v-font); word-break: keep-all; }
+.ps-font-menu[hidden] { display: none; }
+.ps-font-item { display: grid; gap: 2px; min-height: 44px; padding: var(--v-2) var(--v-3); border: 0; border-radius: var(--v-r-sm); background: transparent; color: var(--v-ink); text-align: left; cursor: pointer; }
+.ps-font-item:hover { background: var(--v-hover); }
+.ps-font-item[aria-pressed="true"] { background: var(--v-raise); box-shadow: inset 3px 0 0 var(--v-pick); }
+.ps-font-item:focus-visible { outline: 2px solid var(--v-focus); outline-offset: -2px; }
+.ps-font-item b { font-size: var(--v-md); font-weight: 600; }
+.ps-font-item span { font-size: var(--v-sm); color: var(--v-ink); }
+.ps-font-item small { font-size: var(--v-2xs); color: var(--v-muted); }
 .ps-good { color: var(--v-good); } .ps-warn { color: var(--v-warn); } .ps-bad { color: var(--v-bad); }
 
 /* 휴대폰 폭 — 시안 본문(.page)만 실제 폭으로 좁히고, 후보 보기처럼 어두운 무대 위 기기 틀에 담는다 */

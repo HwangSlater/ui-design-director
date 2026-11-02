@@ -134,6 +134,7 @@
   .dock-2 .v-keys { display: none; }
   .v-title-hint { display: none; } /* 좁으면 「n개 중 하나를 골라 주세요」는 빼고 후보 이름에 자리를 준다 */
   .v-title { flex: none; }         /* 남은 단계 이름은 짧으니 줄이지 않는다 */
+  .v-name { flex-shrink: 0; max-width: 60%; } /* 좁으면 설명보다 후보 이름을 먼저 지킨다 */
   /* 후보가 많으면 썸네일 줄만 옆으로 넘긴다(이전·다음 단추는 제자리). 고름 테두리가 잘리지 않게 여백 */
   .v-thumbs { min-width: 0; overflow-x: auto; scrollbar-width: none; padding: var(--v-1); }
 }
