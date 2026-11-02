@@ -165,6 +165,18 @@ Do not modify files; report findings with severity and evidence.
 - “Design the site” authorizes mockups only. Production code is written only on request and for pages whose mockups are approved.
 - Invented testimonials, customer logos, or figures are never presented as real; missing material stays a labelled empty slot.
 
+## Companion skills
+
+The open-source skills and tools below assist specific stages only when installed or when the user approves the download. This skill keeps every decision and the `DESIGN.md`/`SITE-PLAN.md` files, and does not copy their text. Rules live in `references/companion-skills.md`.
+
+| Stage | Skill or tool | Licence | Part used |
+|---|---|---|---|
+| Format, palette, type candidates | [ui-ux-pro-max](https://github.com/nextlevelbuilder/ui-ux-pro-max-skill) | MIT | read-only search |
+| Layout options | [hallmark](https://github.com/Nutlope/hallmark) | MIT | names of page shapes |
+| Motion | [emilkowalski/skills](https://github.com/emilkowalski/skills) | MIT | `animate`, `review-animations` rules |
+| Site check | [impeccable](https://github.com/pbakaus/impeccable) | Apache-2.0 | `npx impeccable detect` only |
+| Site check | [Web Interface Guidelines](https://github.com/vercel-labs/web-interface-guidelines) | MIT | rule list |
+
 ## Repository structure
 
 ```text
@@ -190,6 +202,7 @@ Do not modify files; report findings with severity and evidence.
             ├── site-plan.md
             ├── page-design.md
             ├── site-build.md
+            ├── companion-skills.md
             └── ui-review.md
 ```
 
@@ -204,6 +217,7 @@ Do not modify files; report findings with severity and evidence.
 - `site-plan.md`: page inventory, flows, and `SITE-PLAN.md`
 - `page-design.md`: layout options and full-fidelity mockups per page type
 - `site-build.md`: order and standards for moving approved mockups into code
+- `companion-skills.md`: rules for using other open-source design skills as stage helpers
 - `ui-review.md`: rendered consistency and accessibility review, plus the whole-site check
 - `check_site.py`: static HTML/CSS check with no dependencies (`python scripts/check_site.py <dir>`)
 

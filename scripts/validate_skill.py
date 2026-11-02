@@ -24,6 +24,7 @@ REQUIRED_FILES = (
     "references/site-plan.md",
     "references/page-design.md",
     "references/site-build.md",
+    "references/companion-skills.md",
     "scripts/check_site.py",
 )
 REPO_MARKDOWN_FILES = ("README.md", "README.en.md")

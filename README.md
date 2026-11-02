@@ -166,6 +166,18 @@ $ui-design-director로 렌더링된 UI가 DESIGN.md를 준수하는지 검수해
 - 「사이트를 디자인해 줘」는 시안까지의 승인입니다. 제품 코드는 사용자가 요청하고 해당 페이지 시안이 승인된 뒤에만 씁니다.
 - 지어낸 후기·고객 로고·수치를 실제처럼 넣지 않습니다. 없으면 빈 자리로 표시합니다.
 
+## 함께 쓰는 스킬
+
+아래 오픈소스 스킬·도구는 설치돼 있거나 사용자가 내려받기를 허락했을 때만 해당 단계에서 보조로 씁니다. 선택과 `DESIGN.md`·`SITE-PLAN.md`는 항상 이 스킬이 맡고, 다른 스킬의 글은 복사하지 않습니다. 자세한 규칙은 `references/companion-skills.md`에 있습니다.
+
+| 단계 | 스킬·도구 | 라이선스 | 쓰는 부분 |
+|---|---|---|---|
+| 형식·팔레트·서체 후보 | [ui-ux-pro-max](https://github.com/nextlevelbuilder/ui-ux-pro-max-skill) | MIT | 읽기 전용 검색 |
+| 레이아웃 시안 | [hallmark](https://github.com/Nutlope/hallmark) | MIT | 페이지 구성 유형 이름 |
+| 모션 | [emilkowalski/skills](https://github.com/emilkowalski/skills) | MIT | `animate`, `review-animations` 기준 |
+| 사이트 점검 | [impeccable](https://github.com/pbakaus/impeccable) | Apache-2.0 | `npx impeccable detect` 검사기만 |
+| 사이트 점검 | [Web Interface Guidelines](https://github.com/vercel-labs/web-interface-guidelines) | MIT | 규칙 목록 |
+
 ## 스킬 구조
 
 ```text
@@ -191,6 +203,7 @@ $ui-design-director로 렌더링된 UI가 DESIGN.md를 준수하는지 검수해
             ├── site-plan.md
             ├── page-design.md
             ├── site-build.md
+            ├── companion-skills.md
             └── ui-review.md
 ```
 
@@ -205,6 +218,7 @@ $ui-design-director로 렌더링된 UI가 DESIGN.md를 준수하는지 검수해
 - `site-plan.md`: 페이지 목록·이동 경로·`SITE-PLAN.md` 작성
 - `page-design.md`: 페이지 유형별 레이아웃 시안과 완성 시안
 - `site-build.md`: 승인된 시안을 제품 코드로 옮기는 순서와 기준
+- `companion-skills.md`: 다른 오픈소스 디자인 스킬을 단계별 보조로 쓰는 규칙
 - `ui-review.md`: 렌더링 결과의 일관성 및 접근성 검수, 사이트 전체 점검
 - `check_site.py`: HTML·CSS 정적 검사(외부 패키지 없음, `python scripts/check_site.py <폴더>`)
 

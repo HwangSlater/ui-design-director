@@ -10,7 +10,8 @@ Use current palette libraries and link to individual palettes or reproducible co
 - Color Hunt for curated four-color combinations;
 - Adobe Color for harmony-based palettes, image extraction, and accessibility exploration;
 - Huemint when contextual previews help explain foreground/background/accent use;
-- another reputable palette library that better fits the product or existing brand color.
+- another reputable palette library that better fits the product or existing brand color;
+- the ui-ux-pro-max colour database when installed, labelled as a database suggestion (`companion-skills.md`).
 
 Verify links and exact hex values. Do not cite a generated combination as a community-curated palette unless it is actually published there.
 

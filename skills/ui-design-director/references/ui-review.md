@@ -35,6 +35,8 @@ The script reads markup and stylesheets only. It cannot see contrast on rendered
 
 **3. Fresh reviewer.** When a subagent is available, give it the screenshots, `DESIGN.md`, and `SITE-PLAN.md` only — not your reasoning — and ask it to find where the site breaks its own rules, where pages disagree with each other, and what looks unfinished. Verify each finding against the current files before acting on it. Without a subagent, state that this pass was skipped.
 
+**4. Companion checks.** When available and approved, run the impeccable detector and the Web Interface Guidelines review described in `companion-skills.md`, map their findings to the tiers above, and report each as ran, skipped, or failed.
+
 Report the result as counts per tier plus the findings that remain, each with the page, the evidence, and the fix or the recorded reason for keeping it. Do not call the site done while a `FLOOR` finding remains.
 
 ## Correction protocol

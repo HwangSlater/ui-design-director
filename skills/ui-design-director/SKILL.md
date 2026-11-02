@@ -55,6 +55,10 @@ If a request spans modes, advance only to the next decision gate that is authori
 - The user may explicitly delegate a design choice. Treat that as authorization to select, but record the delegated decision and rationale rather than presenting it as the user's personal preference.
 - Do not turn concept discovery into a long questionnaire or require design vocabulary. Translate abstract choices into visible product consequences and let the user answer with a candidate number, a reaction, or plain language.
 
+## Companion skills
+
+Open-source design skills such as ui-ux-pro-max, hallmark, emilkowalski/skills, the impeccable detector, and Vercel's Web Interface Guidelines can strengthen specific stages. Read [references/companion-skills.md](references/companion-skills.md) before using any of them. They supply candidates and findings only; this skill keeps every decision and the `DESIGN.md`/`SITE-PLAN.md` files, and nothing is installed or downloaded without asking.
+
 ## Durable outputs
 
 Depending on the active mode, produce only the necessary artifact:

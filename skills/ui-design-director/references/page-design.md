@@ -11,7 +11,7 @@ For each page type, produce 2–3 numbered layout options that differ in **struc
 - Show each option at one wide and one narrow width side by side.
 - Under each option state in one line what it prioritises and what it gives up.
 
-Derive options from the page's job and content. Do not pick a fashionable shape and fill it. Useful questions per surface:
+Derive options from the page's job and content. Do not pick a fashionable shape and fill it. When hallmark is installed, its named landing-page shapes can label read-surface options so they are clearly distinct (`companion-skills.md`); name the shape after deriving it, not before. Useful questions per surface:
 
 - **Read surface:** What must the visitor believe before acting, and what proves it? Does the proof lead (product capture, figure, quote) or does the claim lead? Where does the primary action repeat? How long can the page be before the action is lost?
 - **Work surface:** What does the user look at most often, and what do they change most often? Is the layout list → detail, master–detail split, canvas with panels, or stepwise? What stays fixed when content scrolls? What happens at 0, 1, and 1,000 items?
@@ -36,6 +36,7 @@ If the project already has a component library or framework that runs locally, b
 - the page at narrow (≈375px), medium (≈768px), and wide (≈1280px+) widths;
 - for work surfaces, each required state from `SITE-PLAN.md` as its own labelled frame: empty, loading, error, no-permission, dense data;
 - interactive components in default, hover, keyboard focus, active, disabled, and error/invalid states where they appear;
+- only the motion `DESIGN.md` approved, built and checked against emilkowalski/skills when installed (`companion-skills.md`);
 - real imagery only when it is supplied or its licence is verified; otherwise a labelled empty frame of the correct aspect ratio. Do not use generated or stock imagery as if it were the product.
 
 ### Self-check before showing
