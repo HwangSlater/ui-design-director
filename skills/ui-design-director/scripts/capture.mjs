@@ -164,6 +164,11 @@ async function shoot(port, url, width, steps = []) {
         });
         if (!result.value) throw new Error(`누를 것을 찾지 못함: ${step.click}`);
         await sleep(SETTLE_MS);
+      } else if (step.hide) {
+        // 캡처를 가리는 떠 있는 막대 같은 것을 아예 숨긴다
+        await cdp.send("Runtime.evaluate", {
+          expression: `document.querySelectorAll(${JSON.stringify(step.hide)}).forEach((n) => { n.style.setProperty("display", "none", "important"); })`,
+        });
       } else if (step.wait) await sleep(step.wait);
     }
     if (url !== CURRENT_PAGE) await go(url);

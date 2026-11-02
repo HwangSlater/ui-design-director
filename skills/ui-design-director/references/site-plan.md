@@ -27,11 +27,14 @@ For each page record:
 | Entry points | Where users arrive from |
 | Content source | Supplied by user / exists in repo / needs writing / sample data |
 | Required states | Empty, loading, error, no-permission, long content, success, as applicable |
+| Kept up to date by | For content that changes (dates, seats, prices, menus, hours, staff): who updates it, where, how often |
 | Priority | Core / secondary / later |
 
 Group pages by **page type**. Ten blog posts are one page type; designing the type once is what keeps the site consistent and the work finite. Design every page type, and only the pages whose content changes the layout.
 
 Always include the pages users meet when something goes wrong or is missing: 404, error, empty first-run, signed-out, and no-permission where the product has accounts. These are routinely forgotten and the first to look unfinished.
+
+**Design out content nobody will maintain.** For every piece of changing content, ask who updates it and where. A small business owner usually cannot keep a second copy in sync — a client said of a "seats left this month" list, "I'll never keep these numbers right." When the data already lives in another system (a booking platform, Instagram, a menu tool), link to it for the live part and design a version that cannot go stale on the site: a recurring timetable instead of dated slots, "see live availability" instead of seat counts, prices that change rarely. Use a live embed only when that system offers one and its terms allow it. Record the decision in the page inventory.
 
 ## 3. Map the flows
 
