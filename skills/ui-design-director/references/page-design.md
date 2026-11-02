@@ -11,6 +11,8 @@ For each page type, produce 2–3 numbered layout options that differ in **struc
 - Capture each option at one wide and one real phone width (`scripts/capture.mjs`) and show the options in the viewer from `comparison-board.md`.
 - Under each option state in one line what it prioritises and what it gives up.
 
+Before drawing options, write down what makes the chosen reference good on this page type, from captures viewed at 1:1: image size relative to the screen, white space between sections, type hierarchy (how many sizes, how much contrast between them), density, and its signature components. Every option keeps those traits; options differ in structure, not in quality.
+
 Derive options from the page's job and content. Do not pick a fashionable shape and fill it. When hallmark is installed, its named landing-page shapes can label read-surface options so they are clearly distinct (`companion-skills.md`); name the shape after deriving it, not before. Useful questions per surface:
 
 - **Read surface:** What must the visitor believe before acting, and what proves it? Does the proof lead (product capture, figure, quote) or does the claim lead? Where does the primary action repeat? How long can the page be before the action is lost?
@@ -41,7 +43,7 @@ If the project already has a component library or framework that runs locally, b
 
 ### Self-check before showing
 
-Run `scripts/check_site.py` on the mockup directory and fix every `FLOOR` finding. Then render the pages and check the places mockups break: overflow at the narrow width, the longest label, sticky or scrolling regions, and the states you claimed. Screenshot each page at the three widths. If no renderer is available, say the check was structural only.
+Run `scripts/check_site.py` on the mockup directory and fix every `FLOOR` finding. Run the companion checks agreed at the start (impeccable detector, Web Interface Guidelines) and fix what they confirm. Then put each page next to the reference at the same width at 1:1 and name at least three places where the mockup is flatter, denser, more generic or less finished than the reference; fix them before showing. Then render the pages and check the places mockups break: overflow at the narrow width, the longest label, sticky or scrolling regions, and the states you claimed. Screenshot each page at the three widths. If no renderer is available, say the check was structural only.
 
 Hand the mockups over as a **clickable prototype**, not as screenshots: link the pages so the main flows can be clicked through (logo, navigation, card → detail → add to cart → cart → checkout → order complete, account links), and give every page a small collapsed "상태" switcher on the edge of the screen that jumps between that page's states (empty, invalid, failure, notice/confirm, busy). Keep the switcher clear of toasts, fixed bars and dialogs. Prototype-only script and styles stay in separate files that never move into production code. Click the flows through in a real browser at phone and desktop width before handing over, then give the full path of the entry page and a short list of what to look at. Users found a screenshot viewer tedious once there were many pages and states. Use the screenshot viewer (`comparison-board.md`) for choosing between layout options, where side-by-side comparison matters. Ask for approval per page type, or for specific changes. Classify feedback with `design-md-format.md` § Feedback protocol: a change that should apply everywhere goes into `DESIGN.md` and `tokens.css`/`components.css`, not into one page.
 

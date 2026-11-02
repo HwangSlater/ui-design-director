@@ -2,9 +2,18 @@
 
 Other open-source design skills cover parts of this workflow well. Use them as **evidence and checks inside this skill's gates**, never as a second workflow. This skill keeps ownership of every user decision and of `DESIGN.md` and `SITE-PLAN.md`.
 
+## Start-of-project check
+
+Run this in the context gate, before any candidates are researched, so the companions shape the work from the start instead of being remembered at the end.
+
+1. Look for each companion: a `SKILL.md` for `ui-ux-pro-max`, `hallmark`, `animate`/`review-animations` (emilkowalski) and `web-design-guidelines` in the user's skill folders (`~/.claude/skills`, `~/.agents/skills`, the project's `.claude/skills`) or in the available skills list; for impeccable run `npx --no-install impeccable --version` (prints a version only when it is already on the machine).
+2. Show the user one short table: companion · installed or not · what it adds at which step (widen candidates / name layout shapes / motion / automatic quality checks) · what installing downloads.
+3. Ask once whether to install the missing ones. Install only what the user approves, and say which steps will run without the others.
+4. Record the result in the concept brief. At every later gate, say which companion ran, which was skipped, and why.
+
 ## Rules for every companion
 
-- **Optional.** Each step below works without the companion. Use one only when it is installed (it appears in the available skills list, or its `SKILL.md` exists in a skill directory) or when it runs without installation and the user approved the network access it needs.
+- **Optional, never silent.** Each step below works without the companion, but whether it runs is decided with the user at the start, and every skip is reported. Use one only when it is installed (it appears in the available skills list, or its `SKILL.md` exists in a skill directory) or when it runs without installation and the user approved the network access it needs.
 - **Never install or download without asking.** `npx` and remote rule fetches download code or content; name what will be fetched and ask once per session. If the user declines, continue with this skill's own steps and say which check was skipped.
 - **Inputs, not decisions.** A companion's suggestion is a candidate for the user to choose, with its source named. Do not let a companion pick the theme, palette, or layout, or roll dice on the user's behalf.
 - **Our files only.** Do not let a companion create or overwrite `DESIGN.md`, `PRODUCT.md`, design-system folders, theme scaffolds, or logs. Use read-only modes; when a mode writes files, skip it.
