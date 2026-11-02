@@ -49,6 +49,8 @@ If a request spans modes, advance only to the next decision gate that is authori
 - Preserve existing brand and product constraints unless the user explicitly approves changing them.
 - Treat accessibility as a baseline across every candidate: visible focus, sufficient contrast, non-color cues, usable targets, semantic controls, reflow/zoom, and reduced motion.
 - Avoid generic AI decoration such as gratuitous gradients, glass effects, excessive pills, and oversized hero text unless the chosen reference and product rationale support them.
+- Carry the brief's dislikes through every gate, not only the first. Before showing any comparison, check each candidate against the dislikes list and drop or fix what breaks it; a "no rainbow colours" said in the first message and ignored at the palette step was what disappointed the user most.
+- Check each deliverable against the reason you gave for it. A photo slot recommended "so parents see the classroom at once" was filled with a keyboard close-up and the user caught it.
 - Never present invented testimonials, customer logos, statistics, awards, or product screenshots as real. Use the user's material or a labelled empty slot.
 - Do not copy protected logos, illustrations, text, or a distinctive composition verbatim.
 - Establish the licence of every candidate and recommended dependency from its published licence text, not from memory. When the product will be operated commercially, a licence that forbids or charges for commercial use is a disqualifier, not a footnote — filter on it before taste, name what you verified, and flag what still needs legal review.

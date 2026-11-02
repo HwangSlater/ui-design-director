@@ -36,6 +36,8 @@ Use template sources when adopting page structure is plausible. Use showcases wh
 
 ## 3. Curate candidates
 
+A user without design vocabulary cannot read "just look at the mood" off a site whose content is unrelated: a piano-school owner shown a pharmacy app, a tool-rental shop and a children's English game could not picture her own page. Prefer candidates from the same or a neighbouring trade, and when the direction is still hard to read, render two or three directions with the user's own content in their language (as the layout step does) before asking them to choose; the layout step with real content was the one the user found most useful.
+
 Present 5–8 individual candidates with working detail or preview links, not gallery homepages. The set should cover 2–4 relevant concept territories while remaining plausible for the product. Avoid near-duplicates, trend-only picks, and deliberately weak decoys.
 
 Inspect enough of each candidate to evaluate it. Prefer candidates with multiple relevant pages, responsive previews, and visible component/state coverage. A beautiful hero with no evidence for the product's core screens is a secondary visual reference, not a whole-system candidate.
