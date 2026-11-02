@@ -41,8 +41,8 @@
 /* 막대 — 시안 페이지의 글꼴·색이 섞이지 않게 막대 안에서만 정한다 */
 .v-nav, .v-tip { font-family: var(--v-font); font-size: var(--v-md); line-height: 1.4; word-break: keep-all; letter-spacing: normal; }
 .v-nav *, .v-nav *::before, .v-nav *::after, .v-tip { box-sizing: border-box; }
-.v-nav button { font: inherit; color: inherit; }
-.v-nav a { color: inherit; }
+:where(.v-nav) button { font: inherit; color: inherit; } /* 우선순위 0 — .v-btn·.v-confirm 의 색이 이긴다 */
+:where(.v-nav) a { color: inherit; }
 .v-nav :focus-visible { outline: 2px solid var(--v-focus); outline-offset: 2px; }
 .v-nav svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; flex: none; }
 

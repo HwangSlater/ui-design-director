@@ -8,19 +8,8 @@
 .ps-chip:not([aria-current="true"]) .ps-sw { opacity: 0.7; }
 .ps-chip:hover .ps-sw { opacity: 1; }
 
-/* 명암비 — 막대 가운데, 화면 탭 자리 */
-.ps-checks { display: flex; min-width: 0; margin: 0; padding: 3px; gap: 2px; list-style: none; border-radius: 10px; background: var(--v-raise); }
-.ps-check { display: flex; flex-direction: column; justify-content: center; min-width: 0; height: calc(var(--v-ctl) - 6px); padding: 0 var(--v-3); border-radius: 7px; font-size: var(--v-xs); line-height: 1.2; color: var(--v-muted); white-space: nowrap; }
-.ps-check-top { display: flex; gap: 6px; }
-.ps-check b { color: var(--v-ink); font-weight: 600; font-variant-numeric: tabular-nums; }
-.ps-check:hover { background: var(--v-hover); }
-.ps-check:focus-visible { outline: 2px solid var(--v-focus); outline-offset: 2px; }
-@media (max-width: 900px) { /* 좁으면 셋이 폭을 나눠 쓴다 */
-  .ps-checks { width: 100%; }
-  .ps-check { flex: 1 1 0; padding: 0 var(--v-2); }
-}
-
-/* 글꼴 — 막대 오른쪽 단추, 누르면 막대 위로 목록이 열린다(항목마다 그 글꼴로 보여 줌) */
+/* 글꼴 — 막대 가운데 단추(뼈대 보기의 화면 탭 자리), 누르면 막대 위로 목록이 열린다(항목마다 그 글꼴로 보여 줌) */
+.ps-font-btn { max-width: 22em; background: var(--v-raise); color: var(--v-ink); }
 .ps-font-btn .ps-aa { font-weight: 700; color: var(--v-ink); }
 .ps-font-btn[aria-expanded="true"] { background: var(--v-hover); color: var(--v-ink); }
 .ps-font-menu { position: fixed; z-index: 30; display: grid; gap: 2px; width: min(360px, calc(100vw - 2 * var(--v-bottom))); max-height: calc(100vh - 160px); overflow-y: auto; padding: var(--v-2); border: 1px solid var(--v-bar-edge); border-radius: var(--v-r-bar); background: var(--v-bar); color: var(--v-ink); box-shadow: var(--v-shadow); font-family: var(--v-font); word-break: keep-all; }
@@ -32,7 +21,6 @@
 .ps-font-item b { font-size: var(--v-md); font-weight: 600; }
 .ps-font-item span { font-size: var(--v-sm); color: var(--v-ink); }
 .ps-font-item small { font-size: var(--v-2xs); color: var(--v-muted); }
-.ps-good { color: var(--v-good); } .ps-warn { color: var(--v-warn); } .ps-bad { color: var(--v-bad); }
 
 /* 휴대폰 폭 — 시안 본문(.page)만 실제 폭으로 좁히고, 후보 보기처럼 어두운 무대 위 기기 틀에 담는다 */
 body.ps-on.is-phone { background: var(--v-stage); }

@@ -8,7 +8,8 @@
  *      "note": "선택 사항" }]
  * 글꼴 후보(선택)는 <script type="application/json" id="fonts"> 에 넣는다. 페이지는 --f-heading, --f-body 를 쓴다:
  *   [{ "id": "1", "name": "고운바탕 + 고운돋움", "heading": "\"Gowun Batang\", serif", "body": "…",
- *      "css": ["https://fonts.googleapis.com/…"], "license": "OFL", "source": "https://…", "note": "선택 사항" }]
+ *      "css": ["https://fonts.googleapis.com/…"], "license": "OFL", "maker": "만든 곳", "source": "https://…", "note": "선택 사항" }]
+ *   스타일시트가 없는 글꼴은 "faces": [{ "family": "RIDIBatang", "src": "https://…woff2", "weight": "400" }] 로 넣는다.
  * ← → 팔레트 · F 글꼴 · M PC/휴대폰 · H 숨기기. 주소 #p=A&f=1&v=phone 으로 보던 자리를 기억한다.
  */
 (function () {
@@ -51,12 +52,6 @@
     return (hi + 0.05) / (lo + 0.05);
   }
 
-  function verdict(ratio) {
-    if (ratio >= 4.5) return ["good", "본문 가능"];
-    if (ratio >= 3) return ["warn", "큰 글자·버튼만"];
-    return ["bad", "장식만"];
-  }
-
   function readPalettes() {
     const source = document.getElementById("palettes");
     if (!source) return null;
@@ -81,15 +76,22 @@
   }
 
   // 글꼴 파일은 처음 쓸 때 한 번만 불러온다
-  const loadedCss = new Set();
+  const loaded = new Set();
   function loadFont(f) {
     (f.css || []).forEach((href) => {
-      if (loadedCss.has(href)) return;
-      loadedCss.add(href);
+      if (loaded.has(href)) return;
+      loaded.add(href);
       const link = el("link");
       link.rel = "stylesheet";
       link.href = href;
       document.head.append(link);
+    });
+    (f.faces || []).forEach(({ family, src, weight = "400", style = "normal" }) => {
+      if (!family || !src || loaded.has(src)) return;
+      loaded.add(src);
+      const face = new FontFace(family, `url(${JSON.stringify(src)})`, { weight, style, display: "swap" });
+      document.fonts.add(face);
+      face.load().catch(() => console.warn(`글꼴을 받지 못했습니다: ${family}`)); // 못 받으면 다음 글꼴로 대신 보인다
     });
   }
 
@@ -101,8 +103,8 @@
 <div class="v-bar-main v-bar">
 <div class="v-group v-g-cands"><button class="v-btn icon v-prev" type="button" aria-label="이전 팔레트" data-tip="이전 팔레트|←">${icon("prev")}</button><ol class="v-thumbs" aria-label="팔레트"></ol><button class="v-btn icon v-next" type="button" aria-label="다음 팔레트" data-tip="다음 팔레트|→">${icon("next")}</button></div>
 <div class="v-info" aria-live="polite"><span class="v-title"><b></b><span class="v-title-hint"> · <span class="ps-total"></span>개 중 하나를 골라 주세요</span></span><p class="v-name"></p><span class="v-meta"></span><span class="v-count"></span></div>
-<div class="v-group v-g-pages"><ul class="ps-checks" aria-label="명암비"></ul></div>
-<div class="v-group v-g-tools"><div class="v-seg v-view" role="group" aria-label="PC 또는 휴대폰"><button class="v-btn" type="button" data-view="pc" data-tip="PC 화면으로 보기|M">${icon("pc")}PC</button><button class="v-btn" type="button" data-view="phone" data-tip="휴대폰 폭으로 보기|M">${icon("phone")}휴대폰</button></div><div class="ps-font"><button class="v-btn ps-font-btn" type="button" aria-haspopup="true" aria-expanded="false" data-tip="글꼴 바꾸기|F"><span class="ps-aa" aria-hidden="true">가</span><span class="v-label"></span>${icon("down")}</button><div class="ps-font-menu" role="group" aria-label="글꼴 후보" hidden></div></div><a class="v-btn icon v-demo" href="#" target="_blank" rel="noopener" aria-label="팔레트 출처 새 창으로 열기" data-tip="팔레트 출처를 새 창으로 열기">${icon("source")}</a><button class="v-btn v-confirm" type="button">${icon("check")}<span class="v-label">확정</span></button><button class="v-btn icon v-hide" type="button" aria-label="막대 숨기기" data-tip="막대 숨기기|H">${icon("hide")}</button></div>
+<div class="v-group v-g-pages"><div class="ps-font"><button class="v-btn ps-font-btn" type="button" aria-haspopup="true" aria-expanded="false" data-tip="글꼴 바꾸기|F"><span class="ps-aa" aria-hidden="true">가</span><span class="v-label"></span>${icon("down")}</button><div class="ps-font-menu" role="group" aria-label="글꼴 후보" hidden></div></div></div>
+<div class="v-group v-g-tools"><div class="v-seg v-view" role="group" aria-label="PC 또는 휴대폰"><button class="v-btn" type="button" data-view="pc" data-tip="PC 화면으로 보기|M">${icon("pc")}PC</button><button class="v-btn" type="button" data-view="phone" data-tip="휴대폰 폭으로 보기|M">${icon("phone")}휴대폰</button></div><a class="v-btn icon v-demo" href="#" target="_blank" rel="noopener" aria-label="팔레트 출처 새 창으로 열기" data-tip="팔레트 출처를 새 창으로 열기">${icon("source")}</a><button class="v-btn v-confirm" type="button">${icon("check")}<span class="v-label">확정</span></button><button class="v-btn icon v-hide" type="button" aria-label="막대 숨기기" data-tip="막대 숨기기|H">${icon("hide")}</button></div>
 <p class="v-keys"><kbd>←</kbd> <kbd>→</kbd> 팔레트 · <kbd>F</kbd> 글꼴 · <kbd>M</kbd> 휴대폰 · <kbd>H</kbd> 숨기기</p>
 </div>
 <button class="v-btn v-bar v-reveal" type="button" aria-label="조작 막대 다시 열기"><span class="v-reveal-where"><b></b><span></span></span><span class="v-reveal-open">${icon("show")}열기 H</span></button>`;
@@ -136,7 +138,7 @@
       title.style.fontFamily = f.heading;
       const sample = el("span", null, "손으로 빚어 매일 쓰는 그릇 · 38,000원");
       sample.style.fontFamily = f.body;
-      b.append(title, sample, el("small", null, [f.license, f.note].filter(Boolean).join(" · ")));
+      b.append(title, sample, el("small", null, [f.maker, f.license, f.note].filter(Boolean).join(" · ")));
       b.addEventListener("click", () => { state.f = i; apply(); closeMenu(); fontBtn.focus({ preventScroll: true }); });
       menu.append(b);
     });
@@ -171,7 +173,8 @@
       const b = el("button", "v-thumb ps-chip");
       b.type = "button";
       b.setAttribute("aria-label", `${p.id} ${p.name || ""}`.trim());
-      b.dataset.tip = `${p.id} ${p.name || ""}`.trim();
+      // 명암비는 말풍선으로 — 막대에는 이름만
+      b.dataset.tip = [`${p.id} ${p.name || ""}`.trim(), ...PAIRS.map(([short, , fg, bg]) => `${short} ${contrast(p.roles[fg], p.roles[bg]).toFixed(1)}`)].join(" · ");
       const sw = el("span", "ps-sw");
       (p.colors || []).forEach((c) => {
         const dot = el("span");
@@ -196,27 +199,16 @@
         loadFont(f);
         root.setProperty("--f-heading", f.heading);
         root.setProperty("--f-body", f.body);
-        fontBtn.querySelector(".v-label").textContent = `글꼴 ${f.id}`;
+        fontBtn.querySelector(".v-label").textContent = `글꼴 ${f.id} · ${f.name || ""}`;
         fontBtn.dataset.tip = `글꼴 ${f.id} ${f.name || ""} 바꾸기|F`;
         $$(".ps-font-item").forEach((b, i) => b.setAttribute("aria-pressed", String(i === state.f)));
       }
-      const meta = [f ? `글꼴 ${f.id} ${f.name || ""}`.trim() : "", p.note || ""].filter(Boolean).join(" · ");
+      const meta = p.note || ""; // 글꼴 이름은 가운데 글꼴 단추에 있다
       $(".v-name").textContent = name;
       $(".v-name").dataset.tip = name;
       $(".v-meta").textContent = meta;
       $(".v-meta").dataset.tip = meta;
       $(".v-count").textContent = `${state.i + 1} / ${list.length}`;
-      $(".ps-checks").replaceChildren(...PAIRS.map(([short, full, fg, bg]) => {
-        const ratio = contrast(p.roles[fg], p.roles[bg]);
-        const [cls, word] = verdict(ratio);
-        const li = el("li", "ps-check");
-        li.tabIndex = 0;
-        li.dataset.tip = `${full} 명암비 ${ratio.toFixed(2)} — 4.5 이상 본문, 3 이상 큰 글자·버튼`;
-        const top = el("span", "ps-check-top");
-        top.append(el("span", null, short), el("b", null, ratio.toFixed(2)));
-        li.append(top, el("span", `ps-${cls}`, word));
-        return li;
-      }));
       const demo = $(".v-demo");
       demo.hidden = !p.source;
       if (p.source) demo.href = p.source;
