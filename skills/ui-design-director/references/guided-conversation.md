@@ -11,6 +11,7 @@ Use this protocol when the user wants help selecting a design but has not suppli
 - Use plain language before design terminology. For example, say “more information visible at once” before “high density.”
 - Give a recommendation when evidence supports one, but label it as a recommendation and keep every subjective choice with the user.
 - End each turn with one clear action the user can take next.
+- Welcome real content whenever the user offers it (prices, hours, rules, answers to common questions) even before it is asked for, and record it in the brief under the facts that will appear on the pages. Users often want to hand over content first; it also decides page structure and real-length layout.
 
 Do not dump the entire workflow, a large questionnaire, or all unresolved choices into one message. Do not ask the user to repeat facts found in the project.
 

@@ -8,7 +8,8 @@ Run this in the context gate, before any candidates are researched, so the compa
 
 1. Look for each companion: a `SKILL.md` for `ui-ux-pro-max`, `hallmark`, `animate`/`review-animations` (emilkowalski) and `web-design-guidelines` in the user's skill folders (`~/.claude/skills`, `~/.agents/skills`, the project's `.claude/skills`) or in the available skills list; for impeccable run `npx --no-install impeccable --version` (prints a version only when it is already on the machine).
 2. Show the user one short table: companion · installed or not · what it adds at which step (widen candidates / name layout shapes / motion / automatic quality checks) · what installing downloads.
-3. Ask once whether to install the missing ones. Install only what the user approves, and say which steps will run without the others.
+3. Ask once whether to install the missing ones, in plain words: one sentence per companion on what changes in the result ("more template and colour ideas to choose from", "smoother, checked animation"), plus your recommendation. Most users do not know these tools; a bare "install X?" gets "I don't know, skip it". Install only what is approved, and say which steps will run without the others.
+   - Installing changes the machine, so consent must come from whoever owns it. When the person you are designing with is not that owner (a client, a colleague, another session acting as the user), proceed with what is installed and ask the owner separately; never treat the client's "sure" as permission to install.
 4. Record the result in the concept brief. At every later gate, say which companion ran, which was skipped, and why.
 
 ## Rules for every companion
