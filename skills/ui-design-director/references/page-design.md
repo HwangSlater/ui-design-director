@@ -1,12 +1,12 @@
 # Designing every page
 
-Use this after `SITE-PLAN.md` is approved. Each page type passes two decisions before any production code: a **layout** choice from low-fidelity options, then a **mockup** approval at full fidelity. Work core page types first, then secondary ones. Keep `SITE-PLAN.md` status columns current as each decision lands.
+Use this after `SITE-PLAN.md` is approved. Each page type passes two decisions before any production code: a **layout** choice from options that differ in structure, then a **mockup** approval at full fidelity. Work core page types first, then secondary ones. Keep `SITE-PLAN.md` status columns current as each decision lands.
 
-## 1. Layout options (low fidelity)
+## 1. Layout options
 
 For each page type, produce 2–3 numbered layout options that differ in **structure**, not styling: what leads, how content is ordered, how the primary action is reached, how the page reflows on a phone.
 
-- Render them in greyscale with `DESIGN.md` spacing and type scale only — no palette, imagery, or decoration — so the user judges structure rather than colour.
+- Render them with the approved `DESIGN.md` tokens — palette, fonts, spacing, components — and a licence-checked sample photo in every photo slot (see `comparison-board.md` § Sample photos). Keep colour, type and photos identical across options so only the structure differs. Users judged greyscale boxes as unable to show the real mood, and asked for photos always.
 - Use the real or planned content from `SITE-PLAN.md` at real length.
 - Capture each option at one wide and one real phone width (`scripts/capture.mjs`) and show the options in the viewer from `comparison-board.md`.
 - Under each option state in one line what it prioritises and what it gives up.
@@ -37,7 +37,7 @@ If the project already has a component library or framework that runs locally, b
 - for work surfaces, each required state from `SITE-PLAN.md` as its own labelled frame: empty, loading, error, no-permission, dense data;
 - interactive components in default, hover, keyboard focus, active, disabled, and error/invalid states where they appear;
 - only the motion `DESIGN.md` approved, built and checked against emilkowalski/skills when installed (`companion-skills.md`);
-- real imagery only when it is supplied or its licence is verified; otherwise a labelled empty frame of the correct aspect ratio. Do not use generated or stock imagery as if it were the product.
+- real imagery when supplied; otherwise licence-checked sample photos of the right subject and aspect ratio, credited and labelled on the page as samples to be replaced, with a hatched frame as the offline fallback. Do not use generated imagery, and do not present sample photos as the product.
 
 ### Self-check before showing
 

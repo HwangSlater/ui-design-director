@@ -24,7 +24,7 @@ Its purpose is to replace vague requests such as “make it feel like Linear” 
 - Guide vague requests through a step-by-step design conversation
 - Plan the whole site in `SITE-PLAN.md`: page inventory, main flows, navigation, and per-page status
 - Treat read surfaces (marketing, docs) and work surfaces (dashboards, forms) by their own rules
-- Offer 2–3 numbered greyscale layout options per page type, then build full-fidelity mockups from the chosen one
+- Offer 2–3 numbered layout options per page type (in the approved colours and fonts, with sample photos), then build full-fidelity mockups from the chosen one
 - Share one token and component stylesheet across mockups so approved pages transfer into code intact
 - Run a dependency-free static check (`check_site.py`) that reports accessibility floor, token drift, and common generic patterns in three tiers
 - Check rendering at three widths and get a review from a reviewer that never saw the builder's reasoning
