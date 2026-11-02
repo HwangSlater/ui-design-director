@@ -50,7 +50,7 @@ Navigation follows from the inventory: global navigation holds only core pages; 
 
 ## 4. Check content reality
 
-Design fails quietly when it is drawn around invented copy. For each core page note what real content exists. Where it does not, plan sample content that matches the real length and shape (a real-length product name, a realistic price table, a 40-row list), and mark it as sample. Never present invented testimonials, customer logos, statistics, or awards as if they were real; leave a labelled slot instead.
+Design fails quietly when it is drawn around invented copy. For each core page note what real content exists. Where it does not, plan sample content that matches the real length and shape (a real-length product name, a realistic price table, a 40-row list), and mark it as sample. Never present invented testimonials, customer logos, statistics, or awards as if they were real; leave a labelled slot instead. The same applies to small practical facts (address details, directions, hours, policies): keep a list of what the user has confirmed and mark everything else as unconfirmed until they do.
 
 ## 5. Write SITE-PLAN.md
 

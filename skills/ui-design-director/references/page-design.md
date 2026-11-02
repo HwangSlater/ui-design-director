@@ -35,6 +35,7 @@ If the project already has a component library or framework that runs locally, b
 ### What a mockup must show
 
 - every section or region at real content length, including the longest realistic title, name, and label;
+- only facts the user gave. Anything you had to fill in — directions, walking times, opening days, policies, prices, staff names — is marked on the page as unconfirmed (for example a small "확인 필요" tag) and listed when you hand the mockup over. Plausible guesses read as facts: a client found an invented subway exit, walking time and closing day only because they happened to read every line;
 - the page at narrow (≈375px), medium (≈768px), and wide (≈1280px+) widths;
 - for work surfaces, each required state from `SITE-PLAN.md` as its own labelled frame: empty, loading, error, no-permission, dense data;
 - interactive components in default, hover, keyboard focus, active, disabled, and error/invalid states where they appear;
