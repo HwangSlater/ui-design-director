@@ -3,21 +3,15 @@
  * ← → 후보 · ↑ ↓ 화면 · M PC/휴대폰 · H 막대 숨기기.
  * 화면 넘기는 방식 data.mode: "tabs"(한 화면씩) · "stack"(네 화면을 이어 붙여 스크롤만으로 보기).
  * 주소 #c=1&p=home&v=pc 로 보고 있던 자리를 기억한다.
+ * 막대 공용 동작(말풍선·숨기기·단축키)은 dock.js.
  */
 (function () {
   "use strict";
 
   const data = JSON.parse(document.getElementById("board-data").textContent);
-  const $ = (sel) => document.querySelector(sel);
-  const $$ = (sel) => Array.from(document.querySelectorAll(sel));
-  const el = (tag, cls, text) => {
-    const n = document.createElement(tag);
-    if (cls) n.className = cls;
-    if (text !== undefined) n.textContent = text;
-    return n;
-  };
+  const { $, $$, el } = window.Dock;
   const VIEWS = ["pc", "phone"];
-  const TIP_GAP = 10;
+  let hideTip = () => {};
   const MODE = data.mode === "stack" ? "stack" : "tabs";
   const SPY_OFFSET = 48; // 이어 보기에서 이 높이 안에 들어온 구획을 「지금 화면」으로 친다
   // 사용자가 고른 화면(state.p)은 후보를 넘겨도 바꾸지 않는다. 없는 후보에서는 「없어요」를 보여 준다.
@@ -112,8 +106,12 @@
   function render() {
     const cand = data.candidates[state.c];
     $$(".v-thumb").forEach((b, i) => b.setAttribute("aria-current", String(i === state.c)));
-    $(".v-name").textContent = `${cand.id} ${cand.title}`;
-    $(".v-meta").textContent = [cand.meta, cand.recommended ? "추천" : ""].filter(Boolean).join(" · ");
+    const name = `${cand.id} ${cand.title}`;
+    const meta = [cand.meta, cand.recommended ? "추천" : ""].filter(Boolean).join(" · ");
+    $(".v-name").textContent = name;
+    $(".v-name").dataset.tip = name; // 길어서 말줄임이 되면 말풍선으로 전체를 본다
+    $(".v-meta").textContent = meta;
+    $(".v-meta").dataset.tip = meta;
     $(".v-count").textContent = `${state.c + 1} / ${data.candidates.length}`;
     const demo = $(".v-demo");
     demo.hidden = !cand.demo;
@@ -157,44 +155,20 @@
     render();
   }
 
-  // 마우스로 누른 단추에 포커스가 남은 채 단축키를 쓰면 그 단추에 포커스 테두리가 켜져
-  // 고른 것과 다른 것이 함께 강조된다. 같은 묶음 안에서 지금 고른 것으로 포커스를 옮긴다.
   const GROUPS = [
     [".v-thumb", '.v-thumb[aria-current="true"]'],
     [".v-pages .v-btn", '.v-pages .v-btn[aria-selected="true"]'],
     [".v-view .v-btn", '.v-view .v-btn[aria-pressed="true"]'],
   ];
   function syncFocus() {
-    const active = document.activeElement;
-    const group = active && GROUPS.find(([member]) => active.matches(member));
-    if (group) $(group[1]).focus({ preventScroll: true });
+    window.Dock.syncFocus(GROUPS);
     hideTip();
   }
 
   function toggleDock() {
-    const hidden = document.body.classList.toggle("dock-hidden");
     hideTip();
-    (hidden ? $(".v-reveal") : $(".v-hide")).focus({ preventScroll: true });
+    window.Dock.toggleDock();
   }
-
-  // 말풍선 — 막대 전체 위에 하나만. 마우스를 올렸을 때와 키보드 포커스일 때만 뜬다.
-  const tip = el("div", "v-tip");
-  tip.setAttribute("role", "tooltip");
-  tip.hidden = true;
-  function showTip(target) {
-    const text = target.dataset.tip;
-    if (!text) return hideTip();
-    const [main, key] = text.split("|");
-    tip.replaceChildren(document.createTextNode(main.trim()));
-    if (key) tip.append(el("kbd", null, key.trim()));
-    const r = target.getBoundingClientRect();
-    const bar = $(".v-nav").getBoundingClientRect();
-    tip.hidden = false;
-    const half = tip.offsetWidth / 2;
-    tip.style.left = `${Math.min(Math.max(r.left + r.width / 2, half + TIP_GAP), innerWidth - half - TIP_GAP)}px`;
-    tip.style.top = `${bar.top - tip.offsetHeight - TIP_GAP}px`;
-  }
-  function hideTip() { tip.hidden = true; }
 
   // 휠은 어디서 굴려도 지금 보이는 시안을 내린다(막대 위, 휴대폰 바깥 포함)
   function forwardWheel(e) {
@@ -230,7 +204,8 @@
 
     const pages = $(".v-pages");
     data.pages.forEach((p) => {
-      const b = el("button", "v-btn", p.label);
+      const b = el("button", "v-btn");
+      b.append(el("span", "v-label", p.label)); // 긴 이름은 말줄임, 전체는 말풍선에
       b.type = "button";
       b.dataset.key = p.key;
       b.setAttribute("role", "tab");
@@ -242,26 +217,19 @@
     $(".v-hide").addEventListener("click", toggleDock);
     $(".v-reveal").addEventListener("click", toggleDock);
 
-    document.body.append(tip);
-    const nav = $(".v-nav");
-    nav.addEventListener("mouseover", (e) => { const t = e.target.closest("[data-tip]"); if (t) showTip(t); });
-    nav.addEventListener("mouseleave", hideTip);
-    nav.addEventListener("focusin", (e) => { if (e.target.matches(":focus-visible")) showTip(e.target); else hideTip(); });
-    nav.addEventListener("focusout", hideTip);
-    nav.addEventListener("click", hideTip);
+    hideTip = window.Dock.installTip($(".v-nav"));
     document.addEventListener("wheel", forwardWheel, { passive: false });
     frames().forEach(([sel]) => $(sel).addEventListener("scroll", spy, { passive: true }));
     document.body.classList.add(`mode-${MODE}`);
 
-    document.addEventListener("keydown", (e) => {
-      if (e.altKey || e.ctrlKey || e.metaKey) return;
-      if (e.key === "ArrowRight") { e.preventDefault(); moveCandidate(1); syncFocus(); }
-      else if (e.key === "ArrowLeft") { e.preventDefault(); moveCandidate(-1); syncFocus(); }
-      else if (e.key === "ArrowDown") { e.preventDefault(); movePage(1); syncFocus(); }
-      else if (e.key === "ArrowUp") { e.preventDefault(); movePage(-1); syncFocus(); }
-      else if (e.key === "m" || e.key === "M") { state.v = state.v === "pc" ? "phone" : "pc"; render(); syncFocus(); }
-      else if (e.key === "h" || e.key === "H") { toggleDock(); }
-      else if (e.key === "Escape") { hideTip(); }
+    const flipView = () => { state.v = state.v === "pc" ? "phone" : "pc"; render(); syncFocus(); };
+    window.Dock.onKeys({
+      ArrowRight: () => { moveCandidate(1); syncFocus(); },
+      ArrowLeft: () => { moveCandidate(-1); syncFocus(); },
+      ArrowDown: () => { movePage(1); syncFocus(); },
+      ArrowUp: () => { movePage(-1); syncFocus(); },
+      m: flipView,
+      h: toggleDock,
     });
 
     // 다른 후보 사진을 미리 받아 넘길 때 비지 않게 한다

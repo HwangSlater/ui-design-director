@@ -194,6 +194,7 @@ $ui-design-director로 렌더링된 UI가 DESIGN.md를 준수하는지 검수해
         ├── agents/
         │   └── openai.yaml
         ├── assets/
+        │   ├── dock.css · dock.js
         │   ├── board.css · board.js
         │   └── palette-switcher.css · palette-switcher.js
         ├── scripts/

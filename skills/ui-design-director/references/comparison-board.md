@@ -41,7 +41,10 @@ The viewer fills the window with the selected page. A floating two-tier bar at t
 - the wheel scrolls the visible page from anywhere, including over the bar and beside the phone frame;
 - a missing page is marked without changing the tab's width (faint text and a corner dot), so the bar never resizes between candidates;
 - page jumps are instant — pages are thousands of pixels apart and a smooth scroll makes the next key press start from the wrong place;
-- hiding the bar collapses it into a pill in the bottom-right corner that still says which candidate, page and view are showing ("2 Field · 상품 목록 · 휴대폰") and reopens on click or H.
+- hiding the bar collapses it into a pill in the bottom-right corner that still says which candidate, page and view are showing ("2 Field · 상품 목록 · 휴대폰") and reopens on click or H;
+- long text never leaves the bar: names, notes and page tabs truncate with an ellipsis (shrinking the note first, the candidate name last) and show in full in the tooltip; the name row never widens the bar; on narrow screens the "n개 중 하나" hint is dropped and the thumbnail row scrolls sideways.
+
+The bar itself lives in `assets/dock.css` and `assets/dock.js` (tokens, tooltip, hide/pill, shortcuts) and is shared with the palette preview, so both choices look and behave the same. Fix bar problems there, not in a copy.
 
 The address keeps the position (`#c=1&p=home&v=pc`) so you can open the user straight to a specific view.
 
@@ -49,9 +52,9 @@ Use the same viewer for layout options (`page-design.md`): render each option, c
 
 ## Palettes — `assets/palette-switcher.js` and `.css`
 
-After the format is chosen, build a small preview page in that format's structure with realistic content (for a shop: header, first screen, categories, product grid, product detail). Style it only with six role colours — `--c-bg`, `--c-surface`, `--c-text`, `--c-action`, `--c-on-action`, `--c-accent` — plus values mixed from them. Wrap the content in `.page` and use container queries so the switcher's phone-width button reflows it.
+After the format is chosen, build a small preview page in that format's structure with realistic content (for a shop: header, first screen, categories, product grid, product detail). Style it only with six role colours — `--c-bg`, `--c-surface`, `--c-text`, `--c-action`, `--c-on-action`, `--c-accent` — plus values mixed from them. Wrap the content in `.page` and use container queries so the phone view reflows it.
 
-Put the candidates in `<script type="application/json" id="palettes">` with their source link, original swatches, role mapping, and a one-line note on derived colours. The switcher adds a bar of palette chips, applies a palette on click, shows contrast for text/background, button text/button and accent/background computed from the hex values, and keeps the choice in the address (`#p=A`). Copy both asset files next to the page.
+Put the candidates in `<script type="application/json" id="palettes" data-step="팔레트 고르기">` with their source link, original swatches, role mapping, and a one-line note on derived colours. The switcher adds the same two-tier bar as the candidate viewer: step title, palette name and note, colour-strip thumbnails, the three contrast checks (text/background, button text/button, accent/background, computed from the hex values, with the verdict in words as well as colour) where the page tabs would be, PC/phone, source link and hide. Keys: ← → palettes, M phone (the page narrows to 390 px inside a device frame on the dark stage), H hide. The address keeps the choice (`#p=A&v=phone`). Link `dock.css` and `palette-switcher.css`, load `dock.js` then `palette-switcher.js`, and copy all four files next to the page.
 
 ## Before showing
 

@@ -1,0 +1,142 @@
+/* 아래에 떠 있는 조작 막대 — 후보 보기(board)와 팔레트 바꿔 보기(palette-switcher)가 함께 쓴다 */
+:root {
+  --v-stage: #121110;
+  --v-bar: #1c1a18;
+  --v-bar-edge: rgba(255, 255, 255, 0.08);
+  --v-raise: #2a2724;
+  --v-hover: #34302c;
+  --v-ink: #f4f1ec;
+  --v-muted: #a39c93;
+  --v-faint: #6f6962;
+  --v-pick: #f4f1ec;
+  --v-on-pick: #121110;
+  --v-frame: #0a0908;
+  --v-paper: #ffffff;
+  --v-tip: #f4f1ec;
+  --v-focus: #7cc4ff;      /* 키보드 포커스 — 「고른 것」의 흰 표시와 다른 색 */
+  --v-on-tip: #121110;
+  --v-good: #86d39c;       /* 명암비 판정 — 막대 바탕 위에서 읽히는 밝은 색, 글자로도 함께 알린다 */
+  --v-warn: #e8b85c;
+  --v-bad: #ff9a8f;
+  --v-shadow: 0 12px 40px rgba(0, 0, 0, 0.5), 0 2px 8px rgba(0, 0, 0, 0.3);
+
+  --v-1: 4px; --v-2: 8px; --v-3: 12px; --v-4: 16px; --v-5: 20px; --v-6: 24px;
+  --v-r-xs: 6px; --v-r-sm: 8px; --v-r: 12px; --v-r-bar: 16px; --v-r-phone: 40px;
+  --v-2xs: 0.6875rem; --v-xs: 0.75rem; --v-sm: 0.8125rem; --v-md: 0.9375rem;
+  --v-font: "Pretendard", "Apple SD Gothic Neo", "Malgun Gothic", system-ui, sans-serif;
+  --v-dur: 160ms;
+  --v-ease: cubic-bezier(0.2, 0, 0, 1);
+
+  --v-gap: 8px;
+  --v-ctl: 36px;            /* 막대 안 모든 단추 높이 */
+  --v-tab-max: 11em;        /* 화면 탭 하나의 최대 폭 — 넘는 이름은 말줄임, 전체는 말풍선에 */
+  --v-thumb-w: 64px;
+  --v-thumb-h: 40px;
+  --v-bottom: 16px;
+  --v-phone-w: 390px;
+  --v-bezel: 12px;
+  --v-scroll-tail: 140px;   /* 막대에 가려도 끝까지 내려 볼 수 있는 여유 */
+}
+
+/* 막대 — 시안 페이지의 글꼴·색이 섞이지 않게 막대 안에서만 정한다 */
+.v-nav, .v-tip { font-family: var(--v-font); font-size: var(--v-md); line-height: 1.4; word-break: keep-all; letter-spacing: normal; }
+.v-nav *, .v-nav *::before, .v-nav *::after, .v-tip { box-sizing: border-box; }
+.v-nav button { font: inherit; color: inherit; }
+.v-nav a { color: inherit; }
+.v-nav :focus-visible { outline: 2px solid var(--v-focus); outline-offset: 2px; }
+.v-nav svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; flex: none; }
+
+/* 가운데 정렬은 left·right + margin auto 로 한다. left: 50% 로 두면 막대가 쓸 수 있는 폭이 화면 절반이 된다. */
+.v-nav { position: fixed; z-index: 10; left: var(--v-bottom); right: var(--v-bottom); bottom: var(--v-bottom); width: fit-content; max-width: calc(100vw - 2 * var(--v-bottom)); margin-inline: auto; display: flex; align-items: center; gap: var(--v-2); color: var(--v-ink); }
+.v-group { display: flex; align-items: center; gap: var(--v-1); min-width: 0; }
+.v-bar { background: var(--v-bar); border: 1px solid var(--v-bar-edge); border-radius: var(--v-r-bar); box-shadow: var(--v-shadow); padding: var(--v-2); }
+.v-bar-main { min-width: 0; }
+
+.v-btn { position: relative; display: inline-flex; align-items: center; justify-content: center; gap: 6px; height: var(--v-ctl); min-width: var(--v-ctl); padding: 0 var(--v-3); border: 0; border-radius: var(--v-r-sm); background: transparent; color: var(--v-muted); cursor: pointer; white-space: nowrap; font-size: var(--v-sm); text-decoration: none; }
+.v-btn.icon { padding: 0; width: var(--v-ctl); }
+.v-btn:hover { background: var(--v-hover); color: var(--v-ink); }
+.v-label { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+
+.v-seg { display: flex; min-width: 0; padding: 3px; gap: 2px; border-radius: 10px; background: var(--v-raise); }
+.v-seg .v-btn { flex: 0 1 auto; max-width: var(--v-tab-max); height: calc(var(--v-ctl) - 6px); border-radius: 7px; }
+.v-seg .v-btn[aria-selected="true"], .v-seg .v-btn[aria-pressed="true"] { background: var(--v-pick); color: var(--v-on-pick); font-weight: 600; }
+.v-seg .v-btn[data-missing="true"] { color: var(--v-faint); }
+/* 없는 화면 — 폭이 바뀌지 않게 글자색과 모서리 점으로만 표시 */
+.v-seg .v-btn[data-missing="true"]::after { content: ""; position: absolute; top: 5px; right: 5px; width: 5px; height: 5px; border-radius: 50%; background: var(--v-faint); }
+
+.v-thumbs { margin: 0; padding: 0 2px; list-style: none; display: flex; gap: 6px; }
+.v-thumb { position: relative; display: block; width: var(--v-thumb-w); height: var(--v-thumb-h); padding: 0; border: 0; border-radius: var(--v-r-xs); background: var(--v-raise); cursor: pointer; overflow: visible; }
+.v-thumb img { width: 100%; height: 100%; object-fit: cover; object-position: top; display: block; border-radius: var(--v-r-xs); opacity: 0.55; filter: saturate(0.6); }
+.v-thumb-num { position: absolute; left: 3px; bottom: 3px; min-width: 16px; height: 16px; padding: 0 3px; display: grid; place-items: center; border-radius: 4px; background: var(--v-frame); color: var(--v-ink); font-size: var(--v-2xs); font-weight: 700; line-height: 1; }
+.v-thumb:hover img { opacity: 0.9; filter: none; }
+.v-thumb[aria-current="true"] { box-shadow: 0 0 0 2px var(--v-bar), 0 0 0 4px var(--v-pick); }
+.v-thumb[aria-current="true"] img { opacity: 1; filter: none; }
+
+/* 이름 줄 — 긴 글자는 말줄임. 줄어드는 순서: 설명 → 단계 제목 → 후보 이름 */
+.v-info { display: flex; flex-direction: column; justify-content: center; min-width: 0; padding: 0 var(--v-2); }
+.v-name, .v-meta, .v-title { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.v-name { margin: 0; font-size: var(--v-md); font-weight: 700; flex: 0 1 auto; }
+.v-meta { font-size: var(--v-xs); color: var(--v-muted); flex: 0 8 auto; }
+.v-count { font-size: var(--v-xs); color: var(--v-faint); font-variant-numeric: tabular-nums; white-space: nowrap; flex: none; }
+.v-title { font-size: var(--v-xs); color: var(--v-muted); flex: 0 3 auto; }
+.v-title b { color: var(--v-ink); font-weight: 600; }
+.dock-1 .v-title, .dock-3 .v-title { display: none; }
+.v-rule { width: 1px; height: 24px; background: var(--v-bar-edge); margin: 0 var(--v-1); flex: none; }
+
+/* 말풍선 — 막대 전체 위에 하나만 띄워 아무것도 가리지 않는다 */
+.v-tip { position: fixed; z-index: 20; max-width: calc(100vw - 2 * var(--v-bottom)); padding: 6px 10px; border-radius: var(--v-r-xs); background: var(--v-tip); color: var(--v-on-tip); font-size: var(--v-xs); font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; pointer-events: none; transform: translateX(-50%); box-shadow: var(--v-shadow); }
+.v-tip[hidden] { display: none; }
+.v-tip kbd { font-family: inherit; margin-left: 6px; padding: 0 5px; border-radius: 4px; background: var(--v-on-tip); color: var(--v-tip); }
+
+/* 숨김 — 오른쪽 아래 구석의 알약 하나만 남아 지금 위치를 알린다 */
+.dock-hidden .v-nav > :not(.v-reveal) { display: none; }
+.dock-hidden .v-nav { left: auto; right: var(--v-bottom); max-width: calc(100vw - 2 * var(--v-bottom)); }
+.v-reveal { display: none; }
+.dock-hidden .v-reveal { display: inline-flex; gap: var(--v-3); max-width: 100%; height: 44px; padding: 0 var(--v-2) 0 var(--v-4); background: var(--v-bar); color: var(--v-ink); }
+.dock-hidden .v-reveal:hover { background: var(--v-hover); }
+.v-reveal-where { display: flex; align-items: baseline; gap: var(--v-2); min-width: 0; }
+.v-reveal-where b, .v-reveal-where span { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+.v-reveal-where b { font-weight: 700; flex: 0 1 auto; }
+.v-reveal-where span { color: var(--v-muted); flex: 0 3 auto; }
+.v-reveal-open { display: inline-flex; flex: none; align-items: center; gap: 4px; height: 30px; padding: 0 var(--v-2); border-radius: var(--v-r-xs); background: var(--v-raise); color: var(--v-muted); font-size: var(--v-xs); }
+
+/* 1안 — 막대 하나, 얇은 선으로 구획 */
+.dock-1 .v-nav { gap: 0; }
+.dock-1 .v-nav > .v-bar-main { display: flex; align-items: center; gap: var(--v-2); }
+.dock-1 .v-info { width: 132px; flex: none; }
+
+/* 2안 — 위층 이름·단축키, 아래층 조작. 이름 줄은 막대 폭을 늘리지 않는다(contain). */
+.dock-2 .v-bar-main { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; grid-template-areas: "info info keys" "cands pages tools"; align-items: center; column-gap: var(--v-4); row-gap: var(--v-2); padding: var(--v-3) var(--v-3) var(--v-2); }
+.dock-2 .v-bar-main > .v-rule { display: none; }
+.dock-2 .v-info { grid-area: info; contain: inline-size; flex-direction: row; justify-content: flex-start; align-items: baseline; gap: var(--v-2); padding: 0 var(--v-1); }
+.dock-2 .v-title { padding-right: var(--v-2); margin-right: var(--v-1); border-right: 1px solid var(--v-bar-edge); }
+.dock-2 .v-keys { grid-area: keys; justify-self: end; display: block; }
+.dock-2 .v-g-cands { grid-area: cands; }
+.dock-2 .v-g-pages { grid-area: pages; justify-self: center; max-width: 100%; }
+.dock-2 .v-g-tools { grid-area: tools; justify-self: end; }
+.v-keys { display: none; margin: 0; font-size: var(--v-xs); color: var(--v-faint); white-space: nowrap; }
+.v-keys kbd { font-family: inherit; padding: 1px 5px; border-radius: 4px; background: var(--v-raise); color: var(--v-muted); }
+
+/* 3안 — 세 덩어리로 나눠 띄움, 이름은 왼쪽 덩어리 위에 */
+.dock-3 .v-nav { gap: var(--v-3); }
+.dock-3 .v-bar-main.v-bar { display: contents; }
+.dock-3 .v-bar-main > .v-rule { display: none; }
+.dock-3 .v-g-cands, .dock-3 .v-g-pages, .dock-3 .v-g-tools { background: var(--v-bar); border: 1px solid var(--v-bar-edge); border-radius: var(--v-r-bar); box-shadow: var(--v-shadow); padding: var(--v-2); }
+.dock-3 .v-info { position: absolute; left: 0; bottom: calc(100% + 8px); max-width: 100%; flex-direction: row; align-items: baseline; gap: var(--v-2); padding: 6px 12px; border-radius: 999px; background: var(--v-bar); border: 1px solid var(--v-bar-edge); box-shadow: var(--v-shadow); }
+
+@media (min-width: 1700px) {
+  :root { --v-2xs: 0.75rem; --v-xs: 0.8125rem; --v-sm: 0.875rem; --v-md: 1rem; --v-ctl: 40px; --v-thumb-w: 72px; --v-thumb-h: 45px; }
+}
+@media (max-width: 900px) {
+  .v-nav { left: var(--v-2); right: var(--v-2); width: auto; max-width: none; overflow-x: auto; }
+  .dock-2 .v-bar-main { grid-template-columns: minmax(0, 1fr); grid-template-areas: "info" "cands" "pages" "tools"; }
+  .dock-2 .v-g-pages, .dock-2 .v-g-tools { justify-self: start; }
+  .dock-2 .v-keys { display: none; }
+  .v-title-hint { display: none; } /* 좁으면 「n개 중 하나를 골라 주세요」는 빼고 후보 이름에 자리를 준다 */
+  .v-title { flex: none; }         /* 남은 단계 이름은 짧으니 줄이지 않는다 */
+  /* 후보가 많으면 썸네일 줄만 옆으로 넘긴다(이전·다음 단추는 제자리). 고름 테두리가 잘리지 않게 여백 */
+  .v-thumbs { min-width: 0; overflow-x: auto; scrollbar-width: none; padding: var(--v-1); }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .v-btn, .v-thumb, .v-thumb img { transition: background-color var(--v-dur) var(--v-ease), color var(--v-dur) var(--v-ease), box-shadow var(--v-dur) var(--v-ease), opacity var(--v-dur) var(--v-ease), filter var(--v-dur) var(--v-ease); }
+}

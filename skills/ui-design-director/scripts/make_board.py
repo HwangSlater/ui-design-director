@@ -15,7 +15,7 @@ Spec (paths relative to the spec file):
                      "steps": {"cart": [{"goto": "<url>"}, {"click": "<css>"}]} }] }
 Captured files are expected at <captures>/<slug>-<page>-<width>.jpg. A page appears
 for a candidate when at least one width was captured; missing pages are disabled.
-assets/board.css and assets/board.js are copied next to the output.
+assets/dock.css, dock.js (shared bottom bar), board.css and board.js are copied next to the output.
 """
 
 from __future__ import annotations
@@ -130,6 +130,7 @@ def build(spec: dict, candidates: list[dict]) -> str:
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="check-site" content="comparison-board">
 <title>{step} · {project}</title>
+<link rel="stylesheet" href="dock.css">
 <link rel="stylesheet" href="board.css">
 </head>
 <body class="dock-{dock}">
@@ -141,7 +142,7 @@ def build(spec: dict, candidates: list[dict]) -> str:
 <div class="v-bar-main v-bar">
 <div class="v-group v-g-cands"><button class="v-btn icon v-prev" type="button" aria-label="이전 후보" data-tip="이전 후보|←">{icon("prev")}</button><ol class="v-thumbs" aria-label="후보"></ol><button class="v-btn icon v-next" type="button" aria-label="다음 후보" data-tip="다음 후보|→">{icon("next")}</button></div>
 <span class="v-rule" aria-hidden="true"></span>
-<div class="v-info" aria-live="polite"><span class="v-title"><b>{step}</b> · {total}개 중 하나를 골라 주세요</span><p class="v-name"></p><span class="v-meta"></span><span class="v-count"></span></div>
+<div class="v-info" aria-live="polite"><span class="v-title"><b>{step}</b><span class="v-title-hint"> · {total}개 중 하나를 골라 주세요</span></span><p class="v-name"></p><span class="v-meta"></span><span class="v-count"></span></div>
 <span class="v-rule" aria-hidden="true"></span>
 <div class="v-group v-g-pages"><div class="v-seg v-pages" role="tablist" aria-label="화면"></div></div>
 <span class="v-rule" aria-hidden="true"></span>
@@ -151,6 +152,7 @@ def build(spec: dict, candidates: list[dict]) -> str:
 <button class="v-btn v-bar v-reveal" type="button" aria-label="조작 막대 다시 열기"><span class="v-reveal-where"><b></b><span></span></span><span class="v-reveal-open">{icon("show")}열기 H</span></button>
 </nav>
 <script type="application/json" id="board-data">{payload}</script>
+<script src="dock.js"></script>
 <script src="board.js"></script>
 </body>
 </html>
@@ -177,7 +179,7 @@ def main(argv: list[str]) -> int:
     except (OSError, ValueError, KeyError) as exc:
         print(f"ERROR: {exc}", file=sys.stderr)
         return 1
-    for name in ("board.css", "board.js"):
+    for name in ("dock.css", "dock.js", "board.css", "board.js"):
         shutil.copyfile(ASSETS / name, target.parent / name)
     print(f"wrote {target} ({len(candidates)} candidates)")
     return 0

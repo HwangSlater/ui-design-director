@@ -193,6 +193,7 @@ The open-source skills and tools below assist specific stages only when installe
         ├── agents/
         │   └── openai.yaml
         ├── assets/
+        │   ├── dock.css · dock.js
         │   ├── board.css · board.js
         │   └── palette-switcher.css · palette-switcher.js
         ├── scripts/

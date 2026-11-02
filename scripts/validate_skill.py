@@ -28,6 +28,8 @@ REQUIRED_FILES = (
     "references/comparison-board.md",
     "scripts/make_board.py",
     "scripts/capture.mjs",
+    "assets/dock.css",
+    "assets/dock.js",
     "assets/board.css",
     "assets/board.js",
     "assets/palette-switcher.css",
