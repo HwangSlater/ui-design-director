@@ -36,6 +36,7 @@ REQUIRED_FILES = (
     "assets/palette-switcher.css",
     "assets/palette-switcher.js",
     "scripts/check_site.py",
+    "scripts/anchor_check.py",
 )
 REPO_MARKDOWN_FILES = ("README.md", "README.en.md")
 UNFINISHED_MARKERS = ("TODO", "TBD", "FIXME", "PLACEHOLDER")
@@ -114,10 +115,34 @@ def check_markdown() -> None:
                 )
 
 
+ANCHOR_SAMPLE = """<!doctype html><html lang="ko"><head><meta name="viewport" content="width=device-width"></head><body>
+<a href="#main">본문으로 건너뛰기</a><main id="main"><a href="#times">수업 시간 보기</a><a href="#gone">없음</a>
+<a href="#bare">숨김</a><a href="#fees">수강료 보기</a>
+<section id="times"><h2 class="sr">한눈에</h2><h3>초등학생</h3></section>
+<section id="bare"><h2 class="sr">숨김</h2></section><section id="fees"><h2>수강료</h2></section></main></body></html>"""
+
+
+def check_anchor_rules() -> None:
+    """같은 페이지 링크 점검이 잡아야 할 것만 잡는지 본다(빈 문자열 → 결과 규칙 목록)."""
+    sys.path.insert(0, str(ROOT / "scripts"))
+    from check_site import PageParser, Report
+
+    report = Report()
+    parser = PageParser("sample.html", report)
+    parser.feed(ANCHOR_SAMPLE)
+    parser.close()
+    parser.finish()
+    got = sorted((f.rule, f.line) for f in report.findings)
+    want = [("anchor-heading", 3), ("anchor-label", 2), ("anchor-target", 2)]
+    if got != want:
+        fail(f"anchor rules: expected {want}, got {got}")
+
+
 def main() -> None:
     check_required_files()
     check_metadata()
     check_markdown()
+    check_anchor_rules()
     print("Skill validation passed.")
 
 

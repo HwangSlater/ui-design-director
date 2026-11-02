@@ -198,6 +198,7 @@ The open-source skills and tools below assist specific stages only when installe
         │   └── palette-switcher.css · palette-switcher.js
         ├── scripts/
         │   ├── check_site.py
+        │   ├── anchor_check.py
         │   ├── capture.mjs
         │   ├── make_board.py
         │   └── wait_choice.mjs

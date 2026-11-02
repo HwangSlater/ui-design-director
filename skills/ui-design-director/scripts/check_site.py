@@ -15,6 +15,8 @@ from dataclasses import dataclass
 from html.parser import HTMLParser
 from pathlib import Path
 
+from anchor_check import AnchorTracker
+
 HTML_SUFFIXES = {".html", ".htm"}
 CSS_SUFFIXES = {".css"}
 SKIP_DIRS = {"node_modules", ".git", "dist-cache", "__pycache__"}
@@ -83,10 +85,12 @@ class PageParser(HTMLParser):
         self.label_depth = 0
         self.raw_tag: str | None = None
         self.name_stack: list[dict] = []
+        self.anchors = AnchorTracker()
 
     def handle_starttag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
         a = {k: (v or "") for k, v in attrs}
         line = self.getpos()[0]
+        self.anchors.start(tag, a, line)
         if tag == "html":
             self.saw_html = True
             self.has_lang = bool(a.get("lang", "").strip())
@@ -129,6 +133,7 @@ class PageParser(HTMLParser):
         self.handle_starttag(tag, attrs)
 
     def handle_endtag(self, tag: str) -> None:
+        self.anchors.end(tag)
         if tag == self.raw_tag:
             self.raw_tag = None
         if tag == "label" and self.label_depth:
@@ -145,6 +150,7 @@ class PageParser(HTMLParser):
             return
         if self.raw_tag == "script":
             return
+        self.anchors.data(data)
         if data.strip():
             for entry in self.name_stack:
                 entry["named"] = True
@@ -152,6 +158,7 @@ class PageParser(HTMLParser):
     def finish(self) -> None:
         if not self.saw_html:
             return  # partial or component file; page-level rules do not apply
+        self.anchors.report(self.path, self.report)
         if not self.has_lang:
             self.report.add("FLOOR", self.path, 1, "html-lang", "<html> has no lang attribute")
         if not self.has_viewport:

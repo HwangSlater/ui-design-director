@@ -25,9 +25,9 @@ Use this before showing a set of mockups and before reporting a built site as do
 
 **1. Static check.** Run `python scripts/check_site.py <dir>` from the skill directory against the mockup or build output (HTML and CSS). Findings carry a tier:
 
-- `FLOOR` — never ships: missing `lang`, viewport, image `alt`, form labels, accessible names on icon-only controls, duplicate IDs, focus outlines removed with no `:focus-visible` replacement, motion with no reduced-motion alternative. Fix all of them.
+- `FLOOR` — never ships: missing `lang`, viewport, image `alt`, form labels, accessible names on icon-only controls, duplicate IDs, in-page links (`href="#…"`) whose target is missing or has no visible heading, focus outlines removed with no `:focus-visible` replacement, motion with no reduced-motion alternative. Fix all of them.
 - `DRIFT` — values that bypass tokens: raw colours or font sizes outside the token file, `!important`, `transition: all`. Fix, or keep with a one-line reason recorded in `DESIGN.md` § Implementation mapping as an approved exception.
-- `NOTE` — patterns that often signal generic output (gradient text, more than two font families). Review against `DESIGN.md`; keep when the approved concept calls for it.
+- `NOTE` — patterns that often signal generic output (gradient text, more than two font families), and an in-page link whose words share nothing with the heading it lands on (「수업 시간 보기」 landing on 「초등학생」 — the reader clicked one name and got another; rename the link or give the section the heading the link promises). Review against `DESIGN.md`; keep when the approved concept calls for it.
 
 The script reads markup and stylesheets only. It cannot see contrast on rendered colours, layout, or overflow; the next pass covers those.
 

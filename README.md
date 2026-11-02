@@ -199,6 +199,7 @@ $ui-design-director로 렌더링된 UI가 DESIGN.md를 준수하는지 검수해
         │   └── palette-switcher.css · palette-switcher.js
         ├── scripts/
         │   ├── check_site.py
+        │   ├── anchor_check.py
         │   ├── capture.mjs
         │   ├── make_board.py
         │   └── wait_choice.mjs
