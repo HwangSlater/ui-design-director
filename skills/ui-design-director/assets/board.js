@@ -95,6 +95,7 @@
       const missing = !cand.pages[b.dataset.key];
       b.dataset.missing = String(missing);
       b.setAttribute("aria-selected", String(b.dataset.key === state.p));
+      if (b.dataset.key === state.p) b.scrollIntoView({ block: "nearest", inline: "nearest" }); // 탭이 많아 옆으로 넘겨도 고른 것이 보이게
       b.dataset.tip = missing ? `${cand.title}에는 이 화면이 없어요` : `${b.textContent}${MODE === "stack" ? "(으)로 이동" : " 보기"}|↑ ↓`;
     });
     document.title = `${data.step || ""} · ${cand.id} ${cand.title} · ${labelOf(state.p)}`;
@@ -106,6 +107,7 @@
   function render() {
     const cand = data.candidates[state.c];
     $$(".v-thumb").forEach((b, i) => b.setAttribute("aria-current", String(i === state.c)));
+    $$(".v-thumb")[state.c].scrollIntoView({ block: "nearest", inline: "nearest" }); // 썸네일이 많아 옆으로 넘겨도 고른 것이 보이게
     const name = `${cand.id} ${cand.title}`;
     const meta = [cand.meta, cand.recommended ? "추천" : ""].filter(Boolean).join(" · ");
     $(".v-name").textContent = name;

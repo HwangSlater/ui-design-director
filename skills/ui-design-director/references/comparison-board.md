@@ -42,7 +42,8 @@ The viewer fills the window with the selected page. A floating two-tier bar at t
 - a missing page is marked without changing the tab's width (faint text and a corner dot), so the bar never resizes between candidates;
 - page jumps are instant — pages are thousands of pixels apart and a smooth scroll makes the next key press start from the wrong place;
 - hiding the bar collapses it into a pill in the bottom-right corner that still says which candidate, page and view are showing ("2 Field · 상품 목록 · 휴대폰") and reopens on click or H;
-- long text never leaves the bar: names, notes and page tabs truncate with an ellipsis (shrinking the note first, the candidate name last) and show in full in the tooltip; the name row never widens the bar; on narrow screens the "n개 중 하나" hint is dropped and the thumbnail row scrolls sideways.
+- long text never leaves the bar: names and notes truncate with an ellipsis (shrinking the note first, the candidate name last) and show in full in the tooltip; the name row never widens the bar; on narrow screens the "n개 중 하나" hint is dropped;
+- many candidates or tabs never squeeze the rest of the bar: the thumbnail row has a capped width (`--v-cands-max`) and scrolls sideways, page tabs keep their full label and scroll sideways when they do not fit, and the selected thumbnail and tab are scrolled into view. Check a viewer with 15+ candidates and 6 tabs at 1280 and 390 before showing it.
 
 The bar itself lives in `assets/dock.css` and `assets/dock.js` (tokens, tooltip, hide/pill, shortcuts) and is shared with the palette preview, so both choices look and behave the same. Fix bar problems there, not in a copy.
 

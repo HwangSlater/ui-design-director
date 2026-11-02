@@ -32,6 +32,7 @@
   --v-tab-max: 11em;        /* 화면 탭 하나의 최대 폭 — 넘는 이름은 말줄임, 전체는 말풍선에 */
   --v-thumb-w: 64px;
   --v-thumb-h: 40px;
+  --v-cands-max: clamp(240px, 30vw, 560px); /* 썸네일 줄 최대 폭 — 후보가 많으면 이 안에서 옆으로 넘긴다 */
   --v-bottom: 16px;
   --v-phone-w: 390px;
   --v-bezel: 12px;
@@ -57,14 +58,17 @@
 .v-btn:hover { background: var(--v-hover); color: var(--v-ink); }
 .v-label { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
 
-.v-seg { display: flex; min-width: 0; padding: 3px; gap: 2px; border-radius: 10px; background: var(--v-raise); }
-.v-seg .v-btn { flex: 0 1 auto; max-width: var(--v-tab-max); height: calc(var(--v-ctl) - 6px); border-radius: 7px; }
+.v-seg { display: flex; min-width: 0; padding: 3px; gap: 2px; border-radius: 10px; background: var(--v-raise); overflow-x: auto; scrollbar-width: none; }
+.v-seg .v-btn { flex: none; max-width: var(--v-tab-max); height: calc(var(--v-ctl) - 6px); border-radius: 7px; }
 .v-seg .v-btn[aria-selected="true"], .v-seg .v-btn[aria-pressed="true"] { background: var(--v-pick); color: var(--v-on-pick); font-weight: 600; }
 .v-seg .v-btn[data-missing="true"] { color: var(--v-faint); }
 /* 없는 화면 — 폭이 바뀌지 않게 글자색과 모서리 점으로만 표시 */
 .v-seg .v-btn[data-missing="true"]::after { content: ""; position: absolute; top: 5px; right: 5px; width: 5px; height: 5px; border-radius: 50%; background: var(--v-faint); }
 
-.v-thumbs { margin: 0; padding: 0 2px; list-style: none; display: flex; gap: 6px; }
+/* 후보가 많아도 막대를 밀어내지 않게 — 정해진 폭 안에서 옆으로 넘기고, 고름 테두리가 잘리지 않게 여백 */
+.v-g-cands { max-width: var(--v-cands-max); }
+.v-thumbs { min-width: 0; margin: 0; padding: var(--v-1); list-style: none; display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; scroll-behavior: auto; }
+.v-thumbs li { flex: none; }
 .v-thumb { position: relative; display: block; width: var(--v-thumb-w); height: var(--v-thumb-h); padding: 0; border: 0; border-radius: var(--v-r-xs); background: var(--v-raise); cursor: pointer; overflow: visible; }
 .v-thumb img { width: 100%; height: 100%; object-fit: cover; object-position: top; display: block; border-radius: var(--v-r-xs); opacity: 0.55; filter: saturate(0.6); }
 .v-thumb-num { position: absolute; left: 3px; bottom: 3px; min-width: 16px; height: 16px; padding: 0 3px; display: grid; place-items: center; border-radius: 4px; background: var(--v-frame); color: var(--v-ink); font-size: var(--v-2xs); font-weight: 700; line-height: 1; }
@@ -151,8 +155,7 @@
   .v-title-hint { display: none; } /* 좁으면 「n개 중 하나를 골라 주세요」는 빼고 후보 이름에 자리를 준다 */
   .v-title { flex: none; }         /* 남은 단계 이름은 짧으니 줄이지 않는다 */
   .v-name { flex-shrink: 0; max-width: 60%; } /* 좁으면 설명보다 후보 이름을 먼저 지킨다 */
-  /* 후보가 많으면 썸네일 줄만 옆으로 넘긴다(이전·다음 단추는 제자리). 고름 테두리가 잘리지 않게 여백 */
-  .v-thumbs { min-width: 0; overflow-x: auto; scrollbar-width: none; padding: var(--v-1); }
+  .v-g-cands { max-width: none; }
 }
 @media (prefers-reduced-motion: no-preference) {
   .v-btn, .v-thumb, .v-thumb img { transition: background-color var(--v-dur) var(--v-ease), color var(--v-dur) var(--v-ease), box-shadow var(--v-dur) var(--v-ease), opacity var(--v-dur) var(--v-ease), filter var(--v-dur) var(--v-ease); }
