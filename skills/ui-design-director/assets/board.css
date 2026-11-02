@@ -54,6 +54,11 @@ svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width:
 .v-scroll:has(> img)::after { content: ""; display: block; height: var(--v-scroll-tail); background: var(--v-stage); }
 .v-phone .v-scroll { border-radius: calc(var(--v-r-phone) - var(--v-bezel)); }
 .v-scroll img { display: block; width: 100%; height: auto; }
+/* 이어 보기 — 화면마다 이름 띠가 위에 붙어 따라온다 */
+.v-sec { position: relative; }
+.v-sec-head { position: sticky; top: 0; z-index: 1; padding: 6px var(--v-3); background: var(--v-stage); color: var(--v-ink); font-size: var(--v-xs); font-weight: 600; letter-spacing: 0.02em; }
+.v-sec-empty { display: grid; place-items: center; min-height: 240px; margin: 0; color: var(--v-muted); font-size: var(--v-sm); background: var(--v-raise); }
+.mode-stack .v-sec:last-child { min-height: 100%; background: var(--v-stage); }
 .v-empty { display: grid; place-items: center; height: 100%; margin: 0; padding: var(--v-6); color: var(--v-muted); font-size: var(--v-md); text-align: center; }
 
 /* 막대 — 공통 부품 */
@@ -69,8 +74,8 @@ svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width:
 .v-seg .v-btn { height: calc(var(--v-ctl) - 6px); border-radius: 7px; }
 .v-seg .v-btn[aria-selected="true"], .v-seg .v-btn[aria-pressed="true"] { background: var(--v-pick); color: var(--v-on-pick); font-weight: 600; }
 .v-seg .v-btn[data-missing="true"] { color: var(--v-faint); }
-.v-seg .v-btn[data-missing="true"]::after { content: "없음"; margin-left: 4px; padding: 0 4px; border-radius: 4px; font-size: var(--v-2xs); background: var(--v-hover); color: var(--v-muted); }
-.v-seg .v-btn[data-missing="true"][aria-selected="true"]::after { background: var(--v-raise); }
+/* 없는 화면 — 폭이 바뀌지 않게 글자색과 모서리 점으로만 표시 */
+.v-seg .v-btn[data-missing="true"]::after { content: ""; position: absolute; top: 5px; right: 5px; width: 5px; height: 5px; border-radius: 50%; background: var(--v-faint); }
 
 .v-thumbs { margin: 0; padding: 0 2px; list-style: none; display: flex; gap: 6px; }
 .v-thumb { position: relative; display: block; width: var(--v-thumb-w); height: var(--v-thumb-h); padding: 0; border: 0; border-radius: var(--v-r-xs); background: var(--v-raise); cursor: pointer; overflow: visible; }
@@ -96,9 +101,14 @@ svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width:
 
 /* 숨김 — 둥근 단추 하나만 남는다 */
 .dock-hidden .v-nav > :not(.v-reveal) { display: none; }
+.dock-hidden .v-nav { left: auto; right: var(--v-bottom); transform: none; } /* 숨기면 오른쪽 아래 구석으로 */
 .v-reveal { display: none; }
-.dock-hidden .v-reveal { display: inline-flex; background: var(--v-bar); color: var(--v-ink); padding: 0 var(--v-4); height: 40px; }
+.dock-hidden .v-reveal { display: inline-flex; gap: var(--v-3); height: 44px; padding: 0 var(--v-2) 0 var(--v-4); background: var(--v-bar); color: var(--v-ink); }
 .dock-hidden .v-reveal:hover { background: var(--v-hover); }
+.v-reveal-where { display: flex; align-items: baseline; gap: var(--v-2); }
+.v-reveal-where b { font-weight: 700; }
+.v-reveal-where span { color: var(--v-muted); }
+.v-reveal-open { display: inline-flex; align-items: center; gap: 4px; height: 30px; padding: 0 var(--v-2); border-radius: var(--v-r-xs); background: var(--v-raise); color: var(--v-muted); font-size: var(--v-xs); }
 
 /* 1안 — 막대 하나, 얇은 선으로 구획 */
 .dock-1 .v-nav { gap: 0; }
@@ -114,7 +124,7 @@ svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width:
 .dock-2 .v-g-cands { grid-area: cands; }
 .dock-2 .v-g-pages { grid-area: pages; justify-self: center; }
 .dock-2 .v-g-tools { grid-area: tools; }
-.v-keys { display: none; margin: 0; font-size: var(--v-xs); color: var(--v-faint); }
+.v-keys { display: none; margin: 0; font-size: var(--v-xs); color: var(--v-faint); white-space: nowrap; }
 .v-keys kbd { font-family: inherit; padding: 1px 5px; border-radius: 4px; background: var(--v-raise); color: var(--v-muted); }
 
 /* 3안 — 세 덩어리로 나눠 띄움, 이름은 왼쪽 덩어리 위에 */

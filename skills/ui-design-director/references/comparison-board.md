@@ -31,15 +31,17 @@ Files already captured are skipped, so a rerun resumes an interrupted batch. Ope
 python scripts/make_board.py <spec.json> <out-dir>/index.html
 ```
 
-Spec fields: `project`, `step`, `dock` (2 two-tier bar is the standard; 1 one-row and 3 three groups exist for comparison only), `captures`, `widths` (default 1440 and 390), `pages` (key + label), and `candidates` (`id`, `slug`, `title`, `meta`, `recommended`, `demo`, `urls`, `steps`). Use the name the visitor sees on the site as `title` and put the template's name in `meta`. Captures are read from `<captures>/<slug>-<page>-<width>.jpg`.
+Spec fields: `project`, `step`, `dock` (2 two-tier bar is the standard; 1 one-row and 3 three groups exist for comparison only), `pages_mode` (`tabs`: one page at a time, ↑ ↓ switch pages; `stack`: all pages joined top to bottom so scrolling alone walks through them, with each page's name pinned at its top and the tabs jumping and following), `captures`, `widths` (default 1440 and 390), `pages` (key + label), and `candidates` (`id`, `slug`, `title`, `meta`, `recommended`, `demo`, `urls`, `steps`). Use the name the visitor sees on the site as `title` and put the template's name in `meta`. Captures are read from `<captures>/<slug>-<page>-<width>.jpg`.
 
-The viewer fills the window with the selected page. A floating two-tier bar at the bottom shows the step title ("뼈대 고르기 · 5개 중 하나를 골라 주세요"), the current candidate, and the controls: thumbnails, previous/next, page tabs, PC/phone, demo link, hide. Keys: ← → candidates, M phone, H hide. Behaviour the usability test required:
+The viewer fills the window with the selected page. A floating two-tier bar at the bottom shows the step title ("뼈대 고르기 · 5개 중 하나를 골라 주세요"), the current candidate, and the controls: thumbnails, previous/next, page tabs, PC/phone, demo link, hide. Keys: ← → candidates, ↑ ↓ pages, M phone, H hide. Behaviour the usability test required:
 
 - the chosen page tab stays chosen across candidates; a candidate without that page shows "this candidate has no … page" in the frame and its tab is marked 없음 — never silently switch tabs;
 - one tooltip above the whole bar, describing the action first and the key second, shown on hover and keyboard focus only;
 - keyboard focus is drawn in a different colour from the selected state, and shortcuts move focus to the newly selected item;
 - the wheel scrolls the visible page from anywhere, including over the bar and beside the phone frame;
-- the hidden bar leaves one clearly visible reopen button.
+- a missing page is marked without changing the tab's width (faint text and a corner dot), so the bar never resizes between candidates;
+- page jumps are instant — pages are thousands of pixels apart and a smooth scroll makes the next key press start from the wrong place;
+- hiding the bar collapses it into a pill in the bottom-right corner that still says which candidate, page and view are showing ("2 Field · 상품 목록 · 휴대폰") and reopens on click or H.
 
 The address keeps the position (`#c=1&p=home&v=pc`) so you can open the user straight to a specific view.
 
@@ -53,4 +55,4 @@ Put the candidates in `<script type="application/json" id="palettes">` with thei
 
 ## Before showing
 
-Run `scripts/check_site.py` on the folder (boards carry `<meta name="check-site" content="comparison-board">`, so raw swatch colours are not reported as drift) and look at the viewer yourself at 1440×900 and 1280×720: nothing clipped, bar not covering the end of the page, same frame for every candidate. Then open it for the user.
+Run `scripts/check_site.py` on the folder (boards carry `<meta name="check-site" content="comparison-board">`, so raw swatch colours are not reported as drift) and look at the viewer yourself at 1440×900 and 1280×720: nothing clipped, bar not covering the end of the page, same frame for every candidate. Screenshots taken with the browser's `--screenshot` flag can catch the page before scripted scrolling settles; verify interactive states through the DevTools protocol (as `capture.mjs` does) before trusting them. Then open it for the user.

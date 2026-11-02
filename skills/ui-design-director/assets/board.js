@@ -1,6 +1,7 @@
 /*
  * 후보 보기 화면 — <script type="application/json" id="board-data"> 를 읽어 그린다.
- * ← → 후보 넘기기 · M PC/휴대폰 바꾸기 · H 막대 숨기기.
+ * ← → 후보 · ↑ ↓ 화면 · M PC/휴대폰 · H 막대 숨기기.
+ * 화면 넘기는 방식 data.mode: "tabs"(한 화면씩) · "stack"(네 화면을 이어 붙여 스크롤만으로 보기).
  * 주소 #c=1&p=home&v=pc 로 보고 있던 자리를 기억한다.
  */
 (function () {
@@ -17,6 +18,8 @@
   };
   const VIEWS = ["pc", "phone"];
   const TIP_GAP = 10;
+  const MODE = data.mode === "stack" ? "stack" : "tabs";
+  const SPY_OFFSET = 48; // 이어 보기에서 이 높이 안에 들어온 구획을 「지금 화면」으로 친다
   // 사용자가 고른 화면(state.p)은 후보를 넘겨도 바꾸지 않는다. 없는 후보에서는 「없어요」를 보여 준다.
   const state = { c: 0, p: data.pages[0].key, v: "pc" };
 
@@ -52,11 +55,62 @@
     }
   }
 
+  const frames = () => [[".v-desktop .v-scroll", "desktop", "PC"], [".v-phone .v-scroll", "phone", "휴대폰"]];
+  const labelOf = (key) => data.pages.find((p) => p.key === key).label;
+
+  function renderTabsFrames(cand) {
+    const page = cand.pages[state.p];
+    const label = labelOf(state.p);
+    const none = `${cand.title}에는 「${label}」 화면이 없어요. 다른 화면을 골라 보세요.`;
+    frames().forEach(([sel, kind, name]) =>
+      fill($(sel), page && page[kind], `${cand.title} ${label} ${name} 화면`, page ? `${name} 화면 캡처 없음` : none));
+  }
+
+  function renderStackFrames(cand) {
+    frames().forEach(([sel, kind, name]) => {
+      const box = $(sel);
+      box.replaceChildren(...data.pages.map((p) => {
+        const sec = el("section", "v-sec");
+        sec.dataset.key = p.key;
+        sec.append(el("div", "v-sec-head", p.label));
+        const page = cand.pages[p.key];
+        if (page && page[kind]) {
+          const img = el("img");
+          img.src = page[kind];
+          img.alt = `${cand.title} ${p.label} ${name} 화면`;
+          const size = page[`${kind}_size`];
+          if (size) { img.width = size[0]; img.height = size[1]; } // 사진이 오기 전에 자리를 잡아 이동 위치가 맞게
+          img.decoding = "async";
+          sec.append(img);
+        } else {
+          sec.append(el("p", "v-sec-empty", `${cand.title}에는 「${p.label}」 화면이 없어요`));
+        }
+        return sec;
+      }));
+      scrollToPage(box, state.p, "instant");
+    });
+  }
+
+  function scrollToPage(box, key, behavior) {
+    const sec = box.querySelector(`.v-sec[data-key="${key}"]`);
+    if (sec) box.scrollTo({ top: sec.offsetTop, behavior });
+  }
+
+  function updatePageTabs(cand) {
+    $$(".v-pages .v-btn").forEach((b) => {
+      const missing = !cand.pages[b.dataset.key];
+      b.dataset.missing = String(missing);
+      b.setAttribute("aria-selected", String(b.dataset.key === state.p));
+      b.dataset.tip = missing ? `${cand.title}에는 이 화면이 없어요` : `${b.textContent}${MODE === "stack" ? "(으)로 이동" : " 보기"}|↑ ↓`;
+    });
+    document.title = `${data.step || ""} · ${cand.id} ${cand.title} · ${labelOf(state.p)}`;
+    $(".v-reveal-where b").textContent = `${cand.id} ${cand.title}`;
+    $(".v-reveal-where span").textContent = `${labelOf(state.p)} · ${state.v === "phone" ? "휴대폰" : "PC"}`;
+    writeHash();
+  }
+
   function render() {
     const cand = data.candidates[state.c];
-    const page = cand.pages[state.p];
-    const label = data.pages.find((p) => p.key === state.p).label;
-
     $$(".v-thumb").forEach((b, i) => b.setAttribute("aria-current", String(i === state.c)));
     $(".v-name").textContent = `${cand.id} ${cand.title}`;
     $(".v-meta").textContent = [cand.meta, cand.recommended ? "추천" : ""].filter(Boolean).join(" · ");
@@ -64,21 +118,38 @@
     const demo = $(".v-demo");
     demo.hidden = !cand.demo;
     if (cand.demo) demo.href = cand.demo;
-
-    $$(".v-pages .v-btn").forEach((b) => {
-      const missing = !cand.pages[b.dataset.key];
-      b.dataset.missing = String(missing);
-      b.setAttribute("aria-selected", String(b.dataset.key === state.p));
-      b.dataset.tip = missing ? `${cand.title}에는 이 화면이 없어요` : `${b.textContent} 보기`;
-    });
     $$(".v-view .v-btn").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.view === state.v)));
     document.body.classList.toggle("is-phone", state.v === "phone");
+    (MODE === "stack" ? renderStackFrames : renderTabsFrames)(cand);
+    updatePageTabs(cand);
+  }
 
-    const none = `${cand.title}에는 「${label}」 화면이 없어요. 다른 화면 탭을 눌러 보세요.`;
-    fill($(".v-desktop .v-scroll"), page && page.desktop, `${cand.title} ${label} PC 화면`, page ? "PC 화면 캡처 없음" : none);
-    fill($(".v-phone .v-scroll"), page && page.phone, `${cand.title} ${label} 휴대폰 화면`, page ? "휴대폰 화면 캡처 없음" : none);
-    document.title = `${data.step || ""} · ${cand.id} ${cand.title} · ${label}`;
-    writeHash();
+  function choosePage(key, behavior = "instant") { // 화면 사이가 수천 px라 부드럽게 넘기면 늦다
+    state.p = key;
+    if (MODE === "stack") {
+      frames().forEach(([sel]) => scrollToPage($(sel), key, behavior));
+      updatePageTabs(data.candidates[state.c]);
+    } else {
+      render();
+    }
+  }
+
+  function movePage(step) {
+    const i = data.pages.findIndex((p) => p.key === state.p);
+    const next = data.pages[Math.min(Math.max(i + step, 0), data.pages.length - 1)];
+    if (next.key !== state.p) choosePage(next.key);
+  }
+
+  // 이어 보기: 스크롤 위치로 지금 화면 탭을 맞춘다
+  function spy(e) {
+    if (MODE !== "stack") return;
+    const box = e.currentTarget;
+    const secs = Array.from(box.querySelectorAll(".v-sec"));
+    const current = secs.filter((s) => s.offsetTop - box.scrollTop <= SPY_OFFSET).pop() || secs[0];
+    if (current && current.dataset.key !== state.p) {
+      state.p = current.dataset.key;
+      updatePageTabs(data.candidates[state.c]);
+    }
   }
 
   function moveCandidate(step) {
@@ -163,7 +234,7 @@
       b.type = "button";
       b.dataset.key = p.key;
       b.setAttribute("role", "tab");
-      b.addEventListener("click", () => { state.p = p.key; render(); });
+      b.addEventListener("click", () => choosePage(p.key));
       pages.append(b);
     });
 
@@ -179,11 +250,15 @@
     nav.addEventListener("focusout", hideTip);
     nav.addEventListener("click", hideTip);
     document.addEventListener("wheel", forwardWheel, { passive: false });
+    frames().forEach(([sel]) => $(sel).addEventListener("scroll", spy, { passive: true }));
+    document.body.classList.add(`mode-${MODE}`);
 
     document.addEventListener("keydown", (e) => {
       if (e.altKey || e.ctrlKey || e.metaKey) return;
       if (e.key === "ArrowRight") { e.preventDefault(); moveCandidate(1); syncFocus(); }
       else if (e.key === "ArrowLeft") { e.preventDefault(); moveCandidate(-1); syncFocus(); }
+      else if (e.key === "ArrowDown") { e.preventDefault(); movePage(1); syncFocus(); }
+      else if (e.key === "ArrowUp") { e.preventDefault(); movePage(-1); syncFocus(); }
       else if (e.key === "m" || e.key === "M") { state.v = state.v === "pc" ? "phone" : "pc"; render(); syncFocus(); }
       else if (e.key === "h" || e.key === "H") { toggleDock(); }
       else if (e.key === "Escape") { hideTip(); }
