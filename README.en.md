@@ -2,7 +2,7 @@
 
 [한국어](README.md)
 
-`ui-design-director` is a skill for establishing the overall UI concept of a project, working in both Codex and Claude Code. It researches real templates and 3–4 color palettes, helps the user choose the visual format and color direction independently, compares finalists through small coded previews, and turns approved decisions into a reusable `DESIGN.md`.
+`ui-design-director` is a skill for establishing the overall UI concept of a project and carrying it through a complete website or web app, working in both Codex and Claude Code. It researches real templates and 3–4 color palettes, helps the user choose the visual format and color direction independently, compares finalists through small coded previews, and turns approved decisions into a reusable `DESIGN.md`. It then plans the pages, gets a layout and a full-fidelity mockup approved for each page type, and only then moves them into production code.
 
 The user does not need to know design terminology or provide a complete brief. Starting with “I want to choose a design” makes the skill ask one consequential question at a time, offer concrete choices and recommendations, and guide the user to the next decision.
 
@@ -22,6 +22,12 @@ Its purpose is to replace vague requests such as “make it feel like Linear” 
 - Accumulate feedback as durable design rules instead of one-off CSS
 - Review responsive behavior, focus, error, loading, empty states, and accessibility
 - Guide vague requests through a step-by-step design conversation
+- Plan the whole site in `SITE-PLAN.md`: page inventory, main flows, navigation, and per-page status
+- Treat read surfaces (marketing, docs) and work surfaces (dashboards, forms) by their own rules
+- Offer 2–3 numbered greyscale layout options per page type, then build full-fidelity mockups from the chosen one
+- Share one token and component stylesheet across mockups so approved pages transfer into code intact
+- Run a dependency-free static check (`check_site.py`) that reports accessibility floor, token drift, and common generic patterns in three tiers
+- Check rendering at three widths and get a review from a reviewer that never saw the builder's reasoning
 
 ## Workflow
 
@@ -32,8 +38,11 @@ Understand the product context
 → Let the user choose format and color independently
 → Compare finalist combinations in coded UI previews
 → Document the approved decisions in DESIGN.md
-→ Implement and review a representative screen
-→ Propagate approved rules across the project
+→ Plan pages and flows in SITE-PLAN.md
+→ Choose a layout option per page type
+→ Approve full-fidelity mockups per page (three widths, every state)
+→ Build one representative page in code, then the rest
+→ Static check, render pass, and fresh reviewer
 ```
 
 The skill does not finalize the design system or production UI before the user makes a choice. It favors one primary reference and only borrows narrowly defined traits—such as typography hierarchy or dashboard density—from secondary references.
@@ -123,6 +132,20 @@ Use $ui-design-director to turn my approved format and palette into
 project-root DESIGN.md. Separate observed, inferred, and adapted rules.
 ```
 
+To design the whole site:
+
+```text
+Use $ui-design-director to list the pages and main flows this site needs,
+based on DESIGN.md. Once I approve, show me layout options per page type.
+```
+
+To move approved mockups into code:
+
+```text
+Use $ui-design-director to build the approved mockups. Show me one
+representative page first, then extend to the rest once I confirm.
+```
+
 To review an existing implementation:
 
 ```text
@@ -139,6 +162,8 @@ Do not modify files; report findings with severity and evidence.
 - Delegated choices are recorded as delegated, with the selection rationale.
 - `DESIGN.md` is approved only after format, palette, high-impact adaptations, and requested preview feedback are resolved.
 - Coded previews are comparison artifacts, not production implementation or an approved design system.
+- “Design the site” authorizes mockups only. Production code is written only on request and for pages whose mockups are approved.
+- Invented testimonials, customer logos, or figures are never presented as real; missing material stays a labelled empty slot.
 
 ## Repository structure
 
@@ -153,6 +178,8 @@ Do not modify files; report findings with severity and evidence.
         ├── SKILL.md
         ├── agents/
         │   └── openai.yaml
+        ├── scripts/
+        │   └── check_site.py
         └── references/
             ├── design-selection.md
             ├── guided-conversation.md
@@ -160,6 +187,9 @@ Do not modify files; report findings with severity and evidence.
             ├── concept-preview.md
             ├── reference-extraction.md
             ├── design-md-format.md
+            ├── site-plan.md
+            ├── page-design.md
+            ├── site-build.md
             └── ui-review.md
 ```
 
@@ -171,20 +201,27 @@ Do not modify files; report findings with severity and evidence.
 - `concept-preview.md`: comparable coded UI previews
 - `reference-extraction.md`: extracting and adapting reference rules
 - `design-md-format.md`: the `DESIGN.md` contract and feedback protocol
-- `ui-review.md`: rendered consistency and accessibility review
+- `site-plan.md`: page inventory, flows, and `SITE-PLAN.md`
+- `page-design.md`: layout options and full-fidelity mockups per page type
+- `site-build.md`: order and standards for moving approved mockups into code
+- `ui-review.md`: rendered consistency and accessibility review, plus the whole-site check
+- `check_site.py`: static HTML/CSS check with no dependencies (`python scripts/check_site.py <dir>`)
 
 ## Context footprint
 
-The complete skill instructions are approximately 35.1KB, but they are not loaded all at once. The agent reads the base `SKILL.md` and only the references needed for the active mode.
+The complete skill instructions are approximately 53KB, but they are not loaded all at once. The agent reads the base `SKILL.md` and only the references needed for the active mode.
 
 | Mode | Approximate load | Assessment |
 |---|---:|---|
-| Base entry point | 7.4KB | Light to moderate |
-| Full guided selection | 21.1KB | Moderate |
-| Concept and color selection | 16.8KB | Moderate |
-| Coded preview | 10.7KB | Light to moderate |
-| DESIGN.md extraction | 16.4KB | Moderate |
-| UI review | 9.2KB | Light |
+| Base entry point | 9.6KB | Light to moderate |
+| Full guided selection | 24.0KB | Moderate |
+| Concept and color selection | 19.0KB | Moderate |
+| Coded preview | 12.8KB | Light to moderate |
+| DESIGN.md extraction | 18.5KB | Moderate |
+| Site plan | 14.2KB | Light to moderate |
+| Page mockups | 18.4KB | Moderate |
+| Build | 17.1KB | Moderate |
+| UI review | 13.5KB | Light to moderate |
 
 Progressive disclosure keeps the skill from consuming unnecessary project context.
 

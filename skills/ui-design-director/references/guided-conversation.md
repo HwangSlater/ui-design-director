@@ -27,6 +27,13 @@ Adapt the sequence to known context; skip resolved stages.
 7. **Coded preview:** Offer 2–3 fair combinations using `concept-preview.md` when visual comparison will resolve uncertainty.
 8. **Confirmation:** Recap the exact format, palette, borrowed traits, adaptations, and unresolved points before creating approved `DESIGN.md`.
 
+When the user wants the whole site or app, continue:
+
+9. **Pages:** Propose the page inventory and 2–5 main flows from `site-plan.md`; ask what to cut or add, not to invent the list.
+10. **Layouts:** Page type by page type, show numbered layout options from `page-design.md`; the user answers with a number or a combination of named parts.
+11. **Mockups:** Show screenshots of each full-fidelity page at three widths; ask for approval or one concrete change per page.
+12. **Build:** Only on request, move approved mockups into code with `site-build.md`, starting with one representative page.
+
 ## Help an uncertain user
 
 “I don't know” is useful feedback, not a blocker. Respond by reducing the decision:
@@ -45,6 +52,7 @@ After each meaningful decision, give a compact state recap only when it helps or
 
 ```text
 Progress: Context ✓ → Format selecting → Color pending → Preview pending → DESIGN.md pending
+          → Pages pending → Layouts pending → Mockups pending → Code pending
 Locked: professional tone, desktop-first, compact dashboard
 Avoid: glass effects, oversized hero text
 Next: choose two format finalists

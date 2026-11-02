@@ -21,6 +21,10 @@ REQUIRED_FILES = (
     "references/reference-extraction.md",
     "references/design-md-format.md",
     "references/ui-review.md",
+    "references/site-plan.md",
+    "references/page-design.md",
+    "references/site-build.md",
+    "scripts/check_site.py",
 )
 REPO_MARKDOWN_FILES = ("README.md", "README.en.md")
 UNFINISHED_MARKERS = ("TODO", "TBD", "FIXME", "PLACEHOLDER")

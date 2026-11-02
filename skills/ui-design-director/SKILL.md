@@ -1,11 +1,11 @@
 ---
 name: ui-design-director
-description: Guide users conversationally through an overall UI concept by researching live templates and 3–4 color palettes, comparing coded previews, and converting approved choices into a durable DESIGN.md. Use when a user says they want to choose a design, for new products, redesigns, design-system extraction, or project-wide UI direction; do not trigger for isolated styling fixes.
+description: Guide users conversationally from an overall UI concept to a complete website or web app design — researching live templates and 3–4 color palettes, comparing coded previews, recording approved choices in DESIGN.md, planning every page in SITE-PLAN.md, approving layouts and full-fidelity mockups page by page, then building and checking the site. Use when a user wants to choose a design, design or build a whole site or app, redesign, extract a design system, or set project-wide UI direction; do not trigger for isolated styling fixes.
 ---
 
 # UI Design Director
 
-Turn subjective taste into an explicit, user-approved design language. The user owns the visual decision; provide strong research, comparisons, and a recommendation so that choice is informed rather than arbitrary.
+Turn subjective taste into an explicit, user-approved design language, then carry that language through every page of the site. The user owns each visual decision; provide strong research, comparisons, and a recommendation so that choice is informed rather than arbitrary.
 
 ## Guide the conversation
 
@@ -16,10 +16,15 @@ When the user gives a broad request such as “I want to choose a design,” rea
 - **Concept:** The format or palette is undecided. Read [references/design-selection.md](references/design-selection.md) and [references/color-selection.md](references/color-selection.md). Let the user select the overall format and base palette as separate decisions.
 - **Preview:** Format and palette finalists exist but the user wants to see them applied. Read [references/concept-preview.md](references/concept-preview.md) and create small, comparable coded UI previews outside production surfaces.
 - **Extract:** The format reference and palette are approved, or the user explicitly wants a partial draft. Read [references/reference-extraction.md](references/reference-extraction.md) and [references/design-md-format.md](references/design-md-format.md), then create or revise project-root `DESIGN.md`. A partial draft must keep unresolved selections provisional and cannot be marked approved.
-- **Apply:** `DESIGN.md` is approved and the user asked for implementation. Read it first, map it to shared tokens and primitives, and implement a representative slice before broad propagation when practical.
-- **Review:** The user wants consistency or quality review. Read [references/ui-review.md](references/ui-review.md) and inspect rendered UI against `DESIGN.md`.
+- **Site plan:** `DESIGN.md` exists and the user wants the whole site or app designed. Read [references/site-plan.md](references/site-plan.md) and produce project-root `SITE-PLAN.md`: page inventory, flows, navigation, and per-page status.
+- **Pages:** `SITE-PLAN.md` is approved. Read [references/page-design.md](references/page-design.md); for each page type offer numbered low-fidelity layout options, then build full-fidelity mockups from the chosen layout.
+- **Build:** Mockups are approved and the user asked for production code. Read [references/site-build.md](references/site-build.md); move tokens, then shared components, then one representative page, then the rest.
+- **Apply:** `DESIGN.md` is approved and the user asked to restyle an existing product without a page-by-page redesign. Read it first, map it to shared tokens and primitives, and implement a representative slice before broad propagation when practical.
+- **Review:** The user wants consistency or quality review, or a set of mockups or a built site is about to be shown as finished. Read [references/ui-review.md](references/ui-review.md) and inspect rendered UI against `DESIGN.md`; for mockups and sites also run its § Site check.
 
-If a request spans modes, advance only to the next decision gate that is authorized. Do not interpret “find a design” as approval to implement it.
+On entry, read project-root `DESIGN.md` and `SITE-PLAN.md` if they exist and resume from the first gate they leave open; do not redo approved decisions.
+
+If a request spans modes, advance only to the next decision gate that is authorized. Do not interpret “find a design” as approval to implement it, or “design the site” as approval to write production code.
 
 ## Required gates
 
@@ -28,8 +33,11 @@ If a request spans modes, advance only to the next decision gate that is authori
 3. **Palette gate:** Present linked 3–4 color palette candidates independently from the format. Explain intended UI roles and contrast risks. Let the user select, modify, or reject them; a palette's original swatches are inspiration, not yet complete semantic UI tokens.
 4. **Preview gate:** Offer a coded comparison when visual judgment would benefit; create it when the user requests or accepts. Combine only finalists using identical content and component coverage. Preview code is disposable evidence, not approval or production implementation.
 5. **Rules gate:** Extract and adapt the approved format and palette into `DESIGN.md`. Separate observed evidence, product-specific decisions, and unknowns. Ask for approval of unresolved high-impact choices; minor safe defaults may remain clearly marked as provisional.
-6. **Proof gate:** When production implementation is requested, build or adapt one representative page/slice and show it at relevant viewport sizes and states. Propagate only after approval when the scope is broad.
-7. **System gate:** Move every approved reusable feedback item into `DESIGN.md` and the shared token/component layer. Chat instructions and page-local CSS are not durable design decisions.
+6. **Site plan gate:** For a whole-site request, get the page inventory and main flows in `SITE-PLAN.md` approved before designing pages. Classify each page as a read surface or a work surface; they follow different rules.
+7. **Layout gate:** For each page type, show 2–3 numbered greyscale layout options that differ in structure and let the user choose. Settle the shared frame (navigation, footer, sidebar) once.
+8. **Mockup gate:** Build full-fidelity mockups of each page type from `DESIGN.md` tokens and components, at three widths and in every required state, pass the § Site check, and get per-page approval.
+9. **Proof gate:** When production implementation is requested, build or adapt one representative page/slice and show it at relevant viewport sizes and states. Propagate only after approval when the scope is broad.
+10. **System gate:** Move every approved reusable feedback item into `DESIGN.md` and the shared token/component layer. Chat instructions and page-local CSS are not durable design decisions.
 
 ## Non-negotiable behavior
 
@@ -41,6 +49,7 @@ If a request spans modes, advance only to the next decision gate that is authori
 - Preserve existing brand and product constraints unless the user explicitly approves changing them.
 - Treat accessibility as a baseline across every candidate: visible focus, sufficient contrast, non-color cues, usable targets, semantic controls, reflow/zoom, and reduced motion.
 - Avoid generic AI decoration such as gratuitous gradients, glass effects, excessive pills, and oversized hero text unless the chosen reference and product rationale support them.
+- Never present invented testimonials, customer logos, statistics, awards, or product screenshots as real. Use the user's material or a labelled empty slot.
 - Do not copy protected logos, illustrations, text, or a distinctive composition verbatim.
 - Establish the licence of every candidate and recommended dependency from its published licence text, not from memory. When the product will be operated commercially, a licence that forbids or charges for commercial use is a disqualifier, not a footnote — filter on it before taste, name what you verified, and flag what still needs legal review.
 - The user may explicitly delegate a design choice. Treat that as authorization to select, but record the delegated decision and rationale rather than presenting it as the user's personal preference.
@@ -55,7 +64,9 @@ Depending on the active mode, produce only the necessary artifact:
 - isolated coded previews comparing finalist format/palette combinations;
 - an approved-reference record;
 - project-root `DESIGN.md` with tokens, rationale, provenance, decisions, and open questions;
-- shared token/component implementation and a representative UI proof;
-- a rendered-UI review with concrete deviations and corrections.
+- project-root `SITE-PLAN.md` with page inventory, flows, navigation, and per-page layout/mockup/code status;
+- numbered layout options and full-fidelity mockups per page type, sharing one token and component stylesheet;
+- shared token/component implementation and a representative UI proof, then the remaining pages;
+- a rendered-UI review or site check with findings by tier and concrete corrections.
 
 When product requirements conflict with the reference, explain the conflict and prioritize usability, accessibility, existing brand constraints, and the user's explicit decisions.
