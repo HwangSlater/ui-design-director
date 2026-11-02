@@ -35,7 +35,7 @@ The script reads markup and stylesheets only. It cannot see contrast on rendered
 
 **3. Fresh reviewer.** When a subagent is available, give it the screenshots, `DESIGN.md`, and `SITE-PLAN.md` only — not your reasoning — and ask it to find where the site breaks its own rules, where pages disagree with each other, and what looks unfinished. Verify each finding against the current files before acting on it. Without a subagent, state that this pass was skipped.
 
-**4. Companion checks.** Run the impeccable detector and the Web Interface Guidelines review described in `companion-skills.md` whenever they were installed or approved at the start-of-project check; they are not optional extras once agreed. Map their findings to the tiers above and report each as ran, skipped (with the reason agreed with the user), or failed.
+**4. Companion checks.** Run hallmark's `sloplint`, the impeccable detector and the Web Interface Guidelines review described in `companion-skills.md` whenever they were installed or approved at the start-of-project check; they are not optional extras once agreed. Map their findings to the tiers above and report each as ran, skipped (with the reason agreed with the user), or failed.
 
 **5. Reference critique.** Open each page beside the primary reference at the same width at 1:1. Name where the page is flatter, denser, more generic or less finished than the reference — image scale, white space, type contrast, component detail, copy — and fix those before calling the set ready. Passing passes 1–4 only proves nothing is broken; this pass is about whether it is good.
 
