@@ -11,6 +11,7 @@ Use this protocol when the user wants help selecting a design but has not suppli
 - Use plain language before design terminology. For example, say “more information visible at once” before “high density.”
 - Give a recommendation when evidence supports one, but label it as a recommendation and keep every subjective choice with the user.
 - End each turn with one clear action the user can take next.
+- Assume the user is not a developer unless they show otherwise. Hand over visuals as one file to double-click or as a few images; do not send `http://127.0.0.1` addresses, keyboard shortcuts, tool or skill names, or terms like token and component. Answers in chat are always enough — the confirm button is an extra for users who are comfortable with it.
 - Talk in results, not in file names. Summarise a `DESIGN.md` or `SITE-PLAN.md` in a few plain lines in the message and give the path only as a reference; names like "DESIGN.md" mean nothing to most users.
 - When the user gives schedules, prices, capacities or rules, check them against each other at once — overlapping times for a one-person business, totals that do not add up, a rule that contradicts another — and ask before drawing them. A client deliberately gave an overlapping Saturday timetable; it was caught only when they saw it laid out.
 - Every preview that carries content (palette preview, layout options, mockups) follows the same fact rule as mockups: only facts the user gave; anything filled in is marked as unconfirmed and listed in the message ("제가 채워 넣은 것: …").

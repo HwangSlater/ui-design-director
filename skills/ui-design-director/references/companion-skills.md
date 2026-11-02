@@ -39,7 +39,7 @@ Database entries are ideas: a format candidate still needs a live template or si
 `Nutlope/hallmark` (MIT) exists to make generated pages look made, not generated. Use it when building layout options and mockups, not only for its vocabulary:
 
 - Read its `SKILL.md` Floor and `references/` (layout, craft, imagery, macrostructures, gates) before drawing options; name read-surface options with its macrostructures.
-- With an approved `DESIGN.md` at the root, hallmark treats it as a locked system, so its build flow can run without overriding the user's choices. Its theme deal is a candidate source when the user has not chosen a direction yet.
+- With an approved `DESIGN.md` at the root, hallmark treats it as a locked system, so its build flow can run without overriding the user's choices. Its theme deal is a candidate source when the user has not chosen a direction yet: each theme in `references/themes/` has a preview image, which makes a quick, non-technical "which feeling?" page (pick 3–4 themes whose keywords match the product). A theme chosen this way is the direction reference, alongside or instead of a live template.
 - Run its linter on every layout option and mockup before showing them, and fix every `FAIL`; fix or record a reason for every `REFLEX`:
 
   ```bash
