@@ -6,16 +6,17 @@
  *
  * - 127.0.0.1 의 빈 포트에서 기다린다(내 컴퓨터 밖에서는 닿지 않음).
  * - 한 번만 쓰는 열쇠를 만들어, 열쇠가 맞는 확정만 받는다.
- * - 시작하면 사용자에게 줄 주소를 한 줄로 찍는다:  OPEN file:///…/page.html#…&wait=<포트>-<열쇠>
+ * - 비교 화면이 있는 폴더를 같은 주소(http://127.0.0.1:<포트>/)로 함께 내준다. 화면과 받는 곳이 같은 주소라
+ *   브라우저가 「로컬 네트워크 접근」을 막거나 묻지 않는다(file:// 로 열면 Chrome 이 막을 수 있다).
+ * - 시작하면 사용자에게 줄 주소를 한 줄로 찍는다:  OPEN http://127.0.0.1:<포트>/page.html#…&wait=<포트>-<열쇠>
  * - 확정이 오면 decision.json 에 쓰고 CHOSEN 줄을 찍고 끝난다(종료 코드 0).
  *   시간이 다 되면 3, 잘못 부르면 2.
  * 에이전트는 이것을 백그라운드로 돌리고, 끝나면 decision.json 을 읽어 다음 단계로 간다.
  */
 import { createServer } from "node:http";
 import { randomBytes } from "node:crypto";
-import { writeFileSync, existsSync } from "node:fs";
-import { resolve } from "node:path";
-import { pathToFileURL } from "node:url";
+import { writeFileSync, existsSync, readFile, statSync } from "node:fs";
+import { resolve, dirname, basename, extname, sep } from "node:path";
 
 const DEFAULT_MINUTES = 120;
 const MAX_BODY = 8 * 1024; // 확정 한 건은 몇백 바이트면 충분하다
@@ -41,6 +42,29 @@ if (!existsSync(page)) usage(`page not found: ${page}`);
 if (!(opts.minutes > 0)) usage("--minutes must be a positive number");
 
 const token = randomBytes(16).toString("hex");
+const ROOT = dirname(page);
+const TYPES = {
+  ".html": "text/html; charset=utf-8", ".css": "text/css; charset=utf-8", ".js": "text/javascript; charset=utf-8",
+  ".json": "application/json; charset=utf-8", ".jpg": "image/jpeg", ".jpeg": "image/jpeg", ".png": "image/png",
+  ".webp": "image/webp", ".svg": "image/svg+xml", ".woff": "font/woff", ".woff2": "font/woff2",
+};
+
+// 비교 화면 폴더 안의 파일만 읽기 전용으로 내준다. 폴더 밖·목록 보기·모르는 형식은 거절.
+function serveFile(req, res) {
+  let rel;
+  try { rel = decodeURIComponent(new URL(req.url, "http://x").pathname); } catch { return reply(res, 400, { ok: false }); }
+  const file = resolve(ROOT, "." + rel);
+  const type = TYPES[extname(file).toLowerCase()];
+  if (!(file === ROOT || file.startsWith(ROOT + sep)) || !type) return reply(res, 404, { ok: false });
+  let st;
+  try { st = statSync(file); } catch { return reply(res, 404, { ok: false }); }
+  if (!st.isFile()) return reply(res, 404, { ok: false });
+  readFile(file, (err, data) => {
+    if (err) return reply(res, 500, { ok: false });
+    res.writeHead(200, { "Content-Type": type, "Cache-Control": "no-store", "X-Content-Type-Options": "nosniff" });
+    res.end(data);
+  });
+}
 const CORS = {
   // 비교 화면은 file:// 에서 열리므로 출처가 "null" 이다. 열쇠로 거른다.
   "Access-Control-Allow-Origin": "*",
@@ -63,6 +87,7 @@ function isValid(d) {
 let done = false;
 const server = createServer((req, res) => {
   if (req.method === "OPTIONS") return reply(res, 204, {});
+  if (req.method === "GET") return serveFile(req, res);
   if (req.method !== "POST" || req.url !== "/choice") return reply(res, 404, { ok: false });
   let size = 0;
   const chunks = [];
@@ -96,7 +121,7 @@ const server = createServer((req, res) => {
 
 server.listen(0, HOST, () => {
   const { port } = server.address();
-  const url = pathToFileURL(page).href + "#" + [opts.hash, `wait=${port}-${token}`].filter(Boolean).join("&");
+  const url = `http://${HOST}:${port}/${encodeURIComponent(basename(page))}#` + [opts.hash, `wait=${port}-${token}`].filter(Boolean).join("&");
   console.log(`OPEN ${url}`);
   console.log(`WAITING up to ${opts.minutes} min on ${HOST}:${port}`);
 });

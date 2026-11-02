@@ -158,7 +158,9 @@
         return;
       }
       refresh();
-      const why = code === 409 ? "이미 다른 확정을 받아 기다리기를 마쳤어요." : "지금은 에이전트와 연결되어 있지 않아요.";
+      const why = code === 409 ? "이미 다른 확정을 받아 기다리기를 마쳤어요."
+        : !WAIT ? "이 주소로 열면 에이전트와 연결되지 않아요(에이전트가 알려 준 주소로 열어야 해요)."
+        : "에이전트에 닿지 않았어요. 기다리기가 끝났거나 브라우저가 막았을 수 있어요.";
       let copied = false;
       try { await navigator.clipboard.writeText(text); copied = true; } catch { copied = false; }
       status(nav, `${why} ${copied ? "확정 문구를 복사했어요. 채팅에 붙여 넣어 주세요." : "아래 문구를 복사해 채팅에 붙여 넣어 주세요."}`, text);

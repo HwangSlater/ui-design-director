@@ -84,7 +84,7 @@
 .v-rule { width: 1px; height: 24px; background: var(--v-bar-edge); margin: 0 var(--v-1); flex: none; }
 
 /* 확정 단추 — 막대에서 하나뿐인 채운 단추. 글자가 바뀌어도(확정/보내는 중/확정됨) 폭은 그대로 */
-.v-confirm { min-width: 6.5em; background: var(--v-pick); color: var(--v-on-pick); font-weight: 600; }
+.v-confirm { width: 7.5em; background: var(--v-pick); color: var(--v-on-pick); font-weight: 600; }
 .v-confirm:hover { background: var(--v-ink); color: var(--v-on-pick); }
 .v-confirm[data-state="sent"] { background: var(--v-raise); color: var(--v-good); }
 .v-confirm:disabled { cursor: progress; opacity: 0.8; }

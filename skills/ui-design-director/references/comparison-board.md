@@ -72,7 +72,7 @@ Both bars carry a 확정 button so the user can decide on the screen instead of 
 node scripts/wait_choice.mjs <page.html> <decision.json> [--hash "p=A&f=1&v=pc"] [--minutes 120]
 ```
 
-- It listens on a free port on 127.0.0.1 only, with a one-time key, and prints `OPEN file:///…#…&wait=<port>-<key>`. Give the user that address (it is the only one whose button reaches you); the viewers keep `wait` in the address while the user moves around.
+- It listens on a free port on 127.0.0.1 only, with a one-time key, and also serves the page's folder read-only on the same address, so it prints `OPEN http://127.0.0.1:<port>/<page>#…&wait=<port>-<key>`. Give the user that address; it is the only one whose button reaches you, and the viewers keep `wait` in the address while the user moves around. Do not hand out a `file://` address for confirming: Chrome (Local Network Access) blocks or prompts when a file page calls 127.0.0.1, and the button then falls back to copying. Only files inside the page folder with known web types are served; anything else, folder listings and paths outside it get 404.
 - Run it in the background in a way that wakes you when it exits (in Claude Code: `run_in_background`). On exit code 0 it has written `decision.json` (`step`, `label`, `choice`, `received_at`; the key is not stored): record the decision in the brief or `DESIGN.md` and continue to the next gate without asking again. Exit 3 means it timed out.
 - If the user answers in chat instead, stop the waiter. Never leave one running after the step.
 - Without a waiter (another client, a closed session, an expired wait) the button says it is not connected, copies "<step>: <label> 확정" to the clipboard and shows it to paste into chat, so a decision is never lost.
