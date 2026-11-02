@@ -15,6 +15,7 @@ import { join } from "node:path";
 import { createServer } from "node:net";
 
 // 설치 위치는 운영체제가 알려 주는 폴더에서 찾는다
+const SCREEN_SLICES = 4; // 맨 위부터 한 화면씩 잘라 따로 저장할 수(screens/ 폴더)
 const WIN_DIRS = [process.env["ProgramFiles(x86)"], process.env.ProgramFiles, process.env.LOCALAPPDATA].filter(Boolean);
 const BROWSERS = [
   process.env.CAPTURE_BROWSER,
@@ -179,7 +180,17 @@ async function shoot(port, url, width, steps = []) {
       format: "jpeg", quality: 82, captureBeyondViewport: true,
       clip: { x: 0, y: 0, width, height, scale: 1 },
     });
-    return { data: Buffer.from(shot.data, "base64"), height, status };
+    // 한 화면 크기 조각 — 긴 전체 캡처는 파일로 열면 글씨가 너무 작아 안 읽힌다
+    const viewH = phone ? PHONE_HEIGHT : DESKTOP_HEIGHT;
+    const screens = [];
+    for (let i = 0; i < SCREEN_SLICES && i * viewH < height; i++) {
+      const part = await cdp.send("Page.captureScreenshot", {
+        format: "jpeg", quality: 82, captureBeyondViewport: true,
+        clip: { x: 0, y: i * viewH, width, height: Math.min(viewH, height - i * viewH), scale: 1 },
+      });
+      screens.push(Buffer.from(part.data, "base64"));
+    }
+    return { data: Buffer.from(shot.data, "base64"), height, status, screens };
   } finally {
     cdp.close();
     await fetch(`http://127.0.0.1:${port}/json/close/${target.id}`).catch(() => {});
@@ -205,8 +216,11 @@ async function main() {
           continue;
         }
         try {
-          const { data, height } = await shoot(port, job.url, width, job.steps || []);
+          const { data, height, screens } = await shoot(port, job.url, width, job.steps || []);
           writeFileSync(file, data);
+          const sliceDir = join(outDir, "screens");
+          mkdirSync(sliceDir, { recursive: true });
+          screens.forEach((buf, i) => writeFileSync(join(sliceDir, `${job.id}-${width}-${i + 1}.jpg`), buf));
           console.log(`[${done}/${total}] 저장  ${job.id}-${width}  ${width}x${height}`);
         } catch (err) {
           failed.push(`${job.id}-${width}: ${err.message}`);

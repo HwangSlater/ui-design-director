@@ -23,6 +23,8 @@ node scripts/capture.mjs <jobs.json> <captures-dir> [--widths 1280,390]
 
 A job may carry `steps` run in the same window before the capture — `{"goto": url}`, `{"click": "css"}`, `{"wait": ms}` — so state-dependent pages are captured in a comparable state (e.g. add a product, then capture the cart; an empty cart compares nothing). Set the job's url to `@current` to capture the page the steps ended on when its address is unknown. In the spec these live under each candidate's `steps` keyed by page.
 
+It also saves the first four screen-height slices of each capture to `<captures-dir>/screens/` (`<id>-<width>-1.jpg` …). A full-page phone capture is thousands of pixels tall and unreadable when opened as a file — users who look at files instead of the viewer could not read any text — so point them at the slices. For pages that carry the bottom bar (palette preview), capture with `steps` that click `.v-hide` and `url: "@current"` so the bar does not cover the slices.
+
 Files already captured are skipped, so a rerun resumes an interrupted batch. Open a few captures before building the viewer: a 200 response can still be the wrong page. Note capture limits honestly (e.g. sections that fade in on scroll may appear faded).
 
 ## The viewer — `scripts/make_board.py`
