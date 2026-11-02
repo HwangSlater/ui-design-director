@@ -268,3 +268,7 @@ python3 /path/to/skill-creator/scripts/quick_validate.py skills/ui-design-direct
 ```
 
 These commands catch structural issues; behavioral testing should still cover the complete conversational flow: template research, palette selection, coded preview, and `DESIGN.md` generation.
+
+## Wording review — `/ui-wording`
+
+The second skill in this repository. It aligns screen copy with the words similar services already use and unifies it across every page (cart vs basket, mixed politeness levels, "Book" vs "Book now"). It extracts all visible text (`extract_ui_text.py`), finds the inconsistencies (`term_check.py`), and applies an approved term table in one pass. Install by linking `skills/ui-wording` to `~/.claude/skills/ui-wording`.

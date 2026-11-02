@@ -37,6 +37,8 @@ The script reads markup and stylesheets only. It cannot see contrast on rendered
 
 **4. Companion checks.** Run hallmark's `sloplint`, the impeccable detector and the Web Interface Guidelines review described in `companion-skills.md` whenever they were installed or approved at the start-of-project check; they are not optional extras once agreed. Map their findings to the tiers above and report each as ran, skipped (with the reason agreed with the user), or failed.
 
+**4b. Wording.** Run the `ui-wording` skill (bundled in this repository) over the pages: one name per thing, the words similar services already use, one tone, one button form. Show the user its term table before applying it.
+
 **5. Reference critique.** Open each page beside the primary reference at the same width at 1:1. Name where the page is flatter, denser, more generic or less finished than the reference — image scale, white space, type contrast, component detail, copy — and fix those before calling the set ready. Passing passes 1–4 only proves nothing is broken; this pass is about whether it is good.
 
 Report the result as counts per tier plus the findings that remain, each with the page, the evidence, and the fix or the recorded reason for keeping it. Do not call the site done while a `FLOOR` finding remains.

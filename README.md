@@ -269,3 +269,7 @@ python3 /path/to/skill-creator/scripts/quick_validate.py skills/ui-design-direct
 ```
 
 이 검증은 구조적 오류를 확인하며, 실제 품질을 확인하려면 템플릿 선정, 팔레트 선택, 코드 시안, `DESIGN.md` 생성의 전체 대화 흐름도 테스트해야 합니다.
+
+## 화면 문구 검토 — `/ui-wording`
+
+같은 저장소의 두 번째 스킬입니다. 화면 문구를 비슷한 서비스들이 쓰는 말에 맞추고 전체에서 하나로 통일합니다(카트/장바구니, 해요체/합니다체, 「예약」/「예약하기」 같은 섞임). 문구를 모두 뽑아(`extract_ui_text.py`) 흔들리는 곳을 찾고(`term_check.py`), 승인받은 용어표대로 한꺼번에 고칩니다. 설치: `skills/ui-wording` 폴더를 `~/.claude/skills/ui-wording` 으로 연결.

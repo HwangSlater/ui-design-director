@@ -60,7 +60,7 @@ If a request spans modes, advance only to the next decision gate that is authori
 
 ## Companion skills
 
-Open-source design skills — ui-ux-pro-max, hallmark, emilkowalski/skills, impeccable, Vercel's Web Interface Guidelines — do parts of this work better than this skill alone. Use them as they were designed rather than copying their rules in here; read [references/companion-skills.md](references/companion-skills.md) for where each fits. This skill keeps the conversation and the record of the user's choices (`DESIGN.md`/`SITE-PLAN.md`), and nothing is installed without the machine owner's approval.
+Open-source design skills — ui-ux-pro-max, hallmark, emilkowalski/skills, impeccable, Vercel's Web Interface Guidelines — do parts of this work better than this skill alone. Use them as they were designed rather than copying their rules in here; read [references/companion-skills.md](references/companion-skills.md) for where each fits. This skill keeps the conversation and the record of the user's choices (`DESIGN.md`/`SITE-PLAN.md`), and nothing is installed without the machine owner's approval. Screen wording is checked with the sister skill `ui-wording` (same repository, `/ui-wording`): terms matched to similar services and unified across every page.
 
 ## Durable outputs
 
