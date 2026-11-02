@@ -25,6 +25,13 @@ REQUIRED_FILES = (
     "references/page-design.md",
     "references/site-build.md",
     "references/companion-skills.md",
+    "references/comparison-board.md",
+    "scripts/make_board.py",
+    "scripts/capture.mjs",
+    "assets/board.css",
+    "assets/board.js",
+    "assets/palette-switcher.css",
+    "assets/palette-switcher.js",
     "scripts/check_site.py",
 )
 REPO_MARKDOWN_FILES = ("README.md", "README.en.md")

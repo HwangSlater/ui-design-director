@@ -1,0 +1,65 @@
+/* 팔레트 바꿔 보기 막대 — 시안 페이지의 색과 섞이지 않게 막대 전용 값만 쓴다 */
+:root {
+  --ps-bg: #ffffff;
+  --ps-ink: #1d1b19;
+  --ps-muted: #6b655f;
+  --ps-line: #e4dfd8;
+  --ps-pick: #1d1b19;
+  --ps-good: #1f6b3d;
+  --ps-warn: #8a5a00;
+  --ps-bad: #9a2f2f;
+  --ps-shadow: 0 -6px 24px rgba(0, 0, 0, 0.10);
+  --ps-phone-frame: #d9d5cf;
+  --ps-space-1: 4px; --ps-space-2: 8px; --ps-space-3: 12px; --ps-space-4: 16px;
+  --ps-text-xs: 0.75rem; --ps-text-sm: 0.875rem;
+  --ps-radius: 10px;
+  --ps-bar-h: 132px;
+  --ps-phone-w: 390px;
+  --ps-font: "Pretendard", "Apple SD Gothic Neo", "Malgun Gothic", system-ui, sans-serif;
+}
+
+body { padding-bottom: var(--ps-bar-h); }
+
+.ps-bar {
+  position: fixed; left: 0; right: 0; bottom: 0; z-index: 50;
+  display: grid; grid-template-columns: minmax(0, 1fr) minmax(220px, 300px) auto; gap: var(--ps-space-4); align-items: center;
+  padding: var(--ps-space-3) var(--ps-space-4);
+  background: var(--ps-bg); color: var(--ps-ink); box-shadow: var(--ps-shadow);
+  font-family: var(--ps-font); font-size: var(--ps-text-sm); line-height: 1.4; word-break: keep-all;
+}
+.ps-chips { display: flex; gap: var(--ps-space-2); overflow-x: auto; padding: var(--ps-space-1); }
+.ps-chip {
+  display: flex; flex-direction: column; align-items: center; gap: var(--ps-space-1);
+  min-width: 64px; min-height: 44px; padding: var(--ps-space-2);
+  border: 2px solid var(--ps-line); border-radius: var(--ps-radius); background: var(--ps-bg); color: var(--ps-ink);
+  font: inherit; cursor: pointer;
+}
+.ps-chip[aria-pressed="true"] { border-color: var(--ps-pick); }
+.ps-chip:focus-visible, .ps-width:focus-visible, .ps-source:focus-visible { outline: 3px solid var(--ps-pick); outline-offset: 2px; }
+.ps-sw { display: flex; border-radius: 4px; overflow: hidden; }
+.ps-sw span { width: 12px; height: 20px; }
+
+.ps-detail { display: grid; gap: 2px; }
+.ps-title { margin: 0; font-weight: 700; }
+.ps-checks { list-style: none; margin: 0; padding: 0; font-size: var(--ps-text-xs); }
+.ps-checks li { display: flex; justify-content: space-between; gap: var(--ps-space-2); }
+.ps-good { color: var(--ps-good); } .ps-warn { color: var(--ps-warn); } .ps-bad { color: var(--ps-bad); }
+.ps-note { margin: 0; font-size: var(--ps-text-xs); color: var(--ps-muted); }
+.ps-source { font-size: var(--ps-text-xs); color: var(--ps-muted); }
+
+.ps-width {
+  min-height: 44px; padding: var(--ps-space-2) var(--ps-space-3);
+  border: 1px solid var(--ps-line); border-radius: var(--ps-radius); background: var(--ps-bg); color: var(--ps-ink);
+  font: inherit; cursor: pointer; white-space: nowrap;
+}
+.ps-width[aria-pressed="true"] { border-color: var(--ps-pick); font-weight: 700; }
+
+/* 휴대폰 폭 — 시안 본문(.page)만 좁힌다 */
+body.ps-phone { background: var(--ps-phone-frame); }
+body.ps-phone .page { max-width: var(--ps-phone-w); margin: var(--ps-space-4) auto; box-shadow: 0 0 0 1px var(--ps-line); container-type: inline-size; }
+
+@media (max-width: 760px) {
+  :root { --ps-bar-h: 196px; }
+  .ps-bar { grid-template-columns: 1fr auto; }
+  .ps-chips { grid-column: 1 / -1; }
+}

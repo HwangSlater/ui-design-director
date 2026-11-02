@@ -25,6 +25,7 @@ GENERIC_FAMILIES = {
     "-apple-system", "blinkmacsystemfont", "inherit", "initial", "unset",
 }
 MAX_PRIMARY_FAMILIES = 2
+BOARD_MARK = "comparison-board"
 
 DECLARATION = re.compile(r"([-\w]+)\s*:\s*([^;{}]+)(?=[;}])")
 COLOR_LITERAL = re.compile(r"#[0-9a-fA-F]{3,8}\b|\b(?:rgba?|hsla?|oklch|oklab|lab|lch)\(")
@@ -46,6 +47,7 @@ class CssSource:
     path: str
     first_line: int
     text: str
+    board: bool = False  # 색 견본이 곧 내용인 비교판: 날 색 값 경고를 끈다
 
 
 class Report:
@@ -74,6 +76,7 @@ class PageParser(HTMLParser):
         self.has_lang = False
         self.has_viewport = False
         self.saw_html = False
+        self.is_board = False
         self.ids: dict[str, int] = {}
         self.label_targets: set[str] = set()
         self.controls: list[tuple[str, int, str]] = []
@@ -89,6 +92,8 @@ class PageParser(HTMLParser):
             self.has_lang = bool(a.get("lang", "").strip())
         elif tag == "meta" and a.get("name", "").lower() == "viewport":
             self.has_viewport = True
+        elif tag == "meta" and a.get("name", "").lower() == "check-site":
+            self.is_board = a.get("content", "").lower() == BOARD_MARK
         elif tag in ("style", "script"):
             self.raw_tag = tag
         if "id" in a and a["id"]:
@@ -191,7 +196,7 @@ def check_css(sources: list[CssSource], report: Report) -> None:
                     if prop == "font":  # 글꼴 이름은 마지막 크기(/행간) 뒤에 온다
                         value = re.split(r"\d[\w.%]*(?:/\S+)?\s+", value)[-1]
                     families.add(primary_family(value))
-            if "var(" in low:
+            if "var(" in low or src.board:
                 continue
             if COLOR_LITERAL.search(value):
                 report.add("DRIFT", src.path, line, "raw-color", f"{prop}: {value} (use a token)")
@@ -243,6 +248,8 @@ def run(root: Path) -> Report:
         parser.feed(path.read_text(encoding="utf-8", errors="replace"))
         parser.close()
         parser.finish()
+        for css in parser.css:
+            css.board = parser.is_board
         sources.extend(parser.css)
     for path in css_files:
         sources.append(CssSource(str(path.relative_to(root)), 1,

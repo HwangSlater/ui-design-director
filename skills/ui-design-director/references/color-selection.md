@@ -30,12 +30,7 @@ For each candidate show:
 - contrast, color-blindness, saturation, and dark-mode risks;
 - any existing brand color preserved or adjusted.
 
-Use a compact comparison table for meaning and risks, but do not rely on hex strings alone to communicate appearance:
-
-| Palette | Visual swatches | Mood | Proposed roles | Product fit | Contrast/risk |
-|---|---|---|---|---|---|
-
-If the response surface cannot render faithful color swatches, create a lightweight isolated HTML palette board or comparable visual artifact. Use equal-size swatches, readable labels, exact hex values, source links, and sample foreground/background pairs. Do not apply the palettes to production UI at this stage.
+Let the user try the palettes on the chosen format rather than read about them: build the live palette preview in `comparison-board.md` § Palettes, where each palette is a clickable chip that recolours a realistic page and shows its computed contrast. Record mood, roles, and risks in that page's data and in chat only as briefly as needed. The preview is disposable; do not apply palettes to production UI at this stage.
 
 A 3–4 swatch palette is not a complete UI system. Most palettes need derived neutral ramps and state colors. Keep these derivations visually faithful to the selected palette, but do not pretend every original swatch can serve as accessible text or button color.
 

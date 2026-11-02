@@ -53,6 +53,7 @@ If a request spans modes, advance only to the next decision gate that is authori
 - Do not copy protected logos, illustrations, text, or a distinctive composition verbatim.
 - Establish the licence of every candidate and recommended dependency from its published licence text, not from memory. When the product will be operated commercially, a licence that forbids or charges for commercial use is a disqualifier, not a footnote — filter on it before taste, name what you verified, and flag what still needs legal review.
 - The user may explicitly delegate a design choice. Treat that as authorization to select, but record the delegated decision and rationale rather than presenting it as the user's personal preference.
+- Show every choice visually before asking about it: candidates in the full-screen viewer, palettes as a live switchable preview, per [references/comparison-board.md](references/comparison-board.md). Never ask the user to choose from a table of links, a folder of images, or one screenshot per candidate.
 - Do not turn concept discovery into a long questionnaire or require design vocabulary. Translate abstract choices into visible product consequences and let the user answer with a candidate number, a reaction, or plain language.
 
 ## Companion skills
@@ -63,8 +64,8 @@ Open-source design skills such as ui-ux-pro-max, hallmark, emilkowalski/skills, 
 
 Depending on the active mode, produce only the necessary artifact:
 
-- a compact concept brief plus linked candidate shortlist;
-- a linked palette shortlist with swatches, semantic-role proposal, and contrast notes;
+- a compact concept brief plus a candidate viewer (captured pages at desktop and phone width);
+- a live palette preview on the chosen format with semantic roles and computed contrast;
 - isolated coded previews comparing finalist format/palette combinations;
 - an approved-reference record;
 - project-root `DESIGN.md` with tokens, rationale, provenance, decisions, and open questions;

@@ -8,7 +8,7 @@ For each page type, produce 2–3 numbered layout options that differ in **struc
 
 - Render them in greyscale with `DESIGN.md` spacing and type scale only — no palette, imagery, or decoration — so the user judges structure rather than colour.
 - Use the real or planned content from `SITE-PLAN.md` at real length.
-- Show each option at one wide and one narrow width side by side.
+- Capture each option at one wide and one real phone width (`scripts/capture.mjs`) and show the options in the viewer from `comparison-board.md`.
 - Under each option state in one line what it prioritises and what it gives up.
 
 Derive options from the page's job and content. Do not pick a fashionable shape and fill it. When hallmark is installed, its named landing-page shapes can label read-surface options so they are clearly distinct (`companion-skills.md`); name the shape after deriving it, not before. Useful questions per surface:
@@ -43,7 +43,7 @@ If the project already has a component library or framework that runs locally, b
 
 Run `scripts/check_site.py` on the mockup directory and fix every `FLOOR` finding. Then render the pages and check the places mockups break: overflow at the narrow width, the longest label, sticky or scrolling regions, and the states you claimed. Screenshot each page at the three widths. If no renderer is available, say the check was structural only.
 
-Show screenshots first, then a short list of what to look at. Ask for approval per page type, or for specific changes. Classify feedback with `design-md-format.md` § Feedback protocol: a change that should apply everywhere goes into `DESIGN.md` and `tokens.css`/`components.css`, not into one page.
+Show the mockups in the viewer first, then a short list of what to look at. Ask for approval per page type, or for specific changes. Classify feedback with `design-md-format.md` § Feedback protocol: a change that should apply everywhere goes into `DESIGN.md` and `tokens.css`/`components.css`, not into one page.
 
 ## 3. Consistency across pages
 

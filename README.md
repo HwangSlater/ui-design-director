@@ -28,6 +28,8 @@
 - 완성 시안은 토큰·컴포넌트 스타일시트 하나를 공유하므로 승인 후 코드로 그대로 옮김
 - 외부 패키지 없는 정적 검사 스크립트(`check_site.py`): 접근성 필수 항목, 토큰을 거치지 않은 값, 흔한 AI 티 패턴을 세 단계로 보고
 - 세 가지 화면 폭 렌더링 점검과, 내 판단을 모르는 별도 리뷰어의 검토
+- 후보는 표나 링크가 아니라 브라우저 전체 화면 보기로 비교: 후보마다 첫 화면·목록·상세·장바구니를 PC와 실제 휴대폰 폭으로 찍어(`capture.mjs`) 같은 틀에 띄움(`make_board.py`)
+- 팔레트는 고른 뼈대의 견본 화면에 눌러 보며 고름(`palette-switcher.js`), 명암비는 자동 계산
 
 ## 작동 방식
 
@@ -191,8 +193,13 @@ $ui-design-director로 렌더링된 UI가 DESIGN.md를 준수하는지 검수해
         ├── SKILL.md
         ├── agents/
         │   └── openai.yaml
+        ├── assets/
+        │   ├── board.css · board.js
+        │   └── palette-switcher.css · palette-switcher.js
         ├── scripts/
-        │   └── check_site.py
+        │   ├── check_site.py
+        │   ├── capture.mjs
+        │   └── make_board.py
         └── references/
             ├── design-selection.md
             ├── guided-conversation.md
@@ -204,6 +211,7 @@ $ui-design-director로 렌더링된 UI가 DESIGN.md를 준수하는지 검수해
             ├── page-design.md
             ├── site-build.md
             ├── companion-skills.md
+            ├── comparison-board.md
             └── ui-review.md
 ```
 
@@ -219,6 +227,9 @@ $ui-design-director로 렌더링된 UI가 DESIGN.md를 준수하는지 검수해
 - `page-design.md`: 페이지 유형별 레이아웃 시안과 완성 시안
 - `site-build.md`: 승인된 시안을 제품 코드로 옮기는 순서와 기준
 - `companion-skills.md`: 다른 오픈소스 디자인 스킬을 단계별 보조로 쓰는 규칙
+- `comparison-board.md`: 후보를 보여 주는 방식(캡처, 전체 화면 보기, 팔레트 바꿔 보기)
+- `capture.mjs`: 설치 없이 Edge/Chrome으로 실제 기기 폭 전체 페이지 캡처, 찍기 전 동작(상품 담기 등)·이어 찍기 지원
+- `make_board.py`: 캡처로 후보 보기 화면을 만들고 캡처 작업 목록도 뽑음
 - `ui-review.md`: 렌더링 결과의 일관성 및 접근성 검수, 사이트 전체 점검
 - `check_site.py`: HTML·CSS 정적 검사(외부 패키지 없음, `python scripts/check_site.py <폴더>`)
 

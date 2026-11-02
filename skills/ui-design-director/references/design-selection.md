@@ -55,12 +55,9 @@ Do not state unverified prices, licenses, responsiveness, or page coverage as fa
 
 ## 4. Make comparison easy
 
-Use one compact table. Include direct links in the candidate names or immediately below it:
+Show the candidates in the full-screen viewer described in `comparison-board.md`: capture the product's key pages at desktop and phone width, build the viewer, check it, and open it in the user's browser. Do not present a table of links or a folder of screenshots as the comparison.
 
-| Candidate | Status/scope | Product fit | Signature trait | Evidence to inspect | Risk/cost |
-|---|---|---|---|---|---|
-
-Follow it with a recommendation of one or two finalists tied to the brief. Explain why the recommendation fits the real content and user task, not merely why it looks fashionable.
+In chat, keep to what the screens cannot show: licence and reuse status, what could not be verified, and a recommendation of one or two finalists tied to the brief. Explain why the recommendation fits the real content and user task, not merely why it looks fashionable.
 
 Ask the user for a simple decision:
 

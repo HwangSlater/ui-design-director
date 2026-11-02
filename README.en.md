@@ -28,6 +28,8 @@ Its purpose is to replace vague requests such as “make it feel like Linear” 
 - Share one token and component stylesheet across mockups so approved pages transfer into code intact
 - Run a dependency-free static check (`check_site.py`) that reports accessibility floor, token drift, and common generic patterns in three tiers
 - Check rendering at three widths and get a review from a reviewer that never saw the builder's reasoning
+- Compare candidates in a full-screen browser viewer, not a table of links: key pages captured at desktop and real phone width (`capture.mjs`) shown in identical frames (`make_board.py`)
+- Choose palettes by clicking them on a live preview of the chosen format (`palette-switcher.js`), with contrast computed automatically
 
 ## Workflow
 
@@ -190,8 +192,13 @@ The open-source skills and tools below assist specific stages only when installe
         ├── SKILL.md
         ├── agents/
         │   └── openai.yaml
+        ├── assets/
+        │   ├── board.css · board.js
+        │   └── palette-switcher.css · palette-switcher.js
         ├── scripts/
-        │   └── check_site.py
+        │   ├── check_site.py
+        │   ├── capture.mjs
+        │   └── make_board.py
         └── references/
             ├── design-selection.md
             ├── guided-conversation.md
@@ -203,6 +210,7 @@ The open-source skills and tools below assist specific stages only when installe
             ├── page-design.md
             ├── site-build.md
             ├── companion-skills.md
+            ├── comparison-board.md
             └── ui-review.md
 ```
 
@@ -218,6 +226,9 @@ The open-source skills and tools below assist specific stages only when installe
 - `page-design.md`: layout options and full-fidelity mockups per page type
 - `site-build.md`: order and standards for moving approved mockups into code
 - `companion-skills.md`: rules for using other open-source design skills as stage helpers
+- `comparison-board.md`: how candidates are shown (capture, full-screen viewer, palette switcher)
+- `capture.mjs`: dependency-free real-device-width full-page capture via Edge/Chrome, with pre-capture steps and resume
+- `make_board.py`: builds the candidate viewer from captures and writes capture job lists
 - `ui-review.md`: rendered consistency and accessibility review, plus the whole-site check
 - `check_site.py`: static HTML/CSS check with no dependencies (`python scripts/check_site.py <dir>`)
 

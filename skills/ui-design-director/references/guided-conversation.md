@@ -70,6 +70,7 @@ Allow the user to revisit any prior choice. When a decision changes, explain whi
 
 When presenting format or palette candidates:
 
+- show them in the browser with the tools in `comparison-board.md` before asking, and ask with clickable options when available;
 - recommend what to inspect instead of asking “Which looks best?”;
 - accept a candidate number, URL, screenshot, or natural-language reaction;
 - ask for one reason when it will improve the next shortlist, but do not interrogate the user;
