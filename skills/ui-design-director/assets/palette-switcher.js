@@ -32,6 +32,7 @@
     hide: '<path d="M6 9l6 6 6-6"/>',
     show: '<path d="M6 15l6-6 6 6"/>',
     down: '<path d="M8 10l4 4 4-4"/>',
+    check: '<path d="M5 12.5l4.5 4.5L19 7.5"/>',
   };
   const icon = (name) => `<svg viewBox="0 0 24 24" aria-hidden="true">${ICONS[name]}</svg>`;
 
@@ -101,7 +102,7 @@
 <div class="v-group v-g-cands"><button class="v-btn icon v-prev" type="button" aria-label="이전 팔레트" data-tip="이전 팔레트|←">${icon("prev")}</button><ol class="v-thumbs" aria-label="팔레트"></ol><button class="v-btn icon v-next" type="button" aria-label="다음 팔레트" data-tip="다음 팔레트|→">${icon("next")}</button></div>
 <div class="v-info" aria-live="polite"><span class="v-title"><b></b><span class="v-title-hint"> · <span class="ps-total"></span>개 중 하나를 골라 주세요</span></span><p class="v-name"></p><span class="v-meta"></span><span class="v-count"></span></div>
 <div class="v-group v-g-pages"><ul class="ps-checks" aria-label="명암비"></ul></div>
-<div class="v-group v-g-tools"><div class="v-seg v-view" role="group" aria-label="PC 또는 휴대폰"><button class="v-btn" type="button" data-view="pc" data-tip="PC 화면으로 보기|M">${icon("pc")}PC</button><button class="v-btn" type="button" data-view="phone" data-tip="휴대폰 폭으로 보기|M">${icon("phone")}휴대폰</button></div><div class="ps-font"><button class="v-btn ps-font-btn" type="button" aria-haspopup="true" aria-expanded="false" data-tip="글꼴 바꾸기|F"><span class="ps-aa" aria-hidden="true">가</span><span class="v-label"></span>${icon("down")}</button><div class="ps-font-menu" role="group" aria-label="글꼴 후보" hidden></div></div><a class="v-btn icon v-demo" href="#" target="_blank" rel="noopener" aria-label="팔레트 출처 새 창으로 열기" data-tip="팔레트 출처를 새 창으로 열기">${icon("source")}</a><button class="v-btn icon v-hide" type="button" aria-label="막대 숨기기" data-tip="막대 숨기기|H">${icon("hide")}</button></div>
+<div class="v-group v-g-tools"><div class="v-seg v-view" role="group" aria-label="PC 또는 휴대폰"><button class="v-btn" type="button" data-view="pc" data-tip="PC 화면으로 보기|M">${icon("pc")}PC</button><button class="v-btn" type="button" data-view="phone" data-tip="휴대폰 폭으로 보기|M">${icon("phone")}휴대폰</button></div><div class="ps-font"><button class="v-btn ps-font-btn" type="button" aria-haspopup="true" aria-expanded="false" data-tip="글꼴 바꾸기|F"><span class="ps-aa" aria-hidden="true">가</span><span class="v-label"></span>${icon("down")}</button><div class="ps-font-menu" role="group" aria-label="글꼴 후보" hidden></div></div><a class="v-btn icon v-demo" href="#" target="_blank" rel="noopener" aria-label="팔레트 출처 새 창으로 열기" data-tip="팔레트 출처를 새 창으로 열기">${icon("source")}</a><button class="v-btn v-confirm" type="button">${icon("check")}<span class="v-label">확정</span></button><button class="v-btn icon v-hide" type="button" aria-label="막대 숨기기" data-tip="막대 숨기기|H">${icon("hide")}</button></div>
 <p class="v-keys"><kbd>←</kbd> <kbd>→</kbd> 팔레트 · <kbd>F</kbd> 글꼴 · <kbd>M</kbd> 휴대폰 · <kbd>H</kbd> 숨기기</p>
 </div>
 <button class="v-btn v-bar v-reveal" type="button" aria-label="조작 막대 다시 열기"><span class="v-reveal-where"><b></b><span></span></span><span class="v-reveal-open">${icon("show")}열기 H</span></button>`;
@@ -225,10 +226,17 @@
       const where = [f ? `글꼴 ${f.id}` : "", state.v === "phone" ? "휴대폰" : "PC"].filter(Boolean).join(" · ");
       $(".v-reveal-where span").textContent = where;
       document.title = `${step} · ${name}${f ? " · " + f.name : ""}`;
-      history.replaceState(null, "", `#p=${encodeURIComponent(p.id)}${f ? "&f=" + encodeURIComponent(f.id) : ""}&v=${state.v}`);
+      window.Dock.writeHash(f ? { p: p.id, f: f.id, v: state.v } : { p: p.id, v: state.v });
+      refreshConfirm();
     }
 
     const hideTip = window.Dock.installTip(nav);
+    const refreshConfirm = window.Dock.installConfirm(nav, $(".v-confirm"), () => {
+      const p = list[state.i];
+      const f = fonts[state.f];
+      const label = [`${p.id} ${p.name || ""}`.trim(), f ? `글꼴 ${f.id} ${f.name || ""}`.trim() : ""].filter(Boolean).join(" + ");
+      return { step, label, choice: { palette: p.id, colors: p.roles, font: f ? { id: f.id, name: f.name, heading: f.heading, body: f.body } : null } };
+    });
     const GROUPS = [[".ps-chip", '.ps-chip[aria-current="true"]'], [".v-view .v-btn", '.v-view .v-btn[aria-pressed="true"]']];
     const after = () => { window.Dock.syncFocus(GROUPS); hideTip(); };
     const move = (step) => { state.i = (state.i + step + list.length) % list.length; apply(); after(); };

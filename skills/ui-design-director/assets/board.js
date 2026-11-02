@@ -12,6 +12,7 @@
   const { $, $$, el } = window.Dock;
   const VIEWS = ["pc", "phone"];
   let hideTip = () => {};
+  let refreshConfirm = () => {};
   const MODE = data.mode === "stack" ? "stack" : "tabs";
   const SPY_OFFSET = 48; // 이어 보기에서 이 높이 안에 들어온 구획을 「지금 화면」으로 친다
   // 사용자가 고른 화면(state.p)은 후보를 넘겨도 바꾸지 않는다. 없는 후보에서는 「없어요」를 보여 준다.
@@ -26,8 +27,7 @@
   }
 
   function writeHash() {
-    const id = encodeURIComponent(data.candidates[state.c].id);
-    history.replaceState(null, "", `#c=${id}&p=${state.p}&v=${state.v}`);
+    window.Dock.writeHash({ c: data.candidates[state.c].id, p: state.p, v: state.v });
   }
 
   function thumbSrc(cand) {
@@ -120,6 +120,7 @@
     document.body.classList.toggle("is-phone", state.v === "phone");
     (MODE === "stack" ? renderStackFrames : renderTabsFrames)(cand);
     updatePageTabs(cand);
+    refreshConfirm();
   }
 
   function choosePage(key, behavior = "instant") { // 화면 사이가 수천 px라 부드럽게 넘기면 늦다
@@ -218,6 +219,10 @@
     $(".v-reveal").addEventListener("click", toggleDock);
 
     hideTip = window.Dock.installTip($(".v-nav"));
+    refreshConfirm = window.Dock.installConfirm($(".v-nav"), $(".v-confirm"), () => {
+      const cand = data.candidates[state.c];
+      return { step: data.step, label: `${cand.id} ${cand.title}`, choice: { candidate: cand.id, title: cand.title } };
+    });
     document.addEventListener("wheel", forwardWheel, { passive: false });
     frames().forEach(([sel]) => $(sel).addEventListener("scroll", spy, { passive: true }));
     document.body.classList.add(`mode-${MODE}`);

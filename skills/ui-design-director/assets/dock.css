@@ -83,6 +83,22 @@
 .dock-1 .v-title, .dock-3 .v-title { display: none; }
 .v-rule { width: 1px; height: 24px; background: var(--v-bar-edge); margin: 0 var(--v-1); flex: none; }
 
+/* 확정 단추 — 막대에서 하나뿐인 채운 단추. 글자가 바뀌어도(확정/보내는 중/확정됨) 폭은 그대로 */
+.v-confirm { min-width: 6.5em; background: var(--v-pick); color: var(--v-on-pick); font-weight: 600; }
+.v-confirm:hover { background: var(--v-ink); color: var(--v-on-pick); }
+.v-confirm[data-state="sent"] { background: var(--v-raise); color: var(--v-good); }
+.v-confirm:disabled { cursor: progress; opacity: 0.8; }
+
+/* 알림 줄 — 확정 결과. 닫기 전까지 남는다 */
+.v-status { position: fixed; z-index: 25; left: 0; right: 0; width: fit-content; max-width: min(560px, calc(100vw - 2 * var(--v-bottom))); margin-inline: auto; display: flex; align-items: flex-start; gap: var(--v-2); padding: var(--v-3) var(--v-2) var(--v-3) var(--v-4); border: 1px solid var(--v-bar-edge); border-radius: var(--v-r); background: var(--v-bar); color: var(--v-ink); box-shadow: var(--v-shadow); font-family: var(--v-font); font-size: var(--v-sm); line-height: 1.5; word-break: keep-all; }
+.v-status[hidden] { display: none; }
+.v-status p { margin: 0; }
+.v-status-body { display: grid; gap: var(--v-2); min-width: 0; }
+.v-status-copy { width: 100%; height: var(--v-ctl); padding: 0 var(--v-2); border: 1px solid var(--v-bar-edge); border-radius: var(--v-r-xs); background: var(--v-raise); color: var(--v-ink); font: inherit; }
+.v-status-copy:focus-visible, .v-status-close:focus-visible { outline: 2px solid var(--v-focus); outline-offset: 2px; }
+.v-status-close { flex: none; color: var(--v-muted); font: inherit; font-size: var(--v-md); }
+.v-status, .v-status * { box-sizing: border-box; }
+
 /* 말풍선 — 막대 전체 위에 하나만 띄워 아무것도 가리지 않는다 */
 .v-tip { position: fixed; z-index: 20; max-width: calc(100vw - 2 * var(--v-bottom)); padding: 6px 10px; border-radius: var(--v-r-xs); background: var(--v-tip); color: var(--v-on-tip); font-size: var(--v-xs); font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; pointer-events: none; transform: translateX(-50%); box-shadow: var(--v-shadow); }
 .v-tip[hidden] { display: none; }

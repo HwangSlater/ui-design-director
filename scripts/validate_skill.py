@@ -28,6 +28,7 @@ REQUIRED_FILES = (
     "references/comparison-board.md",
     "scripts/make_board.py",
     "scripts/capture.mjs",
+    "scripts/wait_choice.mjs",
     "assets/dock.css",
     "assets/dock.js",
     "assets/board.css",

@@ -200,7 +200,8 @@ $ui-design-director로 렌더링된 UI가 DESIGN.md를 준수하는지 검수해
         ├── scripts/
         │   ├── check_site.py
         │   ├── capture.mjs
-        │   └── make_board.py
+        │   ├── make_board.py
+        │   └── wait_choice.mjs
         └── references/
             ├── design-selection.md
             ├── guided-conversation.md
@@ -231,6 +232,7 @@ $ui-design-director로 렌더링된 UI가 DESIGN.md를 준수하는지 검수해
 - `comparison-board.md`: 후보를 보여 주는 방식(캡처, 전체 화면 보기, 팔레트 바꿔 보기)
 - `capture.mjs`: 설치 없이 Edge/Chrome으로 실제 기기 폭 전체 페이지 캡처, 찍기 전 동작(상품 담기 등)·이어 찍기 지원
 - `make_board.py`: 캡처로 후보 보기 화면을 만들고 캡처 작업 목록도 뽑음
+- `wait_choice.mjs`: 비교 화면의 「확정」 단추를 기다렸다가 결정을 파일로 넘김(내 컴퓨터 안에서만, 한 번 쓰는 열쇠). 연결이 없으면 단추가 확정 문구를 복사해 줌
 - `ui-review.md`: 렌더링 결과의 일관성 및 접근성 검수, 사이트 전체 점검
 - `check_site.py`: HTML·CSS 정적 검사(외부 패키지 없음, `python scripts/check_site.py <폴더>`)
 

@@ -62,4 +62,18 @@ Put the candidates in `<script type="application/json" id="palettes" data-step="
 
 ## Before showing
 
-Run `scripts/check_site.py` on the folder (boards carry `<meta name="check-site" content="comparison-board">`, so raw swatch colours are not reported as drift) and look at the viewer yourself at 1440×900 and 1280×720: nothing clipped, bar not covering the end of the page, same frame for every candidate. Screenshots taken with the browser's `--screenshot` flag can catch the page before scripted scrolling settles; verify interactive states through the DevTools protocol (as `capture.mjs` does) before trusting them. Then open it for the user.
+Run `scripts/check_site.py` on the folder (boards carry `<meta name="check-site" content="comparison-board">`, so raw swatch colours are not reported as drift) and look at the viewer yourself at 1440×900 and 1280×720: nothing clipped, bar not covering the end of the page, same frame for every candidate. Screenshots taken with the browser's `--screenshot` flag can catch the page before scripted scrolling settles; verify interactive states through the DevTools protocol (as `capture.mjs` does) before trusting them. Then give the user the full address to open; do not open browser windows on their screen unless asked.
+
+## The confirm button — `scripts/wait_choice.mjs`
+
+Both bars carry a 확정 button so the user can decide on the screen instead of typing in chat. Start the waiter before giving out the address:
+
+```bash
+node scripts/wait_choice.mjs <page.html> <decision.json> [--hash "p=A&f=1&v=pc"] [--minutes 120]
+```
+
+- It listens on a free port on 127.0.0.1 only, with a one-time key, and prints `OPEN file:///…#…&wait=<port>-<key>`. Give the user that address (it is the only one whose button reaches you); the viewers keep `wait` in the address while the user moves around.
+- Run it in the background in a way that wakes you when it exits (in Claude Code: `run_in_background`). On exit code 0 it has written `decision.json` (`step`, `label`, `choice`, `received_at`; the key is not stored): record the decision in the brief or `DESIGN.md` and continue to the next gate without asking again. Exit 3 means it timed out.
+- If the user answers in chat instead, stop the waiter. Never leave one running after the step.
+- Without a waiter (another client, a closed session, an expired wait) the button says it is not connected, copies "<step>: <label> 확정" to the clipboard and shows it to paste into chat, so a decision is never lost.
+- The button's label keeps its width (확정 / 보내는 중 / 확정됨) and the result stays on screen until closed.

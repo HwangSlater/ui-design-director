@@ -199,7 +199,8 @@ The open-source skills and tools below assist specific stages only when installe
         ├── scripts/
         │   ├── check_site.py
         │   ├── capture.mjs
-        │   └── make_board.py
+        │   ├── make_board.py
+        │   └── wait_choice.mjs
         └── references/
             ├── design-selection.md
             ├── guided-conversation.md
@@ -230,6 +231,7 @@ The open-source skills and tools below assist specific stages only when installe
 - `comparison-board.md`: how candidates are shown (capture, full-screen viewer, palette switcher)
 - `capture.mjs`: dependency-free real-device-width full-page capture via Edge/Chrome, with pre-capture steps and resume
 - `make_board.py`: builds the candidate viewer from captures and writes capture job lists
+- `wait_choice.mjs`: waits for the viewers' confirm button and hands the decision over as a file (loopback only, one-time key); without it the button copies the decision text to paste into chat
 - `ui-review.md`: rendered consistency and accessibility review, plus the whole-site check
 - `check_site.py`: static HTML/CSS check with no dependencies (`python scripts/check_site.py <dir>`)
 

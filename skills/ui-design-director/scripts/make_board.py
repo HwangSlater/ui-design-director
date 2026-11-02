@@ -39,6 +39,7 @@ ICONS = {
     "demo": '<path d="M14 4h6v6M20 4l-9 9M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"/>',
     "hide": '<path d="M6 9l6 6 6-6"/>',
     "show": '<path d="M6 15l6-6 6 6"/>',
+    "check": '<path d="M5 12.5l4.5 4.5L19 7.5"/>',
 }
 
 
@@ -146,7 +147,7 @@ def build(spec: dict, candidates: list[dict]) -> str:
 <span class="v-rule" aria-hidden="true"></span>
 <div class="v-group v-g-pages"><div class="v-seg v-pages" role="tablist" aria-label="화면"></div></div>
 <span class="v-rule" aria-hidden="true"></span>
-<div class="v-group v-g-tools"><div class="v-seg v-view" role="group" aria-label="PC 또는 휴대폰"><button class="v-btn" type="button" data-view="pc" data-tip="PC 화면으로 보기|M">{icon("pc")}PC</button><button class="v-btn" type="button" data-view="phone" data-tip="휴대폰 화면으로 보기|M">{icon("phone")}휴대폰</button></div><a class="v-btn icon v-demo" href="#" target="_blank" rel="noopener" aria-label="데모 사이트 새 창으로 열기" data-tip="실제 데모 사이트를 새 창으로 열기">{icon("demo")}</a><button class="v-btn icon v-hide" type="button" aria-label="막대 숨기기" data-tip="막대 숨기기|H">{icon("hide")}</button></div>
+<div class="v-group v-g-tools"><div class="v-seg v-view" role="group" aria-label="PC 또는 휴대폰"><button class="v-btn" type="button" data-view="pc" data-tip="PC 화면으로 보기|M">{icon("pc")}PC</button><button class="v-btn" type="button" data-view="phone" data-tip="휴대폰 화면으로 보기|M">{icon("phone")}휴대폰</button></div><a class="v-btn icon v-demo" href="#" target="_blank" rel="noopener" aria-label="데모 사이트 새 창으로 열기" data-tip="실제 데모 사이트를 새 창으로 열기">{icon("demo")}</a><button class="v-btn v-confirm" type="button">{icon("check")}<span class="v-label">확정</span></button><button class="v-btn icon v-hide" type="button" aria-label="막대 숨기기" data-tip="막대 숨기기|H">{icon("hide")}</button></div>
 <p class="v-keys"><kbd>←</kbd> <kbd>→</kbd> 후보 · <kbd>↑</kbd> <kbd>↓</kbd> 화면 · <kbd>M</kbd> 휴대폰 · <kbd>H</kbd> 숨기기</p>
 </div>
 <button class="v-btn v-bar v-reveal" type="button" aria-label="조작 막대 다시 열기"><span class="v-reveal-where"><b></b><span></span></span><span class="v-reveal-open">{icon("show")}열기 H</span></button>
