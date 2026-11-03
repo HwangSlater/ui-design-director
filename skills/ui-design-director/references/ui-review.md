@@ -21,7 +21,7 @@ For each finding identify the screen/component, observed behavior, violated rule
 
 ## Site check
 
-Use this before showing a set of mockups and before reporting a built site as done. It adds six passes to the review above.
+Use this before showing a set of mockups and before reporting a built site as done. It adds seven passes to the review above.
 
 **1. Static check.** Run `python scripts/check_site.py <dir>` from the skill directory against the mockup or build output (HTML and CSS). Findings carry a tier:
 
@@ -35,6 +35,8 @@ Use this before showing a set of mockups and before reporting a built site as do
 The script reads markup and stylesheets only. It cannot see contrast on rendered colours, layout, or overflow; the next pass covers those.
 
 **2. Render pass.** Open every page at ≈375, ≈768, and ≈1280px and capture screenshots with `scripts/capture.mjs`; a headless window resized below about 500px still lays out wider, so window-size screenshots of phone widths are not evidence. Check horizontal overflow (capture prints 「넘침」 with the element and how many px it sticks out — fix every one), the longest label at the narrowest width, the hero or first screen fitting the viewport, sticky regions, keyboard order with a visible focus ring on every control, 200% zoom, and each state listed for the page in `SITE-PLAN.md`. Compute contrast for each text/background pair actually used from token values, not by eye.
+
+**2b. Skeleton pass.** Run `node scripts/skeleton.mjs <out.md> <ours>=<home> <ref>=<url> … --ours <ours> --prev <earlier homes in the workspace>` at 1280. It reports how much of the page is one stacked column, the most columns, column changes, side panels, sideways strips, round boxes and shapes. Treat 「이전 시안과 같은 틀」 and 「참고와 다름」 as findings: redraw from the reference and the concept, or record in `DESIGN.md` why this project keeps that skeleton.
 
 **3. Fresh reviewer.** When a subagent is available, give it the screenshots, `DESIGN.md`, and `SITE-PLAN.md` only — not your reasoning — and ask it to find where the site breaks its own rules, where pages disagree with each other, and what looks unfinished. Verify each finding against the current files before acting on it. Without a subagent, state that this pass was skipped.
 
