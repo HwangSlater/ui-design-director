@@ -37,6 +37,7 @@ If the project already has a component library or framework that runs locally, b
 
 - every section or region at real content length, including the longest realistic title, name, and label;
 - each piece of information once per screen: a hero visual that repeats the table below it ("why does the timetable appear twice?") is decoration pretending to be content;
+- one consistent moment in time. When a sample screen is set on a day ("today = 27 October"), every number on it must be true as of that day: a pre-match card next to standings taken after that match showed eight games played when only seven had been, and the client caught it. Pick the day the supplied data describes (the day after the round it covers) and fill only what lies after it as samples;
 - only facts the user gave. Anything you had to fill in — directions, walking times, opening days, policies, prices, staff names — is marked on the page as unconfirmed (for example a small "확인 필요" tag) and listed when you hand the mockup over. Plausible guesses read as facts: a client found an invented subway exit, walking time and closing day only because they happened to read every line;
 - the page at narrow (≈375px), medium (≈768px), and wide (≈1280px+) widths;
 - for work surfaces, each required state from `SITE-PLAN.md` as its own labelled frame: empty, loading, error, no-permission, dense data;
