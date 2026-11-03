@@ -228,6 +228,14 @@ class PageTracker:
                                f"「{h['text']}」 repeats the page title 「{top['text']}」 (line {top['line']})")
 
 
+# 배치안 묶음(today-1/2/3)과 판정용 사본(-clean)은 서로 대신하는 한 페이지다 — 같은 사진을 써도 흐름 안에서 두 번이 아니다
+OPTION_SUFFIX = re.compile(r"(?:-clean)?(?:-\d{1,2})?(?:-clean)?(?=\.html?$)", re.IGNORECASE)
+
+
+def page_group(path: str) -> str:
+    return OPTION_SUFFIX.sub("", path, count=1)
+
+
 def report_photo_reuse(pages: dict[str, list[tuple[str, int, bool]]], report) -> None:
     """같은 사진이 큰 자리에서 한 페이지 두 번, 또는 3개 넘는 페이지에 나오면서 한 번이라도 큰 자리면 알린다."""
     by_photo: dict[str, dict[str, list[tuple[int, bool]]]] = {}
@@ -242,9 +250,10 @@ def report_photo_reuse(pages: dict[str, list[tuple[str, int, bool]]], report) ->
                 report.add("DRIFT", path, large[1], "photo-reused-across-pages",
                            f"{key} shown twice on this page (line {large[0]}) outside a card")
         large_pages = sorted(p for p, here in uses.items() if any(not card for _, card in here))
-        if len(uses) >= PHOTO_MIN_PAGES and large_pages:
+        groups = {page_group(p) for p in uses}
+        if len(groups) >= PHOTO_MIN_PAGES and large_pages:
             path = large_pages[0]
             line = next(line for line, card in uses[path] if not card)
             report.add("DRIFT", path, line, "photo-reused-across-pages",
-                       f"{key} used on {len(uses)} pages ({', '.join(sorted(uses))}), as a large photo here — "
+                       f"{key} used on {len(groups)} pages ({', '.join(sorted(groups))}), as a large photo here — "
                        "a sample photo should appear once in the flow")
