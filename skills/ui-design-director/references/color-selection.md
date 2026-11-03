@@ -19,7 +19,7 @@ Verify links and exact hex values. Do not cite a generated combination as a comm
 
 Present 6–10 relevant 3–4 color combinations. Cover a small number of meaningful mood territories—such as calm/trustworthy, warm/human, technical/precise, or bold/creative—derived from the concept brief. Avoid random rainbow variety and near-duplicates.
 
-Candidates must differ in their large areas — background, surfaces, bands — not only in the button: five palettes on the same paper colour gave a piano-school owner nothing to choose between. When the brief says “warm”, offer more than one reading of warmth (cream and brown; pale sky and tangerine; off-white and deep green; butter and brick) instead of three shades of cream and brown, and check the result against the other projects' palettes (`design-selection.md` § 3).
+Candidates must differ in their large areas — background, surfaces, bands — not only in the button: five palettes on the same paper colour gave a piano-school owner nothing to choose between. When the brief says “warm”, offer more than one reading of warmth (cream and brown; pale sky and tangerine; off-white and deep green; butter and brick) instead of three shades of cream and brown (`design-selection.md` § 3).
 
 For each candidate show:
 

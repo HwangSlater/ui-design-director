@@ -27,7 +27,7 @@ Use this before showing a set of mockups and before reporting a built site as do
 
 - `FLOOR` — never ships: missing `lang`, viewport, image `alt`, form labels, accessible names on icon-only controls, duplicate IDs, in-page links (`href="#…"`) whose target is missing or has no visible heading, focus outlines removed with no `:focus-visible` replacement, motion with no reduced-motion alternative. Fix all of them.
 - `DRIFT` — values that bypass tokens: raw colours or font sizes outside the token file, `!important`, `transition: all`. Fix, or keep with a one-line reason recorded in `DESIGN.md` § Implementation mapping as an approved exception.
-- `NOTE` — patterns that often signal generic output (gradient text, more than two font families), a `tokens.css` that shares three of background, action colour, heading face and body face with another `*-시안` project beside it (`sibling-look` — record the reason in `DESIGN.md`, for example a heading face the user insisted on, or change the rest), and an in-page link whose words share nothing with the heading it lands on (「수업 시간 보기」 landing on 「초등학생」 — the reader clicked one name and got another; rename the link or give the section the heading the link promises). Review against `DESIGN.md`; keep when the approved concept calls for it.
+- `NOTE` — patterns that often signal generic output (gradient text, more than two font families), and an in-page link whose words share nothing with the heading it lands on (「수업 시간 보기」 landing on 「초등학생」 — the reader clicked one name and got another; rename the link or give the section the heading the link promises). Review against `DESIGN.md`; keep when the approved concept calls for it.
 
 The script reads markup and stylesheets only. It cannot see contrast on rendered colours, layout, or overflow; the next pass covers those.
 
@@ -41,7 +41,7 @@ The script reads markup and stylesheets only. It cannot see contrast on rendered
 
 **5. Reference critique.** Open each page beside the primary reference at the same width at 1:1. Name where the page is flatter, denser, more generic or less finished than the reference — image scale, white space, type contrast, component detail, copy — and fix those before calling the set ready. Passing passes 1–4 only proves nothing is broken; this pass is about whether it is good.
 
-**6. Sibling look.** Put the first screen beside the first screens of the other `*-시안` projects at the same width. If someone could swap the logos and not notice, change the composition or the signature element (`design-selection.md` § 1) before showing it; `sibling-look` only sees tokens, not composition.
+**6. Trade test.** Cover the name and logo on the first screen. If it could belong to a different trade — a pottery studio's page passing for a piano school's — strengthen the element only this business has (`design-selection.md` § 1) or change the composition before showing it.
 
 Report the result as counts per tier plus the findings that remain, each with the page, the evidence, and the fix or the recorded reason for keeping it. Do not call the site done while a `FLOOR` finding remains.
 
