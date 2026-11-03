@@ -13,6 +13,7 @@ Derive what is safe from the repository and conversation, then confirm only cons
 - mobile/desktop priority and accessibility constraints;
 - existing logo, palette, typeface, component library, or technical constraints;
 - explicit dislikes and examples the user considers “too much” or “too plain”;
+- **what only this business has**: two or three materials, objects, places or habits of this trade (a pottery studio: clay texture, the wheel, glaze drips; a piano school: the black-and-white rhythm of keys, staff lines, the apartment-block shop sign). At least one candidate direction is built around one of them, so the site could not be mistaken for another trade;
 - whether paid templates are acceptable and whether the goal is inspiration or licensed reuse.
 
 Summarize these as **confirmed**, **inferred**, and **open**. Do not force a lengthy questionnaire when repository evidence is sufficient.
@@ -37,6 +38,8 @@ Use template sources when adopting page structure is plausible. Use showcases wh
 ## 3. Curate candidates
 
 A user without design vocabulary cannot read "just look at the mood" off a site whose content is unrelated: a piano-school owner shown a pharmacy app, a tool-rental shop and a children's English game could not picture her own page. Prefer candidates from the same or a neighbouring trade, and when the direction is still hard to read, render two or three directions with the user's own content in their language (as the layout step does) before asking them to choose; the layout step with real content was the one the user found most useful.
+
+**Do not converge on your last project.** Brief words such as “warm”, “clean” or “calm” have many readings, but they drift to one default: a pottery studio and a piano school, briefed a day apart, both came out as cream paper, a brown button, the same heading face and a text-left/photo-right first screen, and the user said they looked like one company's sites. Before presenting, look at the other `*-시안` folders beside this project and name what they settled on (background, action colour, heading face, first-screen composition). Keep at most one of those in any candidate unless the user asked for it, and say which one you kept and why.
 
 Present 5–8 individual candidates with working detail or preview links, not gallery homepages. The set should cover 2–4 relevant concept territories while remaining plausible for the product. Avoid near-duplicates, trend-only picks, and deliberately weak decoys.
 

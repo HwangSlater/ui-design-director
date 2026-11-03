@@ -10,6 +10,7 @@ For each page type, produce 2–3 numbered layout options that differ in **struc
 - Use the real or planned content from `SITE-PLAN.md` at real length.
 - Capture each option at one wide and one real phone width (`scripts/capture.mjs`) and show the options in the viewer from `comparison-board.md`.
 - Under each option state in one line what it prioritises and what it gives up.
+- At least one option changes the **first screen** itself, not only the order of sections below it: full-width photo, type only, the timetable or price list first, a single strong object drawing. Three options that all open with text on the left and a photo on the right are one option.
 
 Before drawing options, write down what makes the chosen reference good on this page type, from captures viewed at 1:1: image size relative to the screen, white space between sections, type hierarchy (how many sizes, how much contrast between them), density, and its signature components. Every option keeps those traits; options differ in structure, not in quality.
 

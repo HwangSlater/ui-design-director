@@ -26,7 +26,7 @@ Its purpose is to replace vague requests such as “make it feel like Linear” 
 - Treat read surfaces (marketing, docs) and work surfaces (dashboards, forms) by their own rules
 - Offer 2–3 numbered layout options per page type (in the approved colours and fonts, with sample photos), then build full-fidelity mockups from the chosen one
 - Share one token and component stylesheet across mockups so approved pages transfer into code intact
-- Run a dependency-free static check (`check_site.py`) that reports accessibility floor, token drift, and common generic patterns in three tiers
+- Run a dependency-free static check (`check_site.py`) that reports accessibility floor, token drift, common generic patterns, and tokens too close to sibling projects' mockups in three tiers
 - Check rendering at three widths and get a review from a reviewer that never saw the builder's reasoning
 - Compare candidates in a full-screen browser viewer, not a table of links: key pages captured at desktop and real phone width (`capture.mjs`) shown in identical frames (`make_board.py`)
 - Choose palettes by clicking them on a live preview of the chosen format (`palette-switcher.js`), with contrast computed automatically
@@ -199,6 +199,7 @@ The open-source skills and tools below assist specific stages only when installe
         ├── scripts/
         │   ├── check_site.py
         │   ├── anchor_check.py
+        │   ├── sibling_check.py
         │   ├── capture.mjs
         │   ├── make_board.py
         │   └── wait_choice.mjs

@@ -16,6 +16,7 @@ from html.parser import HTMLParser
 from pathlib import Path
 
 from anchor_check import AnchorTracker
+import sibling_check
 
 HTML_SUFFIXES = {".html", ".htm"}
 CSS_SUFFIXES = {".css"}
@@ -265,6 +266,7 @@ def run(root: Path) -> Report:
         check_css(sources, report)
     if not html_files and not css_files:
         report.add("FLOOR", str(root), 0, "no-files", "no HTML or CSS files found")
+    sibling_check.check(root, report)
     return report
 
 
