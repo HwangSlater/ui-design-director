@@ -12,6 +12,12 @@ Every choice the user makes — format reference, palette, layout option — is 
 - **Palettes are tried, not listed.** Show palettes as switchable colours on a live preview built in the chosen format (§ Palettes), never as a static swatch table.
 - **Korean text** uses `word-break: keep-all` everywhere (viewer, previews, mockups) so words never split mid-word.
 
+## Live sites first — `scripts/make_live_board.py`
+
+Capturing every candidate at two widths and several pages is slow (a batch of seven candidates ran past ten minutes) and goes stale. For a user who can open web pages, show the real sites instead: `python scripts/make_live_board.py <spec.json> <out.html>` writes one page that loads each candidate in a phone or desktop frame, with buttons for its other pages and an "open in a new window" link. It checks each site's response headers first; sites that forbid framing (X-Frame-Options, CSP `frame-ancestors`) or fail on certificates are marked, and a blocked site shows its `shot` image if you give one rather than an empty frame. Open the result once and click through: some sites still break out by script, and sites that open with a black intro animation show nothing useful on their first screen — lead with another page for those or drop them.
+
+Capture with `capture.mjs` only what the live page cannot show: blocked sites, a user (or client session) who can only look at images — give them one first-screen image per candidate, not a full set — and the side-by-side critique in `ui-review.md`.
+
 ## Capturing sites — `scripts/capture.mjs`
 
 Drives the installed Edge or Chrome through the DevTools protocol; no packages. Emulates real device widths (a headless window cannot go below about 500 px, so window-size screenshots of "phone" layouts are wrong), scrolls to wake lazy images, captures the full page, and refuses to save 4xx/5xx responses.
