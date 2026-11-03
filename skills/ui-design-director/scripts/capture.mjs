@@ -36,17 +36,32 @@ const SETTLE_MS = 2500;
 const SCROLL_STEP_MS = 120;
 // 이름으로 못 찾는 덮개: 화면에 붙어 있고(fixed/sticky) 「쿠키」 문구가 있으며 화면 절반보다 작은 것. Flour 메뉴의 아래 쿠키 띠가 이름으로는 안 잡혔다
 // 빵집 메뉴의 「쿠키」처럼 상품 이름과 겹치지 않게 문장 꼴로만 찾고, 머리·메뉴(header·nav)는 건드리지 않는다
-const OVERLAY_WORDS = /use (of )?cookies|cookies help|cookie (policy|settings|preferences)|accept (all )?cookies|쿠키(를| 사용| 정책| 설정)|개인정보 수집/i;
+// 한국 사이트의 광고·공지 팝업은 「오늘 하루 그만 보기」「오늘 하루 보지 않기」로 닫는다(집닥 시공사례에 이사 광고 팝업)
+const OVERLAY_WORDS = /use (of )?cookies|cookies help|cookie (policy|settings|preferences)|accept (all )?cookies|쿠키(를| 사용| 정책| 설정)|개인정보 수집|오늘 하루 ?(그만 ?보기|보지 않기|열지 않기)|하루 동안 보지 않기/i;
 const hideOverlaysExpr = (sel, words) => `(() => {
   const off = (n) => n.style.setProperty("display", "none", "important");
   document.querySelectorAll(${JSON.stringify(sel)}).forEach(off);
   for (const n of document.querySelectorAll("body *")) {
-    const pos = getComputedStyle(n).position;
-    if (pos !== "fixed" && pos !== "sticky") continue;
+    const cs = getComputedStyle(n), pos = cs.position;
+    const floating = pos === "fixed" || pos === "sticky" || (pos === "absolute" && Number(cs.zIndex) >= 1); // 한국 사이트 팝업은 absolute + z-index가 많다
+    if (!floating) continue;
     if (n.matches("header, nav") || n.querySelector("nav")) continue;
     const r = n.getBoundingClientRect();
     if (r.height > innerHeight / 2 || !${words}.test(n.textContent || "")) continue;
     off(n);
+  }
+  // 흐름 안에 박힌 광고 상자(집닥: 「오늘 하루 그만 보기 · 닫기」가 달린 오른쪽 광고): 그 글자에서 위로 올라가며
+  // 화면보다 작은 가장 큰 상자를 가린다 — 머리·메뉴·본문 전체는 크기 제한에 걸려 남는다
+  const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
+  for (let t = walker.nextNode(); t; t = walker.nextNode()) {
+    if (!/오늘 하루 ?(그만 ?보기|보지 않기|열지 않기)|하루 동안 보지 않기/.test(t.textContent)) continue;
+    let box = null;
+    for (let el = t.parentElement; el && el !== document.body; el = el.parentElement) {
+      const r = el.getBoundingClientRect();
+      if (r.width > innerWidth * 0.6 || r.height > innerHeight * 0.85 || el.matches("header, nav, main")) break;
+      box = el;
+    }
+    if (box) off(box);
   }
 })()`;
 const OVERLAY_SELECTORS = '[id*="cookie" i],[class*="cookie" i],[id*="consent" i],[class*="consent" i],[id*="onetrust" i],[class*="onetrust" i],[id*="termly" i],[id*="klaviyo" i],[class*="klaviyo" i],[id*="onesignal" i],[class*="newsletter-popup" i],[aria-modal="true"]';
