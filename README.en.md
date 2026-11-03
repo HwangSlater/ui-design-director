@@ -204,6 +204,7 @@ The open-source skills and tools below assist specific stages only when installe
         │   ├── block_colours.py
         │   ├── side_by_side.py
         │   ├── make_live_board.py
+        │   ├── compose_metrics.mjs
         │   ├── extract_styles.mjs
         │   ├── capture.mjs
         │   ├── make_board.py
@@ -241,6 +242,7 @@ The open-source skills and tools below assist specific stages only when installe
 - `wait_choice.mjs`: waits for the viewers' confirm button and hands the decision over as a file (loopback only, one-time key); without it the button copies the decision text to paste into chat
 - `ui-review.md`: rendered consistency and accessibility review, plus the whole-site check
 - `check_site.py`: static HTML/CSS check with no dependencies (`python scripts/check_site.py <dir>`)
+- `compose_metrics.mjs`: measures the desktop first screen's composition (photo, colour-panel and empty shares, largest type, strong block colours, text span) against several running sites and marks what falls short
 - `extract_styles.mjs`: pulls the type sizes, radii, shadows, spacing and photo/box counts a reference actually uses
 - `make_live_board.py`: a board that loads candidate sites live instead of capturing them, marking sites that refuse framing
 - `side_by_side.py`: our page beside the reference at the same width, with a visual-layer checklist
