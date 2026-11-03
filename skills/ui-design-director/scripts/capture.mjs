@@ -5,6 +5,7 @@
 //   steps(선택): 찍기 전에 같은 창에서 할 일. { "goto": url } · { "click": "css 선택자" } · { "wait": ms }
 //   예) 장바구니를 상품이 담긴 상태로 찍기: 상품 페이지로 가서 담기 단추를 누른 뒤 url(장바구니)을 찍는다.
 //   url 을 "@current" 로 주면 steps 를 마친 화면 그대로 찍는다(주소를 모르는 상품 상세 등).
+//   쿠키·동의·알림 창은 기본으로 걷어 낸다. 창 자체를 보여 줘야 하면 "keepOverlays": true.
 //   "scrollY": 숫자 를 주면 전체 길이 대신 그 위치의 한 화면만 찍는다 — 아래에 붙는 단추·위에 붙는 칩처럼
 //   스크롤해도 따라오는 것은 전체 길이 캡처에선 페이지 중간에 박혀 글을 가린 것처럼 보이므로 이렇게 확인한다.
 // 결과: <out-dir>/<id>-<width>.jpg. 이미 있는 파일은 건너뛰므로 중간에 끊겨도 다시 돌리면 이어서 찍는다.
@@ -33,6 +34,7 @@ const DESKTOP_HEIGHT = 900;
 const MAX_PAGE_HEIGHT = 8000;
 const SETTLE_MS = 2500;
 const SCROLL_STEP_MS = 120;
+const OVERLAY_SELECTORS = '[id*="cookie" i],[class*="cookie" i],[id*="consent" i],[class*="consent" i],[id*="onetrust" i],[class*="onetrust" i],[id*="termly" i],[id*="klaviyo" i],[class*="klaviyo" i],[id*="onesignal" i],[class*="newsletter-popup" i],[aria-modal="true"]';
 const CURRENT_PAGE = "@current"; // url 에 이 값을 주면 steps 를 마친 그 화면을 찍는다
 const NAV_TIMEOUT_MS = 45000;
 const PHONE_UA =
@@ -132,7 +134,7 @@ async function launch() {
   throw new Error("브라우저 디버깅 포트가 열리지 않았습니다.");
 }
 
-async function shoot(port, url, width, steps = [], scrollY = null) {
+async function shoot(port, url, width, steps = [], scrollY = null, keepOverlays = false) {
   const target = await (await fetch(`http://127.0.0.1:${port}/json/new?about:blank`, { method: "PUT" })).json();
   const cdp = await Cdp.open(target.webSocketDebuggerUrl);
   try {
@@ -174,6 +176,11 @@ async function shoot(port, url, width, steps = [], scrollY = null) {
       } else if (step.wait) await sleep(step.wait);
     }
     if (url !== CURRENT_PAGE) await go(url);
+
+    // 쿠키·동의·알림 창은 사이트의 구성이 아니다 — 기본으로 걷어 낸다(빵집 후보 셋이 창에 덮여 의뢰인이 볼 수 없었다)
+    if (!keepOverlays) {
+      await cdp.send("Runtime.evaluate", { expression: `document.querySelectorAll(${JSON.stringify(OVERLAY_SELECTORS)}).forEach((n) => n.style.setProperty("display", "none", "important"))` });
+    }
 
     // 늦게 불러오는 사진을 깨우려고 끝까지 내렸다가 올린다
     await cdp.send("Runtime.evaluate", {
@@ -230,7 +237,7 @@ async function main() {
           continue;
         }
         try {
-          const { data, height, screens } = await shoot(port, job.url, width, job.steps || [], job.scrollY ?? null);
+          const { data, height, screens } = await shoot(port, job.url, width, job.steps || [], job.scrollY ?? null, Boolean(job.keepOverlays));
           writeFileSync(file, data);
           const sliceDir = join(outDir, "screens");
           mkdirSync(sliceDir, { recursive: true });

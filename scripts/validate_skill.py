@@ -14,6 +14,7 @@ ROOT = REPO_ROOT / "skills" / SKILL_NAME
 REQUIRED_FILES = (
     "scripts/compose_metrics.mjs",
     "scripts/blind_sheet.py",
+    "scripts/check_shots.py",
     "SKILL.md",
     "agents/openai.yaml",
     "references/design-selection.md",

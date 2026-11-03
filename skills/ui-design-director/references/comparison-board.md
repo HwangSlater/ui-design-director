@@ -82,6 +82,8 @@ Put the candidates in `<script type="application/json" id="palettes" data-step="
 
 Run `scripts/check_site.py` on the folder (boards carry `<meta name="check-site" content="comparison-board">`, so raw swatch colours are not reported as drift) and look at the viewer yourself at 1440×900 and 1280×720: nothing clipped, bar not covering the end of the page, same frame for every candidate. Screenshots taken with the browser's `--screenshot` flag can catch the page before scripted scrolling settles; verify interactive states through the DevTools protocol (as `capture.mjs` does) before trusting them. Then give the user the full address to open; do not open browser windows on their screen unless asked.
 
+Before any image goes to the user, run `python scripts/check_shots.py <folder>`: it flags captures that are blank or one colour at the top (a loading spinner, a logo-only entrance page, a black intro). `capture.mjs` now hides cookie, consent and newsletter overlays by default (`"keepOverlays": true` keeps them). Then open every image that will be sent and check what it shows against what you are about to say about it — in the bakery project three of six candidates went out covered by a spinner, a cookie banner and a pop-up, and a later message said "overlay removed" while the cookie text was still in the picture.
+
 ## The confirm button — `scripts/wait_choice.mjs`
 
 Both bars carry a 확정 button so the user can decide on the screen instead of typing in chat. Start the waiter before giving out the address:
