@@ -19,7 +19,7 @@ For each page record:
 
 | Field | Meaning |
 |---|---|
-| ID | Stable short slug, such as `home`, `pricing`, `project-detail` |
+| Name | The page's name in the user's language (「첫 화면」, 「사례 모음」) — the table is read by the client; keep the file slug (`home`, `cases`) in a separate designer line below the table. A renovation client read `home`, `admin-case` and `status: draft` in the first column and asked for Korean. |
 | Surface | read or work |
 | Page type | Shared layout it belongs to; pages of one type share one design |
 | Job | The one thing the visitor or user comes to do here |
