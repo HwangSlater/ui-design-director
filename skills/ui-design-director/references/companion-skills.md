@@ -54,7 +54,7 @@ Database entries are ideas: a format candidate still needs a live template or si
 
 ### Site check — impeccable and Vercel guidelines
 
-Run after `check_site.py`, as pass 4 of `ui-review.md` § Site check, together with hallmark's linter.
+Run after `check_site.py`, as pass 4 of `ui-review.md` § Site check, together with hallmark's linter. When impeccable is installed it runs on every layout option set and every mockup set, not only at the end; a stay project that skipped it shipped exactly the look it detects.
 
 - **impeccable** (`pbakaus/impeccable`, Apache-2.0): `npx impeccable detect --json <dir-or-url>` (exit 0 clean, 2 findings, anything else failed). Its `critique` and `audit` commands are also useful for a second opinion on a finished page.
 - **Web Interface Guidelines** (`vercel-labs/web-interface-guidelines`, MIT): invoke the `web-design-guidelines` skill when installed, otherwise apply `https://raw.githubusercontent.com/vercel-labs/web-interface-guidelines/main/command.md` to the page files and report in `file:line` form.
