@@ -23,6 +23,8 @@ Check selected and active states in every candidate, not only the default one: a
 
 Candidates must differ in their large areas — background, surfaces, bands — not only in the button: five palettes on the same paper colour gave a piano-school owner nothing to choose between. When the brief says “warm”, offer more than one reading of warmth (cream and brown; pale sky and tangerine; off-white and deep green; butter and brick) instead of three shades of cream and brown (`design-selection.md` § 3).
 
+Count the strong colours a palette gives you. A palette with one dark accent and three pale tints ends up painting the header, every button, the status bands, the donation panel, the contact buttons and the confirmation panel the same colour; a shelter owner called the result "green boxes all the way down", the one AI-looking thing left, next to a reference that rotates purple, orange and sky blue. When a candidate has a single strong colour, propose a second block colour (from the same source or a sibling palette) for information or celebration panels at this gate, and let the user choose it.
+
 For each candidate show:
 
 - a clear swatch strip with exact hex values and a direct source link;

@@ -10,6 +10,7 @@ Every choice the user makes — format reference, palette, layout option — is 
 - **No commentary on the board.** Do not put pros/cons chips, badges, or paragraphs on the viewer. The user judges from the screens; your recommendation and reasoning go in chat, briefly.
 - **Ask with clickable options** when the client offers a structured question tool: one option per candidate (number + name + one-line consequence), recommendation first and labelled. Otherwise ask for a number in one sentence.
 - **Palettes are tried, not listed.** Show palettes as switchable colours on a live preview built in the chosen format (§ Palettes), never as a static swatch table.
+- **Three or four phone screens per image** when the user can only see images. A sheet of nine phones had to be zoomed to read; label each screen by what it shows, not by its file name.
 - **Korean text** uses `word-break: keep-all` everywhere (viewer, previews, mockups) so words never split mid-word.
 
 ## Live sites first — `scripts/make_live_board.py`
