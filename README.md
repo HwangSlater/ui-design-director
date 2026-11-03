@@ -200,6 +200,7 @@ $ui-design-director로 렌더링된 UI가 DESIGN.md를 준수하는지 검수해
         ├── scripts/
         │   ├── check_site.py
         │   ├── anchor_check.py
+        │   ├── side_by_side.py
         │   ├── capture.mjs
         │   ├── make_board.py
         │   └── wait_choice.mjs
@@ -236,6 +237,7 @@ $ui-design-director로 렌더링된 UI가 DESIGN.md를 준수하는지 검수해
 - `wait_choice.mjs`: 비교 화면의 「확정」 단추를 기다렸다가 결정을 파일로 넘김(내 컴퓨터 안에서만, 한 번 쓰는 열쇠). 연결이 없으면 단추가 확정 문구를 복사해 줌
 - `ui-review.md`: 렌더링 결과의 일관성 및 접근성 검수, 사이트 전체 점검
 - `check_site.py`: HTML·CSS 정적 검사(외부 패키지 없음, `python scripts/check_site.py <폴더>`)
+- `side_by_side.py`: 우리 화면과 기준 사이트를 같은 폭으로 나란히 놓고 시각 층 대조표를 붙인 비교 페이지
 
 ## 컨텍스트 크기
 

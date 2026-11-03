@@ -21,6 +21,7 @@ HTML_SUFFIXES = {".html", ".htm"}
 CSS_SUFFIXES = {".css"}
 SKIP_DIRS = {"node_modules", ".git", "dist-cache", "__pycache__"}
 NON_LABELLED_INPUTS = {"hidden", "submit", "button", "reset", "image"}
+VISUAL_TAGS = {"img", "svg", "picture", "video", "canvas"}  # 글자와 상자뿐인 화면을 찾는다
 GENERIC_FAMILIES = {
     "serif", "sans-serif", "monospace", "cursive", "fantasy", "system-ui",
     "ui-serif", "ui-sans-serif", "ui-monospace", "ui-rounded", "emoji", "math",
@@ -86,6 +87,7 @@ class PageParser(HTMLParser):
         self.raw_tag: str | None = None
         self.name_stack: list[dict] = []
         self.anchors = AnchorTracker()
+        self.visuals = 0  # 로고·엠블럼·아이콘·사진처럼 글자가 아닌 것
 
     def handle_starttag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
         a = {k: (v or "") for k, v in attrs}
@@ -108,6 +110,8 @@ class PageParser(HTMLParser):
                 self.ids[a["id"]] = line
         if "style" in a and a["style"].strip():
             self.css.append(CssSource(self.path, line, a["style"] + ";"))
+        if tag in VISUAL_TAGS:
+            self.visuals += 1
         if tag == "img":
             if "alt" not in a:
                 self.report.add("FLOOR", self.path, line, "img-alt",
@@ -163,6 +167,9 @@ class PageParser(HTMLParser):
             self.report.add("FLOOR", self.path, 1, "html-lang", "<html> has no lang attribute")
         if not self.has_viewport:
             self.report.add("FLOOR", self.path, 1, "viewport", "no <meta name=viewport>")
+        if not self.visuals and not self.is_board:
+            self.report.add("NOTE", self.path, 1, "no-visual-layer",
+                            "no logo, mark, icon or image on the page (only text and boxes) — compare with the reference's visual layers")
         for control_id, line, tag in self.controls:
             if not control_id or control_id not in self.label_targets:
                 self.report.add("FLOOR", self.path, line, "form-label",

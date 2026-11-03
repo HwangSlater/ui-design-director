@@ -54,6 +54,9 @@ numeric behavior, and responsive adjustments.
 Base rhythm, scale, containers, grids, gutters, density, section cadence, and
 content-driven breakpoints.
 
+### Visual layers
+The reference's layer inventory (`reference-extraction.md` § Visual layers) with adopt / replace / drop for each, the stand-ins used for missing assets (wordmark, monogram badges), and the icon set with its licence.
+
 ### Shape, border, elevation, iconography, imagery, and motion
 Purposeful scales and usage rules, including reduced-motion behavior.
 

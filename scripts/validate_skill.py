@@ -132,10 +132,20 @@ def check_anchor_rules() -> None:
     parser.feed(ANCHOR_SAMPLE)
     parser.close()
     parser.finish()
-    got = sorted((f.rule, f.line) for f in report.findings)
+    got = sorted((f.rule, f.line) for f in report.findings if f.rule.startswith("anchor-"))
     want = [("anchor-heading", 3), ("anchor-label", 2), ("anchor-target", 2)]
     if got != want:
         fail(f"anchor rules: expected {want}, got {got}")
+    # 글자와 상자뿐인 화면은 잡고, 아이콘 하나라도 있으면 넘어간다
+    if [f.rule for f in report.findings if f.rule == "no-visual-layer"] != ["no-visual-layer"]:
+        fail("no-visual-layer: a text-only page was not reported")
+    report = Report()
+    parser = PageParser("icon.html", report)
+    parser.feed(ANCHOR_SAMPLE.replace('<main id="main">', '<main id="main"><svg viewBox="0 0 1 1"></svg>', 1))
+    parser.close()
+    parser.finish()
+    if any(f.rule == "no-visual-layer" for f in report.findings):
+        fail("no-visual-layer: a page with an icon was reported")
 
 
 def main() -> None:

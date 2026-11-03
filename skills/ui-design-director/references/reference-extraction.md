@@ -16,6 +16,12 @@ Inspect multiple representative pages and relevant viewport sizes where availabl
 
 DOM/CSS reveals values but not necessarily intent. Screenshots reveal appearance but not exact values or hidden states. Record which evidence exists.
 
+## Visual layers — what makes the reference look made
+
+Structure is the easy part to borrow; finish is what gets lost. A futsal-league site took FotMob's table layout and dropped everything else — league crest, team crests, coloured form chips, the second column at desktop width — and the owner's verdict was "compared with sites that actually run, it has no design and is too simple." Before writing tokens, list the reference's visual layers from its captures at 1:1 (the list lives in `scripts/side_by_side.py`): identity (logo, wordmark, header band), the face of each item (team crests, product photos, avatars), icons, colour blocks beyond buttons, data marks (chips, bars, badges), imagery or what stands in for it, depth (shadows, one dark panel), wide-screen columns, and type contrast.
+
+For each layer record **adopt**, **replace with …**, or **drop because …**. A dislike removes a form, not the layer: "no big player photos" becomes team crests or monogram badges, "no black background with neon" becomes one dark scoreboard panel on a light page. Two or more layers dropped without a replacement means the result will look generated; take it back to the user before building. Missing assets get a designed stand-in (a wordmark and simple mark for a league without a logo, monogram badges for teams without crests), labelled as such, not an empty space.
+
 ## Classify every important rule
 
 - **Observed:** directly verified in the reference.
