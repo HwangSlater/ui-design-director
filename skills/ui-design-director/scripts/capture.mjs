@@ -37,7 +37,7 @@ const SCROLL_STEP_MS = 120;
 // 이름으로 못 찾는 덮개: 화면에 붙어 있고(fixed/sticky) 「쿠키」 문구가 있으며 화면 절반보다 작은 것. Flour 메뉴의 아래 쿠키 띠가 이름으로는 안 잡혔다
 // 빵집 메뉴의 「쿠키」처럼 상품 이름과 겹치지 않게 문장 꼴로만 찾고, 머리·메뉴(header·nav)는 건드리지 않는다
 // 한국 사이트의 광고·공지 팝업은 「오늘 하루 그만 보기」「오늘 하루 보지 않기」로 닫는다(집닥 시공사례에 이사 광고 팝업)
-const OVERLAY_WORDS = /use (of )?cookies|cookies help|cookie (policy|settings|preferences)|accept (all )?cookies|쿠키(를| 사용| 정책| 설정)|개인정보 수집|오늘 하루 ?(그만 ?보기|보지 않기|열지 않기)|하루 동안 보지 않기/i;
+const OVERLAY_WORDS = /use (of )?cookies|cookies help|cookie (policy|settings|preferences)|accept (all )?cookies|쿠키(를| 사용| 정책| 설정)|개인정보 수집|오늘 하루 ?(그만 ?보기|보지 않기|열지 않기)|하루 동안 보지 않기|앱(으로|에서) ?(보기|열기|이용하기)|모바일 ?웹으로 (볼래요|보기)/i; // 앱 설치 권유 창(오늘의집)
 const hideOverlaysExpr = (sel, words) => `(() => {
   const off = (n) => n.style.setProperty("display", "none", "important");
   document.querySelectorAll(${JSON.stringify(sel)}).forEach(off);
