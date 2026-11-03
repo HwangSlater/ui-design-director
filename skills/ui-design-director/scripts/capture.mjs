@@ -165,6 +165,19 @@ async function launch() {
   throw new Error("브라우저 디버깅 포트가 열리지 않았습니다.");
 }
 
+// 글·입력·사진 중 오른쪽 끝이 화면 너비를 넘는 것(가로로 미는 목록 안은 뺌)
+const OVERFLOW_PROBE = `(() => {
+  const W = document.documentElement.clientWidth, out = [];
+  for (const el of document.querySelectorAll("input, textarea, select, button, img, p, h1, h2, h3, li, dd, a, label")) {
+    const r = el.getBoundingClientRect();
+    if (!r.width || r.right <= W + 1) continue;
+    let n = el.parentElement, scroller = false;
+    while (n && n !== document.body) { const o = getComputedStyle(n).overflowX; if (o === "auto" || o === "scroll" || o === "hidden") { scroller = true; break; } n = n.parentElement; }
+    if (!scroller) out.push(el.tagName.toLowerCase() + (el.className && typeof el.className === "string" ? "." + el.className.split(" ")[0] : "") + " +" + Math.round(r.right - W) + "px");
+  }
+  return out;
+})()`;
+
 async function shoot(port, url, width, steps = [], scrollY = null, keepOverlays = false) {
   const target = await (await fetch(`http://127.0.0.1:${port}/json/new?about:blank`, { method: "PUT" })).json();
   const cdp = await Cdp.open(target.webSocketDebuggerUrl);
@@ -227,6 +240,8 @@ async function shoot(port, url, width, steps = [], scrollY = null, keepOverlays 
       const view = await cdp.send("Page.captureScreenshot", { format: "jpeg", quality: 82 });
       return { data: Buffer.from(view.data, "base64"), height: phone ? PHONE_HEIGHT : DESKTOP_HEIGHT, status, screens: [] };
     }
+    // 화면 오른쪽 밖으로 삐져나간 칸 — 폰에서 두 칸 입력이 잘린 것을 의뢰인이 먼저 잡았다(집수리 사장님 화면)
+    const spill = (await cdp.send("Runtime.evaluate", { returnByValue: true, expression: OVERFLOW_PROBE })).result.value || [];
     const { cssContentSize } = await cdp.send("Page.getLayoutMetrics");
     const height = Math.min(Math.ceil(cssContentSize.height), MAX_PAGE_HEIGHT);
     const shot = await cdp.send("Page.captureScreenshot", {
@@ -243,7 +258,7 @@ async function shoot(port, url, width, steps = [], scrollY = null, keepOverlays 
       });
       screens.push(Buffer.from(part.data, "base64"));
     }
-    return { data: Buffer.from(shot.data, "base64"), height, status, screens };
+    return { data: Buffer.from(shot.data, "base64"), height, status, screens, spill };
   } finally {
     cdp.close();
     await fetch(`http://127.0.0.1:${port}/json/close/${target.id}`).catch(() => {});
@@ -269,12 +284,13 @@ async function main() {
           continue;
         }
         try {
-          const { data, height, screens } = await shoot(port, job.url, width, job.steps || [], job.scrollY ?? null, Boolean(job.keepOverlays));
+          const { data, height, screens, spill = [] } = await shoot(port, job.url, width, job.steps || [], job.scrollY ?? null, Boolean(job.keepOverlays));
           writeFileSync(file, data);
           const sliceDir = join(outDir, "screens");
           mkdirSync(sliceDir, { recursive: true });
           screens.forEach((buf, i) => writeFileSync(join(sliceDir, `${job.id}-${width}-${i + 1}.jpg`), buf));
           console.log(`[${done}/${total}] 저장  ${job.id}-${width}  ${width}x${height}`);
+          if (spill.length) console.log(`        넘침  화면 밖으로 나간 칸 ${spill.length}개: ${spill.slice(0, 3).join(" | ")}`);
         } catch (err) {
           failed.push(`${job.id}-${width}: ${err.message}`);
           console.log(`[${done}/${total}] 실패  ${job.id}-${width}  ${err.message}`);
