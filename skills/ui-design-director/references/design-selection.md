@@ -15,6 +15,7 @@ Derive what is safe from the repository and conversation, then confirm only cons
 - explicit dislikes and examples the user considers “too much” or “too plain”;
 - **what only this business has**: two or three materials, objects, places or habits of this trade (a pottery studio: clay texture, the wheel, glaze drips; a piano school: the black-and-white rhythm of keys, staff lines, the apartment-block shop sign). At least one candidate direction is built around one of them, so the site could not be mistaken for another trade;
 - whether paid templates are acceptable and whether the goal is inspiration or licensed reuse.
+- **product photos per item**: two or three per product (front, side or cut face, in a hand) taken the same way on the same surface. One matched photo per item lifted a soap shop's product pages to 7 next to running shops; the owner said 8 needs the extra angles, and a single photo plus a long table read as 「설명서」 rather than a product page. Ask for them at the brief and say what one photo per item will cap.
 - **the five questions customers ask most on the phone** (ask the owner in those words). They become the page order, the form's questions and the facts to collect: a renovation owner had to point out, one by one, leaks being urgent, the building-office notice, how many bathrooms, the move-in date and whether the family lives there during the work — answers the designer could have had on day one.
 
 Summarize these as **confirmed**, **inferred**, and **open**. Do not force a lengthy questionnaire when repository evidence is sufficient.
