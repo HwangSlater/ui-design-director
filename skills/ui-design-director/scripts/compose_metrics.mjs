@@ -18,6 +18,10 @@ const CELL = 8; // 넓이를 셀 때 칸 크기(px)
 const MAX_PAGE = 12000; // 너무 긴 페이지는 앞부분만
 // 미달 판정: 기준 사이트 가운데 값 대비 이 비율 아래면 「미달」
 const SHORT_RATIO = 0.7;
+// 첫 화면이 이만큼 넘게 비어 있으면 그 기준 사이트는 덜 불러온 것으로 보고 가운데 값에서 뺀다.
+// 빵집 비교에서 Tatte·태극당이 한 번은 88%·60%, 다음 번엔 1% 로 재져 기준이 흔들렸다.
+const BLANK_REF = 0.9;
+const MIN_REFS = 2;
 const WIN_DIRS = [process.env["ProgramFiles(x86)"], process.env.ProgramFiles, process.env.LOCALAPPDATA].filter(Boolean);
 const BROWSERS = [process.env.CAPTURE_BROWSER,
   ...WIN_DIRS.flatMap((d) => [join(d, "Microsoft/Edge/Application/msedge.exe"), join(d, "Google/Chrome/Application/chrome.exe")]),
@@ -139,13 +143,15 @@ const METRICS = [
 ];
 const LOWER_IS_BETTER = new Set(["firstEmpty"]);
 const median = (a) => { const s = [...a].sort((x, y) => x - y); const m = Math.floor(s.length / 2); return s.length % 2 ? s[m] : (s[m - 1] + s[m]) / 2; };
-const refs = rows.filter((r) => r.name !== ours);
+const blankRefs = rows.filter((r) => r.name !== ours && r.firstEmpty > BLANK_REF);
+const refs = rows.filter((r) => r.name !== ours && !blankRefs.includes(r));
+const tooFew = Boolean(ours) && refs.length < MIN_REFS;
 const me = rows.find((r) => r.name === ours);
 const lines = [`# 구성 비교 — ${width}px`, "", `| 항목 | ${rows.map((r) => r.name).join(" | ")} |${me ? " 판정 |" : ""}`, `|---|${rows.map(() => "---").join("|")}|${me ? "---|" : ""}`];
 let short = 0;
 for (const [k, label, fmt] of METRICS) {
   let verdict = "";
-  if (me && refs.length) {
+  if (me && !tooFew) {
     const m = median(refs.map((r) => r[k]));
     const bad = LOWER_IS_BETTER.has(k) ? me[k] > m / SHORT_RATIO && me[k] - m > 0.1 : me[k] < m * SHORT_RATIO;
     if (bad) short++;
@@ -154,6 +160,8 @@ for (const [k, label, fmt] of METRICS) {
   lines.push(`| ${label} | ${rows.map((r) => fmt(r[k])).join(" | ")} |${verdict}`);
 }
 lines.push("", "## 색 판(넓은 순)", ...rows.map((r) => `- ${r.name}: ${r.blocks.map((b) => `${b.hex}${b.strong ? "(진함)" : ""} ${Math.round(b.pct * 100)}%`).join(", ") || "없음"}`));
-if (me) lines.push("", `미달 ${short}개 — 미달이 있으면 보여 주지 않고 구성을 다시 짠다(page-design.md § 구성 판정).`);
+if (blankRefs.length) lines.push("", `덜 불러온 기준(첫 화면 ${Math.round(BLANK_REF * 100)}% 넘게 빔, 가운데 값에서 뺌): ${blankRefs.map((r) => r.name).join(", ")} — 다시 돌리거나 캡처를 열어 본다.`);
+if (tooFew) lines.push("", `판정 못 함 — 제대로 잰 기준 사이트가 ${refs.length}곳뿐이다(${MIN_REFS}곳 이상 필요). 다시 돌린다.`);
+else if (me) lines.push("", `미달 ${short}개 — 미달이 있으면 보여 주지 않고 구성을 다시 짠다(page-design.md § 구성 판정).`);
 writeFileSync(out, lines.join("\n") + "\n");
 console.log(lines.join("\n"));
