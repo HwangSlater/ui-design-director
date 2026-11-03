@@ -5,6 +5,7 @@
 - photo-reused-across-pages (DRIFT): 같은 사진 파일이 다른 역할로 여러 페이지·한 페이지에 두 번 쓰였다.
 - date-weekday (FLOOR): 「11월 19일 수요일」처럼 날짜와 요일이 안 맞는다(페이지의 「2026년」, 없으면 올해·내년 기준).
 - unsourced-rule (NOTE): 「안 돼요」「불가」「못 해요」 같은 가게 규칙 말투 — 사용자가 준 규칙인지 확인(빵집 시안에 「영어·이모티콘은 안 돼요」를 지어 넣었다).
+- template-leak (FLOOR): 화면 글에 만들다 남은 자리표시(「{S}」「{name}」「{{x}}」「${x}」)가 그대로 보인다 — 차밭 시안에 「찻잎이에요 {S}」가 나가 의뢰인이 잡았다.
 - unsourced-duration (NOTE): 「보통」「3일 안에」 같은 걸리는 시간 짐작이 견본 표시 없이 들어 있다.
 """
 
@@ -19,6 +20,8 @@ HEADINGS = {"h1", "h2", "h3"}
 HIDDEN_CLASSES = {"sr", "sr-only", "visually-hidden"}
 MARKER_CLASSES = {"sample"}  # 「견본」「확인 필요」 표시: 사용자가 준 사실이 아니라고 이미 밝힌 자리
 MARKER_WORDS = ("견본", "확인 필요")
+TEMPLATE_LEAK = re.compile(r"\{\{[^}]*\}\}|\$\{[^}]*\}|\{[A-Za-z_][A-Za-z0-9_]*(?:\[[^\]]*\])?\}")
+NO_TEXT_TAGS = {"script", "style"}
 
 # 탭 제목 판단. 「 · 」「 | 」「 - 」로 나눈 조각마다 본다. 화면 이름은 「입양」「보리 입양 신청」처럼
 # 낱말만으로 되고, 배치 안 이름은 번호가 붙는다. 그래서 (1) 숫자+띄어쓰기로 시작(「2 아이들 먼저」),
@@ -99,6 +102,7 @@ class PageTracker:
         self.marker_depth = 0
         self.dated: list[tuple[int, int, str, int]] = []  # (월, 일, 요일, 줄)
         self.years: set[int] = set()
+        self.leaks: list[tuple[str, int]] = []
 
     def start(self, tag: str, a: dict[str, str], line: int) -> None:
         classes = _classes(a)
@@ -133,6 +137,9 @@ class PageTracker:
             return  # 견본 표시 글자는 제목·문구 비교에서 뺀다
         if self.heading is not None:
             self.heading["text"] += text
+        if self.in_body and self.stack and self.stack[-1]["tag"] not in NO_TEXT_TAGS:
+            for m in TEMPLATE_LEAK.finditer(text):
+                self.leaks.append((m.group(0), self.stack[-1]["line"]))
         if self.in_body and self.stack:
             self.stack[-1]["text"] += text
             if any(w in text for w in MARKER_WORDS):
@@ -169,6 +176,8 @@ class PageTracker:
         if self.title is not None and title_looks_like_option(_norm(self.title)):
             report.add("FLOOR", path, self.title_line, "title-option-label",
                        f"<title> 「{_norm(self.title)}」 reads like a layout option, not the page's heading")
+        for leak, line in self.leaks:
+            report.add("FLOOR", path, line, "template-leak", f"「{leak}」 shows on the page — a placeholder left from the build script")
         self._report_headings(path, report)
         self._report_weekdays(path, report)
         self._report_rules(path, report)
