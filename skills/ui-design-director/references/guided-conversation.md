@@ -27,7 +27,7 @@ Adapt the sequence to known context; skip resolved stages.
 2. **Audience and trust:** Determine who must feel comfortable using it and what impression matters most.
 3. **Content reality:** Identify the representative and most information-dense screen.
 4. **Taste boundaries:** Ask what should feel more restrained, expressive, familiar, premium, playful, technical, warm, or editorial. Use examples rather than adjective-only questions.
-5. **Format references:** Research and present candidates using `design-selection.md` — well-known real sites in the user's own field first, named the way the user would know them ("the K League site", "PLAB"), templates last; ask for favorites and definite rejections, not an immediate final answer if the user is uncertain.
+5. **Format references:** Research and present candidates using `design-selection.md` — well-known real sites in the user's own field, named the way the user would know them ("the K League site", "PLAB"), alongside template-marketplace candidates, each marked as a running site or a template; ask for favorites and definite rejections, not an immediate final answer if the user is uncertain.
 6. **Palette:** Present visual palette candidates using `color-selection.md`; let the user lock, reject, or combine colors by role.
 7. **Coded preview:** Offer 2–3 fair combinations using `concept-preview.md` when visual comparison will resolve uncertainty.
 8. **Confirmation:** Recap the exact format, palette, borrowed traits, adaptations, and unresolved points before creating approved `DESIGN.md`.
