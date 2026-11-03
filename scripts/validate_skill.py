@@ -37,6 +37,8 @@ REQUIRED_FILES = (
     "assets/palette-switcher.js",
     "scripts/check_site.py",
     "scripts/anchor_check.py",
+    "scripts/page_rules.py",
+    "scripts/block_colours.py",
 )
 REPO_MARKDOWN_FILES = ("README.md", "README.en.md")
 UNFINISHED_MARKERS = ("TODO", "TBD", "FIXME", "PLACEHOLDER")
@@ -148,11 +150,65 @@ def check_anchor_rules() -> None:
         fail("no-visual-layer: a page with an icon was reported")
 
 
+REVIEW_SAMPLE = """<!doctype html><html lang="ko"><head><meta name="viewport" content="width=device-width">
+<title>목록 2 거르기 칩 고정 · 쉼터</title></head><body><main>
+<h1>가족을 기다리는 아이 <b>52</b>마리</h1><img src="a.jpg" alt="">
+<h2>가족을 기다리는 아이들</h2><h2>자주 묻는 질문 <span class="sample">견본</span></h2><h2>자주 묻는 질문</h2>
+<p>보통 3주쯤 걸려요.</p>
+<p>2주쯤 걸려요 <span class="sample">확인 필요</span></p>
+</main></body></html>"""
+
+
+def check_review_rules() -> None:
+    """리뷰에서 사람이 잡던 실수(탭 제목·같은 제목·사진 되쓰기·덩어리 색·시간 짐작)를 잡는지 본다."""
+    sys.path.insert(0, str(ROOT / "scripts"))
+    from check_site import CssSource, PageParser, Report
+    from block_colours import check_blocks
+    from page_rules import report_photo_reuse, title_looks_like_option
+
+    report = Report()
+    parser = PageParser("sample.html", report)
+    parser.feed(REVIEW_SAMPLE)
+    parser.close()
+    parser.finish()
+    got = sorted((f.rule, f.line) for f in report.findings if f.rule in
+                 ("title-option-label", "repeated-heading", "unsourced-duration"))
+    want = [("repeated-heading", 4), ("repeated-heading", 4),
+            ("title-option-label", 2), ("unsourced-duration", 5), ("unsourced-duration", 5)]
+    if got != want:
+        fail(f"review rules: expected {want}, got {got}")
+    for title in ("입양 · 쉼터", "보리 입양 신청 · 쉼터", "2024년 후원금 쓰임", "새 가족 찾은 아이 3마리"):
+        if title_looks_like_option(title):
+            fail(f"title-option-label: page title {title!r} was reported")
+
+    report = Report()
+    pages = {f"p{i}.html": [("dog.jpg", 1, True)] for i in range(3)}
+    report_photo_reuse(pages, report)
+    if report.findings:
+        fail("photo-reused-across-pages: a list card on three pages was reported")
+    pages["p0.html"].append(("dog.jpg", 9, False))
+    report_photo_reuse(pages, report)
+    if [(f.path, f.line) for f in report.findings] != [("p0.html", 9)]:
+        fail("photo-reused-across-pages: a card photo reused as a large photo was not reported")
+
+    css = ":root { --ink: #064420; --bg: #FDFAF6; } .top .btn { background: var(--ink); }"
+    css += " .band { background: var(--ink); } .panel { background: var(--ink); } .toast { background: #064420; }"
+    report = Report()
+    check_blocks([CssSource("a.css", 1, css + " .give { background: var(--ink); }")], report)
+    if [f.rule for f in report.findings] != ["one-colour-blocks"]:
+        fail("one-colour-blocks: five block roles in one strong colour were not reported")
+    report = Report()
+    check_blocks([CssSource("a.css", 1, css + " .give { background: #E8A33D; } .hero { background: var(--bg); }")], report)
+    if report.findings:
+        fail("one-colour-blocks: a palette with a second block colour was reported")
+
+
 def main() -> None:
     check_required_files()
     check_metadata()
     check_markdown()
     check_anchor_rules()
+    check_review_rules()
     print("Skill validation passed.")
 
 

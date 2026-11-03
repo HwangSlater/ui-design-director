@@ -200,6 +200,8 @@ The open-source skills and tools below assist specific stages only when installe
         ├── scripts/
         │   ├── check_site.py
         │   ├── anchor_check.py
+        │   ├── page_rules.py
+        │   ├── block_colours.py
         │   ├── side_by_side.py
         │   ├── make_live_board.py
         │   ├── extract_styles.mjs

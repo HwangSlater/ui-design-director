@@ -201,6 +201,8 @@ $ui-design-director로 렌더링된 UI가 DESIGN.md를 준수하는지 검수해
         ├── scripts/
         │   ├── check_site.py
         │   ├── anchor_check.py
+        │   ├── page_rules.py
+        │   ├── block_colours.py
         │   ├── side_by_side.py
         │   ├── make_live_board.py
         │   ├── extract_styles.mjs

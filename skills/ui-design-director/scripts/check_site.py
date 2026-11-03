@@ -16,6 +16,8 @@ from html.parser import HTMLParser
 from pathlib import Path
 
 from anchor_check import AnchorTracker
+from block_colours import check_blocks
+from page_rules import PageTracker, report_photo_reuse
 
 HTML_SUFFIXES = {".html", ".htm"}
 CSS_SUFFIXES = {".css"}
@@ -87,12 +89,14 @@ class PageParser(HTMLParser):
         self.raw_tag: str | None = None
         self.name_stack: list[dict] = []
         self.anchors = AnchorTracker()
+        self.page = PageTracker()  # 탭 제목·머리글·사진·시간 문구
         self.visuals = 0  # 로고·엠블럼·아이콘·사진처럼 글자가 아닌 것
 
     def handle_starttag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
         a = {k: (v or "") for k, v in attrs}
         line = self.getpos()[0]
         self.anchors.start(tag, a, line)
+        self.page.start(tag, a, line)
         if tag == "html":
             self.saw_html = True
             self.has_lang = bool(a.get("lang", "").strip())
@@ -138,6 +142,7 @@ class PageParser(HTMLParser):
 
     def handle_endtag(self, tag: str) -> None:
         self.anchors.end(tag)
+        self.page.end(tag)
         if tag == self.raw_tag:
             self.raw_tag = None
         if tag == "label" and self.label_depth:
@@ -155,6 +160,7 @@ class PageParser(HTMLParser):
         if self.raw_tag == "script":
             return
         self.anchors.data(data)
+        self.page.data(data)
         if data.strip():
             for entry in self.name_stack:
                 entry["named"] = True
@@ -163,6 +169,8 @@ class PageParser(HTMLParser):
         if not self.saw_html:
             return  # partial or component file; page-level rules do not apply
         self.anchors.report(self.path, self.report)
+        if not self.is_board:
+            self.page.report(self.path, self.report)
         if not self.has_lang:
             self.report.add("FLOOR", self.path, 1, "html-lang", "<html> has no lang attribute")
         if not self.has_viewport:
@@ -256,6 +264,7 @@ def run(root: Path) -> Report:
     report = Report()
     html_files, css_files = collect(root)
     sources: list[CssSource] = []
+    photos: dict[str, list[tuple[str, int, bool]]] = {}
     for path in html_files:
         rel = str(path.relative_to(root))
         parser = PageParser(rel, report)
@@ -265,11 +274,15 @@ def run(root: Path) -> Report:
         for css in parser.css:
             css.board = parser.is_board
         sources.extend(parser.css)
+        if parser.saw_html and not parser.is_board:
+            photos[rel] = parser.page.photos
     for path in css_files:
         sources.append(CssSource(str(path.relative_to(root)), 1,
                                  path.read_text(encoding="utf-8", errors="replace")))
+    report_photo_reuse(photos, report)
     if sources:
         check_css(sources, report)
+        check_blocks(sources, report)
     if not html_files and not css_files:
         report.add("FLOOR", str(root), 0, "no-files", "no HTML or CSS files found")
     return report
