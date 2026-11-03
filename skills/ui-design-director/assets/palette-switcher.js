@@ -9,6 +9,8 @@
  * 글꼴 후보(선택)는 <script type="application/json" id="fonts"> 에 넣는다. 페이지는 --f-heading, --f-body 를 쓴다:
  *   [{ "id": "1", "name": "고운바탕 + 고운돋움", "heading": "\"Gowun Batang\", serif", "body": "…",
  *      "css": ["https://fonts.googleapis.com/…"], "license": "OFL", "maker": "만든 곳", "source": "https://…", "note": "선택 사항" }]
+ *   글꼴 메뉴의 견본 문장은 그 프로젝트 내용으로: <script … id="fonts" data-sample="19:30 영통 A코트 · 승점 19">.
+ *   없으면 페이지 첫 제목(h1)을 쓴다. 다른 프로젝트 문장이 남아 있으면 의뢰인이 바로 알아챈다(풋살 리그에 「그릇 · 38,000원」).
  *   스타일시트가 없는 글꼴은 "faces": [{ "family": "RIDIBatang", "src": "https://…woff2", "weight": "400" }] 로 넣는다.
  * ← → 팔레트 · F 글꼴 · M PC/휴대폰 · H 숨기기. 주소 #p=A&f=1&v=phone 으로 보던 자리를 기억한다.
  */
@@ -64,9 +66,12 @@
     }
   }
 
+  let fontSample = "";
   function readFonts() {
     const source = document.getElementById("fonts");
     if (!source) return [];
+    const h1 = document.querySelector("h1");
+    fontSample = source.dataset.sample || (h1 ? h1.textContent.trim() : "") || "가나다 0123456789";
     try {
       return JSON.parse(source.textContent).filter((f) => f.id && f.heading && f.body);
     } catch (err) {
@@ -136,7 +141,7 @@
       b.type = "button";
       const title = el("b", null, `${f.id} ${f.name || ""}`.trim());
       title.style.fontFamily = f.heading;
-      const sample = el("span", null, "손으로 빚어 매일 쓰는 그릇 · 38,000원");
+      const sample = el("span", null, fontSample);
       sample.style.fontFamily = f.body;
       b.append(title, sample, el("small", null, [f.maker, f.license, f.note].filter(Boolean).join(" · ")));
       b.addEventListener("click", () => { state.f = i; apply(); closeMenu(); fontBtn.focus({ preventScroll: true }); });
