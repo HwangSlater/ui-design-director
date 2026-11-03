@@ -22,6 +22,10 @@ Structure is the easy part to borrow; finish is what gets lost. A futsal-league 
 
 For each layer record **adopt**, **replace with …**, or **drop because …**. A dislike removes a form, not the layer: "no big player photos" becomes team crests or monogram badges, "no black background with neon" becomes one dark scoreboard panel on a light page. Two or more layers dropped without a replacement means the result will look generated; take it back to the user before building. Missing assets get a designed stand-in (a wordmark and simple mark for a league without a logo, monogram badges for teams without crests), labelled as such, not an empty space.
 
+### Borrow the grammar, not the face
+
+Measuring and following a leading site in the same field is how a page gets its finish, but when that site shares the user's audience, looking like it is a real cost: a shelter owner whose donors also give to the large welfare groups did not want to be mistaken for them. Take the reference's interaction patterns, proportions and numbers (card ratio, filter style, form steps, type scale, radii); keep the identity layers the user's own — palette, wordmark, photo treatment, signature element. Before showing, put the first screens side by side and ask whether a regular visitor of the reference could mistake one for the other; if so, change the identity layers, not the patterns.
+
 ## Classify every important rule
 
 - **Observed:** directly verified in the reference.
