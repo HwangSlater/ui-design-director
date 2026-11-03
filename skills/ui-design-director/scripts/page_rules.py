@@ -4,6 +4,7 @@
 - repeated-heading (FLOOR): 같은 제목이 한 페이지에 두 번, 또는 h1과 아래 h2가 앞부분이 거의 같다.
 - photo-reused-across-pages (DRIFT): 같은 사진 파일이 다른 역할로 여러 페이지·한 페이지에 두 번 쓰였다.
 - date-weekday (FLOOR): 「11월 19일 수요일」처럼 날짜와 요일이 안 맞는다(페이지의 「2026년」, 없으면 올해·내년 기준).
+- unsourced-rule (NOTE): 「안 돼요」「불가」「못 해요」 같은 가게 규칙 말투 — 사용자가 준 규칙인지 확인(빵집 시안에 「영어·이모티콘은 안 돼요」를 지어 넣었다).
 - unsourced-duration (NOTE): 「보통」「3일 안에」 같은 걸리는 시간 짐작이 견본 표시 없이 들어 있다.
 """
 
@@ -48,6 +49,9 @@ DURATION_PATTERNS = [
 ]
 SNIPPET_RADIUS = 24
 
+# 가게 규칙 말투. 사용자가 준 규칙이면 그대로 두고, 아니면 지운다 — 견본 표시로도 덮지 않는다(손님이 그대로 믿는다)
+RULE_PATTERNS = [re.compile(r"(?:안|못)\s*(?:돼요|됩니다|해요|합니다)(?![가-힣])"), re.compile(r"불가(?:능)?(?:해요|합니다)?"), re.compile(r"금지")]
+
 # 날짜와 요일: 의뢰인이 준 견본 문구 「11월 19일 수요일」이 2026년엔 목요일이었다
 DATE_WEEKDAY = re.compile(r"(\d{1,2})월\s*(\d{1,2})일\s*\(?([월화수목금토일])(?:요일|\))")
 YEAR = re.compile(r"(20\d\d)년")
@@ -91,6 +95,7 @@ class PageTracker:
         self.headings: list[dict] = []
         self.photos: list[tuple[str, int, bool]] = []  # (파일, 줄, 카드 자리인가)
         self.durations: list[dict] = []
+        self.rules: list[dict] = []
         self.marker_depth = 0
         self.dated: list[tuple[int, int, str, int]] = []  # (월, 일, 요일, 줄)
         self.years: set[int] = set()
@@ -154,6 +159,9 @@ class PageTracker:
             for pattern in DURATION_PATTERNS:
                 for m in pattern.finditer(text):
                     self.durations.append({"entry": entry, "text": text, "at": m.start()})
+            for pattern in RULE_PATTERNS:
+                for m in pattern.finditer(text):
+                    self.rules.append({"entry": entry, "text": text, "at": m.start()})
             if entry["tag"] == tag:
                 break
 
@@ -163,6 +171,7 @@ class PageTracker:
                        f"<title> 「{_norm(self.title)}」 reads like a layout option, not the page's heading")
         self._report_headings(path, report)
         self._report_weekdays(path, report)
+        self._report_rules(path, report)
         for d in self.durations:
             entry = d["entry"]
             if entry["marker"] or (entry["parent"] and entry["parent"]["marker"]):
@@ -171,6 +180,17 @@ class PageTracker:
             snippet = d["text"][lo:d["at"] + SNIPPET_RADIUS]
             report.add("NOTE", path, entry["line"], "unsourced-duration",
                        f"「{snippet}」 — a time or frequency guess with no 견본 mark; keep only if the user gave it")
+
+    def _report_rules(self, path: str, report) -> None:
+        seen = set()
+        for r in self.rules:
+            lo = max(0, r["at"] - SNIPPET_RADIUS)
+            snippet = r["text"][lo:r["at"] + SNIPPET_RADIUS // 2]
+            if snippet in seen:
+                continue
+            seen.add(snippet)
+            report.add("NOTE", path, r["entry"]["line"], "unsourced-rule",
+                       f"「{snippet}」 — a shop rule; keep only if the user gave it (a 견본 mark does not make an invented rule safe)")
 
     def _report_weekdays(self, path: str, report) -> None:
         this_year = dt.date.today().year
