@@ -21,6 +21,7 @@ import json
 import ssl
 import sys
 import urllib.error
+import urllib.parse
 import urllib.request
 from pathlib import Path
 
@@ -31,14 +32,16 @@ UA = "Mozilla/5.0 (compatible; ui-design-director live board)"
 
 def frame_policy(url: str) -> str:
     """'ok' · 'blocked' · 'cert' · 'error' — 다른 페이지 안에 띄울 수 있는지."""
-    req = urllib.request.Request(url, method="GET", headers={"User-Agent": UA})
+    # 한글이 든 주소(?status=입양가능)는 그대로 보내면 멈춘다 — 퍼센트 인코딩
+    safe_url = urllib.parse.quote(url, safe=":/?&=%#+,;@!$'()*~")
+    req = urllib.request.Request(safe_url, method="GET", headers={"User-Agent": UA})
     try:
         with urllib.request.urlopen(req, timeout=TIMEOUT_S) as r:
             xfo = (r.headers.get("X-Frame-Options") or "").lower()
             csp = (r.headers.get("Content-Security-Policy") or "").lower()
     except urllib.error.URLError as e:
         return "cert" if isinstance(getattr(e, "reason", None), ssl.SSLError) else "error"
-    except (ssl.SSLError, TimeoutError, OSError):
+    except (ssl.SSLError, TimeoutError, OSError, ValueError, UnicodeError):
         return "error"
     if xfo in ("deny", "sameorigin"):
         return "blocked"
