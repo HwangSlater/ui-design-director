@@ -34,7 +34,23 @@ const DESKTOP_HEIGHT = 900;
 const MAX_PAGE_HEIGHT = 8000;
 const SETTLE_MS = 2500;
 const SCROLL_STEP_MS = 120;
+// 이름으로 못 찾는 덮개: 화면에 붙어 있고(fixed/sticky) 「쿠키」 문구가 있으며 화면 절반보다 작은 것. Flour 메뉴의 아래 쿠키 띠가 이름으로는 안 잡혔다
+// 빵집 메뉴의 「쿠키」처럼 상품 이름과 겹치지 않게 문장 꼴로만 찾고, 머리·메뉴(header·nav)는 건드리지 않는다
+const OVERLAY_WORDS = /use (of )?cookies|cookies help|cookie (policy|settings|preferences)|accept (all )?cookies|쿠키(를| 사용| 정책| 설정)|개인정보 수집/i;
+const hideOverlaysExpr = (sel, words) => `(() => {
+  const off = (n) => n.style.setProperty("display", "none", "important");
+  document.querySelectorAll(${JSON.stringify(sel)}).forEach(off);
+  for (const n of document.querySelectorAll("body *")) {
+    const pos = getComputedStyle(n).position;
+    if (pos !== "fixed" && pos !== "sticky") continue;
+    if (n.matches("header, nav") || n.querySelector("nav")) continue;
+    const r = n.getBoundingClientRect();
+    if (r.height > innerHeight / 2 || !${words}.test(n.textContent || "")) continue;
+    off(n);
+  }
+})()`;
 const OVERLAY_SELECTORS = '[id*="cookie" i],[class*="cookie" i],[id*="consent" i],[class*="consent" i],[id*="onetrust" i],[class*="onetrust" i],[id*="termly" i],[id*="klaviyo" i],[class*="klaviyo" i],[id*="onesignal" i],[class*="newsletter-popup" i],[aria-modal="true"]';
+const HIDE_OVERLAYS = hideOverlaysExpr(OVERLAY_SELECTORS, OVERLAY_WORDS);
 const CURRENT_PAGE = "@current"; // url 에 이 값을 주면 steps 를 마친 그 화면을 찍는다
 const NAV_TIMEOUT_MS = 45000;
 const PHONE_UA =
@@ -179,7 +195,7 @@ async function shoot(port, url, width, steps = [], scrollY = null, keepOverlays 
 
     // 쿠키·동의·알림 창은 사이트의 구성이 아니다 — 기본으로 걷어 낸다(빵집 후보 셋이 창에 덮여 의뢰인이 볼 수 없었다)
     if (!keepOverlays) {
-      await cdp.send("Runtime.evaluate", { expression: `document.querySelectorAll(${JSON.stringify(OVERLAY_SELECTORS)}).forEach((n) => n.style.setProperty("display", "none", "important"))` });
+      await cdp.send("Runtime.evaluate", { expression: HIDE_OVERLAYS });
     }
 
     // 늦게 불러오는 사진을 깨우려고 끝까지 내렸다가 올린다
@@ -188,6 +204,7 @@ async function shoot(port, url, width, steps = [], scrollY = null, keepOverlays 
       awaitPromise: true,
     });
     await sleep(SETTLE_MS);
+    if (!keepOverlays) await cdp.send("Runtime.evaluate", { expression: HIDE_OVERLAYS }); // 내리는 동안 늦게 뜬 띠
     if (scrollY !== null) {
       // 실제 폰처럼 한 화면만: 붙어 다니는 막대가 제자리에 보인다
       await cdp.send("Runtime.evaluate", { expression: `scrollTo(0, ${Number(scrollY)})` });
