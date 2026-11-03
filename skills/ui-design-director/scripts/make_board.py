@@ -85,7 +85,12 @@ def write_jobs(spec: dict, jobs_path: Path) -> int:
 
 
 def resolve_pages(spec: dict, spec_dir: Path, out_dir: Path) -> list[dict]:
-    desktop_w, phone_w = spec.get("widths", DEFAULT_WIDTHS)
+    widths = list(spec.get("widths", DEFAULT_WIDTHS))
+    # 폭을 하나만 주면(휴대폰 화면만 비교할 때) 그 폭을 휴대폰으로 본다. 둘이면 넓은 쪽이 PC
+    if not widths:
+        widths = list(DEFAULT_WIDTHS)
+    phone_w = min(widths)
+    desktop_w = max(widths) if len(widths) > 1 else None
     cap_dir = spec_dir / spec.get("captures", "captures")
     candidates = []
     for c in spec["candidates"]:
@@ -93,6 +98,8 @@ def resolve_pages(spec: dict, spec_dir: Path, out_dir: Path) -> list[dict]:
         for p in spec["pages"]:
             entry = {"url": c.get("urls", {}).get(p["key"], "")}
             for kind, width in (("desktop", desktop_w), ("phone", phone_w)):
+                if width is None:
+                    continue
                 f = cap_dir / f'{c["slug"]}-{p["key"]}-{width}.jpg'
                 if f.is_file():
                     entry[kind] = Path(os.path.relpath(f, out_dir)).as_posix()
