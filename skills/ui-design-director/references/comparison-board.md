@@ -49,6 +49,8 @@ The viewer fills the window with the selected page. A floating two-tier bar at t
 
 The bar itself lives in `assets/dock.css` and `assets/dock.js` (tokens, tooltip, hide/pill, shortcuts) and is shared with the palette preview, so both choices look and behave the same. Fix bar problems there, not in a copy.
 
+After the user chooses, show the revision on its own: a viewer or page that holds only the chosen option as revised, with the earlier options removed or moved to an `earlier/` folder. Adding the revision as one more card in front of the old ones made the client check twice which one was current.
+
 The address keeps the position (`#c=1&p=home&v=pc`) so you can open the user straight to a specific view.
 
 Use the same viewer for layout options (`page-design.md`): render each option, capture it with `capture.mjs`, and list options as candidates.

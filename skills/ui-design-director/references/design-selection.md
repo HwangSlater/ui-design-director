@@ -41,6 +41,8 @@ A user without design vocabulary cannot read "just look at the mood" off a site 
 
 **Do not settle on the default reading of the brief.** Words such as “warm”, “clean” or “calm” have many readings but drift to one default: “warm” became cream paper, a brown button, a rounded heading face and a text-left/photo-right first screen for both a pottery studio and a piano school, and the two sites looked like one company's. Before presenting, write down the default you would reach for from the brief words alone, keep at most one part of it in any candidate unless the brief's own evidence calls for it (the user's wall colour, an existing sign, a font they insist on), and say which part you kept and why.
 
+A reference from another trade can still be the right source for one trait (a train departure board for "the next match in three seconds"), but on its own it reads as irrelevant to an owner ("I'd have asked: why this?"). Show such a trait applied to the user's own content in the same step — one row of their data in that shape — rather than asking them to imagine it.
+
 Present 5–8 individual candidates with working detail or preview links, not gallery homepages. The set should cover 2–4 relevant concept territories while remaining plausible for the product. Avoid near-duplicates, trend-only picks, and deliberately weak decoys.
 
 Inspect enough of each candidate to evaluate it. Prefer candidates with multiple relevant pages, responsive previews, and visible component/state coverage. A beautiful hero with no evidence for the product's core screens is a secondary visual reference, not a whole-system candidate.

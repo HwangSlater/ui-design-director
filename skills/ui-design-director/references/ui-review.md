@@ -41,7 +41,7 @@ The script reads markup and stylesheets only. It cannot see contrast on rendered
 
 **5. Reference critique.** Open each page beside the primary reference at the same width at 1:1. Name where the page is flatter, denser, more generic or less finished than the reference — image scale, white space, type contrast, component detail, copy — and fix those before calling the set ready. Passing passes 1–4 only proves nothing is broken; this pass is about whether it is good.
 
-**6. Trade test.** Cover the name and logo on the first screen. If it could belong to a different trade — a pottery studio's page passing for a piano school's — strengthen the element only this business has (`design-selection.md` § 1) or change the composition before showing it.
+**6. Trade test.** Do this for every page type, not only the first screen; forms, confirmations and admin screens are where sites fall back to the generic booking-app look (white rounded cards, one filled button). Cover the name and logo on each. If it could belong to a different trade — a pottery studio's page passing for a piano school's — strengthen the element only this business has (`design-selection.md` § 1) or change the composition before showing it. Carry the signature into the plain screens too: the league's scoreboard figures belonged on the sign-up page's seats-left number as well, and the client noticed they were missing.
 
 Report the result as counts per tier plus the findings that remain, each with the page, the evidence, and the fix or the recorded reason for keeping it. Do not call the site done while a `FLOOR` finding remains.
 
