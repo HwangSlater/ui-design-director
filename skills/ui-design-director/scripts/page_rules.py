@@ -3,11 +3,13 @@
 - title-option-label (FLOOR): 탭 제목이 화면 이름이 아니라 배치 안 이름이다(「목록 2 거르기 칩 고정」).
 - repeated-heading (FLOOR): 같은 제목이 한 페이지에 두 번, 또는 h1과 아래 h2가 앞부분이 거의 같다.
 - photo-reused-across-pages (DRIFT): 같은 사진 파일이 다른 역할로 여러 페이지·한 페이지에 두 번 쓰였다.
+- date-weekday (FLOOR): 「11월 19일 수요일」처럼 날짜와 요일이 안 맞는다(페이지의 「2026년」, 없으면 올해·내년 기준).
 - unsourced-duration (NOTE): 「보통」「3일 안에」 같은 걸리는 시간 짐작이 견본 표시 없이 들어 있다.
 """
 
 from __future__ import annotations
 
+import datetime as dt
 import re
 from urllib.parse import unquote, urlsplit
 
@@ -45,6 +47,11 @@ DURATION_PATTERNS = [
     re.compile(r"(?:몇|한두|두세|며칠)\s*(?:분|시간|일|주|달)?\s*(?:쯤|정도|안에|이내)"),
 ]
 SNIPPET_RADIUS = 24
+
+# 날짜와 요일: 의뢰인이 준 견본 문구 「11월 19일 수요일」이 2026년엔 목요일이었다
+DATE_WEEKDAY = re.compile(r"(\d{1,2})월\s*(\d{1,2})일\s*\(?([월화수목금토일])(?:요일|\))")
+YEAR = re.compile(r"(20\d\d)년")
+WEEKDAYS = "월화수목금토일"
 
 
 def _classes(a: dict[str, str]) -> list[str]:
@@ -85,6 +92,8 @@ class PageTracker:
         self.photos: list[tuple[str, int, bool]] = []  # (파일, 줄, 카드 자리인가)
         self.durations: list[dict] = []
         self.marker_depth = 0
+        self.dated: list[tuple[int, int, str, int]] = []  # (월, 일, 요일, 줄)
+        self.years: set[int] = set()
 
     def start(self, tag: str, a: dict[str, str], line: int) -> None:
         classes = _classes(a)
@@ -139,6 +148,9 @@ class PageTracker:
             if entry["is_marker"]:
                 self.marker_depth -= 1
             text = _norm(entry["text"])
+            self.years.update(int(y) for y in YEAR.findall(text))
+            for m in DATE_WEEKDAY.finditer(text):
+                self.dated.append((int(m.group(1)), int(m.group(2)), m.group(3), entry["line"]))
             for pattern in DURATION_PATTERNS:
                 for m in pattern.finditer(text):
                     self.durations.append({"entry": entry, "text": text, "at": m.start()})
@@ -150,6 +162,7 @@ class PageTracker:
             report.add("FLOOR", path, self.title_line, "title-option-label",
                        f"<title> 「{_norm(self.title)}」 reads like a layout option, not the page's heading")
         self._report_headings(path, report)
+        self._report_weekdays(path, report)
         for d in self.durations:
             entry = d["entry"]
             if entry["marker"] or (entry["parent"] and entry["parent"]["marker"]):
@@ -158,6 +171,24 @@ class PageTracker:
             snippet = d["text"][lo:d["at"] + SNIPPET_RADIUS]
             report.add("NOTE", path, entry["line"], "unsourced-duration",
                        f"「{snippet}」 — a time or frequency guess with no 견본 mark; keep only if the user gave it")
+
+    def _report_weekdays(self, path: str, report) -> None:
+        this_year = dt.date.today().year
+        years = sorted(self.years) or [this_year, this_year + 1]
+        seen = set()
+        for mon, d, wd, line in self.dated:
+            if (mon, d, wd) in seen:
+                continue
+            seen.add((mon, d, wd))
+            real = []
+            for y in years:
+                try:
+                    real.append(WEEKDAYS[dt.date(y, mon, d).weekday()])
+                except ValueError:
+                    continue  # 2월 30일 같은 없는 날
+            if real and wd not in real:
+                report.add("FLOOR", path, line, "date-weekday",
+                           f"「{mon}월 {d}일 {wd}요일」 — that date is a {'/'.join(real)}요일 in {'/'.join(map(str, years))}; compute the weekday from the date")
 
     def _report_headings(self, path: str, report) -> None:
         seen: dict[str, int] = {}
