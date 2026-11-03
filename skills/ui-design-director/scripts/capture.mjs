@@ -5,6 +5,8 @@
 //   steps(선택): 찍기 전에 같은 창에서 할 일. { "goto": url } · { "click": "css 선택자" } · { "wait": ms }
 //   예) 장바구니를 상품이 담긴 상태로 찍기: 상품 페이지로 가서 담기 단추를 누른 뒤 url(장바구니)을 찍는다.
 //   url 을 "@current" 로 주면 steps 를 마친 화면 그대로 찍는다(주소를 모르는 상품 상세 등).
+//   "scrollY": 숫자 를 주면 전체 길이 대신 그 위치의 한 화면만 찍는다 — 아래에 붙는 단추·위에 붙는 칩처럼
+//   스크롤해도 따라오는 것은 전체 길이 캡처에선 페이지 중간에 박혀 글을 가린 것처럼 보이므로 이렇게 확인한다.
 // 결과: <out-dir>/<id>-<width>.jpg. 이미 있는 파일은 건너뛰므로 중간에 끊겨도 다시 돌리면 이어서 찍는다.
 // 문서 응답이 400 이상이면 저장하지 않고 실패로 보고한다.
 
@@ -130,7 +132,7 @@ async function launch() {
   throw new Error("브라우저 디버깅 포트가 열리지 않았습니다.");
 }
 
-async function shoot(port, url, width, steps = []) {
+async function shoot(port, url, width, steps = [], scrollY = null) {
   const target = await (await fetch(`http://127.0.0.1:${port}/json/new?about:blank`, { method: "PUT" })).json();
   const cdp = await Cdp.open(target.webSocketDebuggerUrl);
   try {
@@ -179,6 +181,13 @@ async function shoot(port, url, width, steps = []) {
       awaitPromise: true,
     });
     await sleep(SETTLE_MS);
+    if (scrollY !== null) {
+      // 실제 폰처럼 한 화면만: 붙어 다니는 막대가 제자리에 보인다
+      await cdp.send("Runtime.evaluate", { expression: `scrollTo(0, ${Number(scrollY)})` });
+      await sleep(SETTLE_MS);
+      const view = await cdp.send("Page.captureScreenshot", { format: "jpeg", quality: 82 });
+      return { data: Buffer.from(view.data, "base64"), height: phone ? PHONE_HEIGHT : DESKTOP_HEIGHT, status, screens: [] };
+    }
     const { cssContentSize } = await cdp.send("Page.getLayoutMetrics");
     const height = Math.min(Math.ceil(cssContentSize.height), MAX_PAGE_HEIGHT);
     const shot = await cdp.send("Page.captureScreenshot", {
@@ -221,7 +230,7 @@ async function main() {
           continue;
         }
         try {
-          const { data, height, screens } = await shoot(port, job.url, width, job.steps || []);
+          const { data, height, screens } = await shoot(port, job.url, width, job.steps || [], job.scrollY ?? null);
           writeFileSync(file, data);
           const sliceDir = join(outDir, "screens");
           mkdirSync(sliceDir, { recursive: true });
