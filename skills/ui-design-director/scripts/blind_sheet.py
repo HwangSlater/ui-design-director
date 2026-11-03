@@ -6,6 +6,7 @@
 결과: <out-dir>/site-1.jpg … 와 key.json(답 — 판정하는 에이전트에게 보여 주지 않는다), prompt.txt(판정 요청 글).
 판정은 이 대화를 모르는 새 에이전트가 한다. 「우리」를 AI로 70% 넘게 확신하면 통과가 아니다(page-design.md § Composition first).
 같은 모델이 「괜찮아요?」에 답하면 너그럽다 — 섞어 놓고 고르게 해야 엄격해진다.
+기준 사이트는 같은 분야·같은 나라(한국어 시안이면 한국 사이트)로, 우리가 본뜬 사이트는 넣지 않는다(장치를 알아본다).
 """
 from __future__ import annotations
 
@@ -33,6 +34,11 @@ def main() -> int:
     seed = int(args[args.index("--seed") + 1]) if "--seed" in args else random.randrange(1 << 16)
     height = int(args[args.index("--height") + 1]) if "--height" in args else 1800
     items = [a.split("=", 1) for a in args[1:] if "=" in a and not a.startswith("--")]
+    ours = [n for n, _ in items if n.startswith("우리")]
+    if len(ours) != 1:
+        # 우리 시안 둘을 한 묶음에 넣으면 같은 이름·사진이 겹쳐 둘 다 바로 들킨다 — 한 묶음에 하나씩
+        print(f"우리 화면은 한 묶음에 하나만 넣으세요(지금 {len(ours)}개: {ours}). 시안마다 따로 만드세요.")
+        return 1
     out.mkdir(parents=True, exist_ok=True)
     random.Random(seed).shuffle(items)
     key = {}
