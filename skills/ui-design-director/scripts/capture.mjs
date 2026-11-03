@@ -37,7 +37,7 @@ const SCROLL_STEP_MS = 120;
 // 이름으로 못 찾는 덮개: 화면에 붙어 있고(fixed/sticky) 「쿠키」 문구가 있으며 화면 절반보다 작은 것. Flour 메뉴의 아래 쿠키 띠가 이름으로는 안 잡혔다
 // 빵집 메뉴의 「쿠키」처럼 상품 이름과 겹치지 않게 문장 꼴로만 찾고, 머리·메뉴(header·nav)는 건드리지 않는다
 // 한국 사이트의 광고·공지 팝업은 「오늘 하루 그만 보기」「오늘 하루 보지 않기」로 닫는다(집닥 시공사례에 이사 광고 팝업)
-const OVERLAY_WORDS = /use (of )?cookies|cookies help|cookie (policy|settings|preferences)|accept (all )?cookies|쿠키(를| 사용| 정책| 설정)|개인정보 수집|오늘 하루 ?(그만 ?보기|보지 않기|열지 않기)|하루 동안 보지 않기|앱(으로|에서) ?(보기|열기|이용하기)|모바일 ?웹으로 (볼래요|보기)/i; // 앱 설치 권유 창(오늘의집)
+const OVERLAY_WORDS = /use (of )?cookies|cookies help|cookie (policy|settings|preferences)|accept (all )?cookies|쿠키(를| 사용| 정책| 설정)|개인정보 수집|오늘(은)? (하루 ?)?(그만 ?보기|보지 않기|열지 않기)|하루 동안 보지 않기|앱(으로|에서) ?(보기|열기|이용하기)|APP ?(열기|설치)|앱 ?설치|모바일 ?웹으로 (볼래요|보기)/i; // 앱 설치 권유 창(오늘의집)
 const hideOverlaysExpr = (sel, words) => `(() => {
   const off = (n) => n.style.setProperty("display", "none", "important");
   document.querySelectorAll(${JSON.stringify(sel)}).forEach(off);
@@ -54,7 +54,7 @@ const hideOverlaysExpr = (sel, words) => `(() => {
   // 화면보다 작은 가장 큰 상자를 가린다 — 머리·메뉴·본문 전체는 크기 제한에 걸려 남는다
   const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
   for (let t = walker.nextNode(); t; t = walker.nextNode()) {
-    if (!/오늘 하루 ?(그만 ?보기|보지 않기|열지 않기)|하루 동안 보지 않기/.test(t.textContent)) continue;
+    if (!/오늘(은)? (하루 ?)?(그만 ?보기|보지 않기|열지 않기)|하루 동안 보지 않기/.test(t.textContent)) continue;
     let box = null;
     for (let el = t.parentElement; el && el !== document.body; el = el.parentElement) {
       const r = el.getBoundingClientRect();
@@ -62,6 +62,20 @@ const hideOverlaysExpr = (sel, words) => `(() => {
       box = el;
     }
     if (box) off(box);
+    // 화면 전체를 덮는 광고 창(교보·예스24 「오늘은 그만보기」): 위로 올라가며 떠 있는(fixed) 가장 바깥 상자를 가린다
+    let fixed = null;
+    for (let el = t.parentElement; el && el !== document.body; el = el.parentElement) {
+      if (el.matches("header, nav, main")) break;
+      if (getComputedStyle(el).position === "fixed") fixed = el;
+    }
+    if (fixed) off(fixed);
+  }
+  // 글자 없이 화면을 어둡게 덮는 판(광고 창 뒤 그늘)
+  for (const n of document.querySelectorAll("body *")) {
+    const cs = getComputedStyle(n);
+    if (cs.position !== "fixed" || (n.textContent || "").trim()) continue;
+    const r = n.getBoundingClientRect();
+    if (r.width >= innerWidth * 0.9 && r.height >= innerHeight * 0.8) off(n);
   }
 })()`;
 const OVERLAY_SELECTORS = '[id*="cookie" i],[class*="cookie" i],[id*="consent" i],[class*="consent" i],[id*="onetrust" i],[class*="onetrust" i],[id*="termly" i],[id*="klaviyo" i],[class*="klaviyo" i],[id*="onesignal" i],[class*="newsletter-popup" i],[aria-modal="true"]';
