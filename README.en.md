@@ -2,7 +2,7 @@
 
 [한국어](README.md)
 
-`ui-design-director` is a skill for establishing the overall UI concept of a project and carrying it through a complete website or web app, working in both Codex and Claude Code. It researches real templates and 3–4 color palettes, helps the user choose the visual format and color direction independently, compares finalists through small coded previews, and turns approved decisions into a reusable `DESIGN.md`. It then plans the pages, gets a layout and a full-fidelity mockup approved for each page type, and only then moves them into production code.
+`ui-design-director` is a skill for establishing the overall UI concept of a project and carrying it through a complete website or web app, working in both Codex and Claude Code. It researches well-known real sites in the project's field as motifs (templates second) and 3–4 color palettes, helps the user choose the visual format and color direction independently, compares finalists through small coded previews, and turns approved decisions into a reusable `DESIGN.md`. It then plans the pages, gets a layout and a full-fidelity mockup approved for each page type, and only then moves them into production code.
 
 The user does not need to know design terminology or provide a complete brief. Starting with “I want to choose a design” makes the skill ask one consequential question at a time, offer concrete choices and recommendations, and guide the user to the next decision.
 
@@ -10,7 +10,7 @@ Its purpose is to replace vague requests such as “make it feel like Linear” 
 
 ## Features
 
-- Research real template and design-system candidates from sources matched to the product archetype: marketing site, dashboard, editing tool, form workflow, or content reader
+- Start from well-known real sites in the same field, found from the brief's field, main job, concept words and audience (a futsal league → K League, Premier League, FotMob, PLAB), then neighbouring-field leaders, award entries, and templates last
 - Establish each candidate and recommended dependency's licence from its published text, and rule out commercially unusable options before taste enters
 - Select the overall design format and color palette independently
 - Compare 3–4 color combinations from sources such as Coolors, Color Hunt, Adobe Color, and Huemint
@@ -221,7 +221,7 @@ The open-source skills and tools below assist specific stages only when installe
 - `SKILL.md`: mode routing, approval gates, and shared constraints
 - `validate_skill.py`: dependency-free structure and documentation checks
 - `guided-conversation.md`: step-by-step conversational guidance
-- `design-selection.md`: template research and overall format selection
+- `design-selection.md`: real-site motifs, template research and overall format selection
 - `color-selection.md`: palette research and accessibility review
 - `concept-preview.md`: comparable coded UI previews
 - `reference-extraction.md`: extracting and adapting reference rules

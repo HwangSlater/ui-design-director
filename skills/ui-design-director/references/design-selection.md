@@ -18,26 +18,26 @@ Derive what is safe from the repository and conversation, then confirm only cons
 
 Summarize these as **confirmed**, **inferred**, and **open**. Do not force a lengthy questionnaire when repository evidence is sufficient.
 
-## 2. Search the right libraries
+## 2. Find well-known real sites first
 
-Use live web research because catalogs and links change. Search multiple relevant sources rather than one marketplace only:
+The strongest motif is a site that already runs in the same field and that people recognise. Owners judge the result against the sites they use ("compared with sites that actually run, it looks too simple"), and a famous site in their own field is something they can read without design vocabulary; a template or an unrelated showcase is not ("a German train site — I'd have asked why"). Templates come second.
 
-- Framer Marketplace for polished marketing, startup, portfolio, editorial, and commerce templates;
-- Webflow Templates and Made in Webflow for responsive multi-page structures and cloneable community work;
-- Landbook for curated websites and landing-page directions;
-- SaaSFrame for SaaS marketing pages, product UI, onboarding, pricing, and dashboard flows;
-- published design-system documentation and its component gallery when the archetype is a tool or application rather than a site;
-- a better current domain-specific marketplace/gallery when the product warrants it.
+Derive the search from the brief, not from a gallery: the **field** (futsal league, piano school, pottery shop), the **job** of the main screen (find my next match, book a trial lesson, buy a mug), the **concept words** (scoreboard, warm and calm, editorial) and the **audience** (office workers on phones, parents, gift buyers). Then look in this order and stop when you have 5–8 strong candidates:
 
-When ui-ux-pro-max is installed, its style and product-pattern search can suggest directions to look for (`companion-skills.md`). A suggestion becomes a candidate only after a real template or showcase in that direction has been opened and inspected.
+1. **Leaders in the same field** — the sites that define it, domestic and international: for a futsal league the national league and federation sites, the big league and score services (K League, Premier League, LaLiga, FotMob, ESPN), and the leading local amateur-sport service (PLAB); for a ceramics shop the well-known studios and craft brands; for a music school the best-known academies and lesson platforms. Prefer sites with many real users or a reputation in the field over portfolio pieces.
+2. **Leaders with the same main job in a neighbouring field** — when the field has few good sites: a booking leader for a class schedule, a transit or match-centre product for "what is next, where, when".
+3. **Award and showcase entries in that category** — Awwwards, CSS Design Awards, Godly, Landbook, filtered by the field (Sports, Music, Shop), for one strong trait each.
+4. **Templates** — Framer Marketplace, Webflow, SaaSFrame, design-system docs for tools — only when a structure is needed that the real sites do not show (a sign-up form, an admin screen), or when the user wants to buy a starting point.
 
-Let the archetype pick the sources. Template marketplaces overwhelmingly sell marketing pages; for a tool or a dense workflow, design-system documentation is where component, density, and state coverage is actually visible.
+For each real site record what it is known for and which visual layers it carries (`reference-extraction.md` § Visual layers), because those layers are what the motif borrows. A famous site is a motif, not a source: borrow its grammar and layers, never its logo, illustrations, photos, text or a distinctive composition verbatim, and say so to the user.
 
-Use template sources when adopting page structure is plausible. Use showcases when only visual language or interaction patterns are needed. Never imply that an inspiration item can be copied or purchased.
+When ui-ux-pro-max is installed, its style and product-pattern search can suggest directions to look for (`companion-skills.md`). A suggestion becomes a candidate only after a real site or template in that direction has been opened and inspected.
+
+Use real sites and showcases for visual language and patterns; use templates when adopting page structure is plausible. Never imply that an inspiration item can be copied or purchased.
 
 ## 3. Curate candidates
 
-A user without design vocabulary cannot read "just look at the mood" off a site whose content is unrelated: a piano-school owner shown a pharmacy app, a tool-rental shop and a children's English game could not picture her own page. Prefer candidates from the same or a neighbouring trade, and when the direction is still hard to read, render two or three directions with the user's own content in their language (as the layout step does) before asking them to choose; the layout step with real content was the one the user found most useful.
+Lead with the well-known real sites from § 2 and mark which candidate is a running site in the field, which is a neighbouring-field leader, and which is a template. A user without design vocabulary cannot read "just look at the mood" off a site whose content is unrelated: a piano-school owner shown a pharmacy app, a tool-rental shop and a children's English game could not picture her own page. Prefer candidates from the same or a neighbouring trade, and when the direction is still hard to read, render two or three directions with the user's own content in their language (as the layout step does) before asking them to choose; the layout step with real content was the one the user found most useful.
 
 **Do not settle on the default reading of the brief.** Words such as “warm”, “clean” or “calm” have many readings but drift to one default: “warm” became cream paper, a brown button, a rounded heading face and a text-left/photo-right first screen for both a pottery studio and a piano school, and the two sites looked like one company's. Before presenting, write down the default you would reach for from the brief words alone, keep at most one part of it in any candidate unless the brief's own evidence calls for it (the user's wall colour, an existing sign, a font they insist on), and say which part you kept and why.
 
@@ -50,6 +50,7 @@ Inspect enough of each candidate to evaluate it. Prefer candidates with multiple
 For every candidate include:
 
 - name, direct link, source, and free/paid/inspiration-only status when known;
+- kind: running site in the field / leader in a neighbouring field / award entry / template, and what it is known for;
 - screenshot/thumbnail when tools allow;
 - concept territory and brand impression;
 - why it fits the brief;
