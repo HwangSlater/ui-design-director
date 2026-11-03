@@ -13,6 +13,7 @@ SKILL_NAME = "ui-design-director"
 ROOT = REPO_ROOT / "skills" / SKILL_NAME
 REQUIRED_FILES = (
     "scripts/compose_metrics.mjs",
+    "scripts/blind_sheet.py",
     "SKILL.md",
     "agents/openai.yaml",
     "references/design-selection.md",

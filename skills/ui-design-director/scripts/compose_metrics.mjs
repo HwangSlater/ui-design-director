@@ -58,6 +58,7 @@ const PROBE = `(() => {
     const r = el.getBoundingClientRect();
     if (r.width * r.height < CELL * CELL * 4) continue;
     const tag = el.tagName;
+    if (tag === "IMG" && !(el.complete && el.naturalWidth > 0)) continue; // 깨진 사진은 사진이 아니다
     const isImg = ["IMG", "VIDEO", "PICTURE", "CANVAS", "IFRAME"].includes(tag) || (tag === "svg" && r.width > 120 && r.height > 120) || /url\\(/.test(cs.backgroundImage);
     if (isImg) { paint(r, 2, -1); continue; }
     const bg = rgb(cs.backgroundColor);
