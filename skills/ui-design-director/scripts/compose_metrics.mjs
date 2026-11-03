@@ -63,7 +63,7 @@ const PROBE = `(() => {
     if (r.width * r.height < CELL * CELL * 4) continue;
     const tag = el.tagName;
     if (tag === "IMG" && !(el.complete && el.naturalWidth > 0)) continue; // 깨진 사진은 사진이 아니다
-    const isImg = ["IMG", "VIDEO", "PICTURE", "CANVAS", "IFRAME"].includes(tag) || (tag === "svg" && r.width > 120 && r.height > 120) || /url\\(/.test(cs.backgroundImage);
+    const isImg = ["IMG", "VIDEO", "PICTURE", "CANVAS", "IFRAME"].includes(tag) || (tag === "svg" && r.width > 120 && r.height > 120) || /url\\(/.test(cs.backgroundImage) || el.classList.contains("slot") || el.hasAttribute("data-photo"); // 시안의 「사진 자리」는 사진 자리로 센다(빗금 바탕을 색 판으로 세면 사진이 들어갈 짜임을 깎아 먹음)
     if (isImg) { paint(r, 2, -1); continue; }
     const bg = rgb(cs.backgroundColor);
     if (bg && (bg[3] ?? 1) > 0.5 && dist(bg, pageBg) > 24) paint(r, 1, colourId(bg));
