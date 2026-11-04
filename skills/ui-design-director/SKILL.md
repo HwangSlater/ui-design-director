@@ -93,6 +93,19 @@ Open-source design skills — ui-ux-pro-max, hallmark, emilkowalski/skills, impe
 
 ## Durable outputs
 
+Keep every project in one folder with this layout — `scripts/preflight.py` reads these names and says so when it finds none of them:
+
+```
+<project folder>/
+  concept-brief.md      gate 1: the owner's words, photos and who/whose notes
+  formats/              gate 2: captures, jobs*.json, skeleton tables (skeleton.mjs at 390 and 1280)
+  DESIGN.md             gates 3–5: palette, type, tokens, shared traits as 「n/N곳」
+  SITE-PLAN.md          gate 6: pages, flows, owner sign-in and lost phone
+  layouts/              gate 7: numbered options
+  mockups/              gate 8: clickable mockups; pictures sent to the client in mockups/보낼-그림/
+  blind/                judge sheets
+```
+
 Depending on the active mode, produce only the necessary artifact:
 
 - a compact concept brief plus a candidate viewer (captured pages at desktop and phone width);

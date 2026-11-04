@@ -82,11 +82,13 @@ Do not state unverified prices, licenses, responsiveness, or page coverage as fa
 
 Include running sites from the user's own country and language in the first set, not only famous foreign ones, show each at phone width first (that is where most of their customers look), and never send a capture with a cookie bar, popup or loading spinner over it — a bakery owner had to ask for all three. Show the candidates in the full-screen viewer described in `comparison-board.md`: capture the product's key pages at desktop and phone width, build the viewer, check it, and give the user its full address to open. Do not present a table of links or a folder of screenshots as the comparison.
 
+Before asking, run `node scripts/skeleton.mjs formats/뼈대-390.md --width 390 name=url …` and again at 1280 on the shortlist (pages from one platform such as Naver Place count as one site), and put the shared traits in the message with their counts (「사진이 첫 화면을 채움 4/6곳」), phone and desktop separately — say them before the client asks. Include the channels the owner named (Naver Place, Instagram, Kakao) as references; customers see those screens first.
+
 In chat, keep to what the screens cannot show: licence and reuse status, what could not be verified, and a recommendation of one or two finalists tied to the brief. Explain why the recommendation fits the real content and user task, not merely why it looks fashionable.
 
 Ask the user for a simple decision:
 
-1. primary reference — it sets tone and direction; the page structure is later built from the traits it shares with the other shortlisted sites (`page-design.md` § 1), not traced from it alone;
+1. the sites whose tone they like — the pick sets tone; the page structure is built from what the shortlisted sites share, never traced from one;
 2. definite rejections and why;
 3. optionally one named trait from a secondary reference.
 
