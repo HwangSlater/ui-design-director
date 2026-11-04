@@ -1,5 +1,7 @@
 # Designing every page
 
+> The ten checks in SKILL.md § Before you send anything to the client summarise the rules below that sessions most often skip. Run them before every layout and mockup message; the sections here hold the reasons and examples.
+
 Use this after `SITE-PLAN.md` is approved. Each page type passes two decisions before any production code: a **layout** choice from options that differ in structure, then a **mockup** approval at full fidelity. Work core page types first, then secondary ones. Keep `SITE-PLAN.md` status columns current as each decision lands.
 
 ## 1. Layout options
