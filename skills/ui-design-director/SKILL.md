@@ -13,7 +13,9 @@ The result is judged against running sites, not against the brief. A beginner or
 
 ## Before you send anything to the client
 
-These are the misses that recur even though each has a rule further down; fresh sessions followed them only after the client pointed them out. Check every item before each message that carries a picture or a page, and say which you checked.
+These are the misses that recur even though each has a rule further down; fresh sessions followed them only after the client pointed them out. Before each message that carries a picture or a page, run `python scripts/preflight.py <project folder>` and fix or answer every line it prints — client-named channels missing from the references or the mockup, shared traits not counted (skeleton tables at 390 and 1280, 「n/N곳」 in `DESIGN.md`), owner sign-in and lost-phone screens, an equal pair of buttons as the main action. Then check the items below that a script cannot see, and say which you checked.
+
+Keep the main conversation short: hand capture runs, re-renders and judge-sheet builds to a subagent and take back only paths and findings. In a measured café run the mockup phase was 55% of all tokens, mostly because every reply re-read the long conversation.
 
 1. **Photos — who and whose.** List the people, signs, price cards, screens and number plates in every photo; ask the owner whose they are (a neighbour's staff, another stall's price card); crop rather than blur. Caption a food photo that shows a richer set than the cheapest menu.
 2. **What you say matches what you send.** Describe a reference only from the frames you attach; count traits as 「n/N곳」, never 「all」; caption each photo by what it shows.
