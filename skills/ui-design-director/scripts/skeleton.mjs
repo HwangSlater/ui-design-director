@@ -18,6 +18,7 @@ const DESKTOP_H = 800;
 const BAND = 160;          // 세로로 이만큼씩 잘라 단 수를 센다(px)
 const MAX_PAGE = 8000;     // 앞부분만
 const GAP = 24;            // 이보다 가까운 글·사진 덩어리는 한 단으로 본다(px)
+const MIN_COL = 64;        // 이보다 좁은 것(아이콘·색 점·작은 링크)은 단으로 세지 않는다 — 폰에서 아이콘 줄을 「7단」으로 세던 것
 const MIN_BOX = 20000;     // 모양을 볼 상자 최소 넓이(px²)
 const ROUND_PX = 20;       // 이 이상 둥글면 「둥근 모양」
 const SAME_STACK = 0.12;   // 한 단 비율 차이가 이 안이면 같은 틀로 본다
@@ -51,7 +52,7 @@ const PROBE = `(() => {
   }
   const bands = [], kinds = [];
   for (let y = 0; y < H; y += ${BAND}) {
-    const inBand = leaves.filter((b) => b.y < y + ${BAND} && b.y + b.h > y && (b.w < W * 0.98 || b.media));
+    const inBand = leaves.filter((b) => b.y < y + ${BAND} && b.y + b.h > y && b.w >= ${MIN_COL} && (b.w < W * 0.98 || b.media));
     const iv = inBand.map((b) => [Math.max(0, b.x), Math.min(W, b.x + b.w)]).sort((a, b) => a[0] - b[0]);
     if (!iv.length) continue;
     const cols = [];
@@ -106,7 +107,8 @@ const cdp = (method, params = {}) => new Promise((r) => { const n = ++id; wait.s
 const rows = [];
 try {
   await cdp("Page.enable");
-  await cdp("Emulation.setDeviceMetricsOverride", { width, height: DESKTOP_H, deviceScaleFactor: 1, mobile: false });
+  const phone = width <= 600; // 폰 너비는 따로 잰다 — 넓은 화면의 칸 나눔을 폰 공통점으로 말하면 안 됨(의뢰인 지적)
+  await cdp("Emulation.setDeviceMetricsOverride", { width, height: phone ? 844 : DESKTOP_H, deviceScaleFactor: 1, mobile: phone });
   for (const [name, url] of targets) {
     await cdp("Page.navigate", { url });
     await sleep(SETTLE_MS);
@@ -144,15 +146,17 @@ for (const p of rows.filter((r) => me && prev.includes(r.name))) {
 // 한 곳에만 있는 것은 그 사이트의 개성이라 옮기지 않는다.
 if (refs.length >= 2) {
   const half = (f) => refs.filter(f).length >= Math.ceil(refs.length / 2);
+  const cnt = (f) => `${refs.filter(f).length}/${refs.length}곳`; // 몇 곳 중 몇 곳인지 함께 — 「일곱 곳 공통」처럼 넉넉하게 말하지 않게
   const st = refs.map((r) => r.stack).sort((a, b) => a - b), mc = refs.map((r) => r.maxCols).sort((a, b) => a - b);
   const common = [`한 단 세로 나열 ${pct(st[0])}~${pct(st[st.length - 1])}(가운데 ${pct(st[Math.floor(st.length / 2)])})`, `가장 많은 단 가운데 ${mc[Math.floor(mc.length / 2)]}`];
   const traits = [["navTop", "맨 위 메뉴 줄"], ["heroPhoto", "첫 화면이 큰 사진"], ["searchFirst", "첫 화면에 검색창"], ["callEnd", "끝에 전화·연락"], ["side", "옆에 붙은 안내판"], ["hscroll", "옆으로 넘기는 띠"]];
-  for (const [k, label] of traits) if (half((r) => r[k])) common.push(label);
-  if (half((r) => r.maxCols >= 3)) common.push("3단 이상 칸이 있음");
-  if (half((r) => r.changes >= 4)) common.push("내려가며 단 수가 자주 바뀜");
-  common.push(half((r) => r.roundShare > 0.1) ? "둥근 상자" : "모서리는 대부분 각짐");
-  if (half((r) => r.shapes > 0)) common.push("원·아치 같은 모양");
-  if (half((r) => r.overText > 0)) common.push("사진 위 글");
+  for (const [k, label] of traits) if (half((r) => r[k])) common.push(`${label} (${cnt((r) => r[k])})`);
+  if (half((r) => r.maxCols >= 3)) common.push(`3단 이상 칸이 있음 (${cnt((r) => r.maxCols >= 3)})`);
+  if (half((r) => r.changes >= 4)) common.push(`내려가며 단 수가 자주 바뀜 (${cnt((r) => r.changes >= 4)})`);
+  const rd = cnt((r) => r.roundShare > 0.1);
+  common.push(half((r) => r.roundShare > 0.1) ? `둥근 상자 (${rd})` : `모서리는 각진 쪽이 많음 — 둥근 곳 ${rd}`);
+  if (half((r) => r.shapes > 0)) common.push(`원·아치 같은 모양 (${cnt((r) => r.shapes > 0)})`);
+  if (half((r) => r.overText > 0)) common.push(`사진 위 글 (${cnt((r) => r.overText > 0)})`);
   // 배치 순서 공통점: 자리마다 절반 넘게 같은 것
   const seq = [];
   for (let i = 0; i < 6; i++) {
@@ -161,10 +165,10 @@ if (refs.length >= 2) {
     if (!top || top[1] < Math.ceil(refs.length / 2)) break;
     seq.push(top[0]);
   }
-  if (seq.length) common.push(`위에서부터 배치: ${seq.join(" → ")}`);
+  if (seq.length) common.push(`위에서부터 배치: ${seq.join(" → ")} (자리마다 절반 넘게 같은 것만 — 모든 곳 공통이 아님)`);
   const only = refs.flatMap((r) => traits.filter(([k]) => r[k] && !half((x) => x[k])).map(([, l]) => `${r.name}의 ${l}`));
-  lines.push("", "## 참고 공통점 — 이 중 이 프로젝트에 써도 좋은 것을 고른다", ...common.map((c) => `- ${c}`));
-  if (only.length) lines.push("", `한 곳에만 있는 것(그 사이트의 개성, 그대로 옮기지 않음): ${only.join(", ")}`);
+  lines.push("", "## 참고 공통점 — 이 중 이 프로젝트에 써도 좋은 것을 고른다", "(짜임만 잰다. 영업시간·접수 마감·전화를 한 덩어리로 두는 것 같은 내용 짜임은 화면을 보고 따로 적는다)", ...common.map((c) => `- ${c}`));
+  if (only.length) lines.push("", `절반이 안 되는 곳에만 있는 것(공통이 아님 — 쓰려면 이유를 대고 이름으로): ${only.join(", ")}`);
   if (me && (me.stack < st[0] - DIFF_STACK || me.stack > st[st.length - 1] + DIFF_STACK)) notes.push(`공통 범위 밖: 우리 한 단 ${pct(me.stack)} — 참고 ${pct(st[0])}~${pct(st[st.length - 1])}`);
 }
 lines.push("", "## 판정", notes.length ? notes.map((n) => `- ${n}`).join("\n") : "- 걸린 것 없음");
