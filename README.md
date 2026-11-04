@@ -300,6 +300,8 @@ node --test tests/test_judge_fill.mjs
 node --test tests/test_live_proxy.mjs
 ```
 
+스킬을 고친 근거(역할극 결과·토큰)는 `docs/역할극-기록.md`, 구간별 토큰은 `python -X utf8 scripts/roleplay_tokens.py <세션 ID> <구간 파일>`.
+
 공식 `skill-creator` 검증기가 설치된 개발 환경에서는 스킬 폴더를 직접 검사할 수도 있습니다.
 
 ```bash
