@@ -44,8 +44,16 @@ def files(root: Path, pattern: str) -> list[Path]:
     return [p for p in root.rglob(pattern) if p.is_file() and not SKIP & set(p.parts)] if root.is_dir() else []
 
 
+NEGATED = re.compile(r"^[^.\n]{0,8}(안 ?해|안 ?써|없어|없음|안 함|안 씀)")  # 「인스타는 안 해요」·「인스타 없음」은 쓰지 않는다는 말 — 한 번이라도 그렇게 말했으면 그 채널은 뺀다(분식집 역할극에서 잘못 걸림)
+
+
 def client_channels(text: str) -> list[str]:
-    return [k for k in CHANNELS if k in text]
+    found = []
+    for k in CHANNELS:
+        spots = [m.end() for m in re.finditer(k, text)]
+        if spots and not any(NEGATED.match(text[e:]) for e in spots):
+            found.append(k)
+    return found
 
 
 class ButtonPairs(HTMLParser):
@@ -98,7 +106,7 @@ def check(root: Path) -> list[str]:
                 out.append("공통점 빠짐: DESIGN.md 에 「n/N곳」으로 센 참고 공통점이 없음 — 묻기 전에 어느 공통점을 왜 썼는지 적고 말할 것")
 
     # 3. 사장님 화면이 있으면 들어가기·폰 분실
-    if OWNER_WORDS.search(said):
+    if OWNER_WORDS.search(said) and plan:  # 계획을 쓰기 전에는 묻지 않는다
         if not LOGIN_WORDS.search(plan):
             out.append("사장님 화면 빠짐: SITE-PLAN.md 에 들어가는 방법(문자 번호·로그인)이 없음")
         if not LOST_WORDS.search(plan):
@@ -111,7 +119,8 @@ def check(root: Path) -> list[str]:
                 out.append("사장님 화면 빠짐: mockups/ 에 폰 분실 안내가 없음")
 
     # 4. 시안에 의뢰인이 말한 채널 연결이 있는가
-    mock_html = " ".join(read(p) for pat in ("*.html", "*.js") for p in files(root / "mockups", pat))
+    pages = list((root / "mockups").glob("*.html")) if (root / "mockups").is_dir() else []  # 시안 쪽이 생긴 뒤에만(공유 부품만 있을 때는 묻지 않음)
+    mock_html = " ".join(read(p) for pat in ("*.html", "*.js") for p in files(root / "mockups", pat)) if pages else ""
     if mock_html:
         for name in client_channels(brief):
             if not any(s in mock_html for s in CHANNELS[name][1] if "." in s or s == "kakao"):
