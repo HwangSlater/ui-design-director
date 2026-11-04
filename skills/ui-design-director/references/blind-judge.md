@@ -21,6 +21,8 @@ Every first screen and page type passes both gates before the client sees it, af
 
 ## Fair sheet (judge's copy only)
 
+Capture the judge's copy with `"judge": true` on the `capture.mjs` job: it hides `.sample`, `.proto` and elements whose class names a slot or hatch (빈 자리), turns 「0000」 phone numbers into plausible ones (text and `tel:`), and prints 「판정 흔적」 for anything still showing (○○, 견본, 「…자리」). Fix what it prints by hand, then:
+
 1. Hide 「견본」 marks, `.sample` and prototype notes (`capture.mjs` step `{"hide": ".sample, .proto"}`, or a `clean` body class).
 2. Replace 「0000」 numbers (「02-336-0000」) and 「○○○」 with plausible sample values, and invented street names likewise.
 3. Fill or remove hatched photo and map slots (「가게 앞 사진 자리」, 「네이버 지도 자리」); a photo grid gets a sample in each slot. Left in, they were the judge's decisive tell.

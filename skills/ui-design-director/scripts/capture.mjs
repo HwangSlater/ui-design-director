@@ -6,6 +6,7 @@
 //   예) 장바구니를 상품이 담긴 상태로 찍기: 상품 페이지로 가서 담기 단추를 누른 뒤 url(장바구니)을 찍는다.
 //   url 을 "@current" 로 주면 steps 를 마친 화면 그대로 찍는다(주소를 모르는 상품 상세 등).
 //   쿠키·동의·알림 창은 기본으로 걷어 낸다. 창 자체를 보여 줘야 하면 "keepOverlays": true.
+//   "judge": true — 블라인드 판정용 사본만: 견본 표시·빗금 자리를 숨기고 0000 번호를 그럴듯한 번호로(judge_fill.mjs). 남은 흔적은 「판정 흔적」으로 알린다.
 //   "scrollY": 숫자 를 주면 전체 길이 대신 그 위치의 한 화면만 찍는다 — 아래에 붙는 단추·위에 붙는 칩처럼
 //   스크롤해도 따라오는 것은 전체 길이 캡처에선 페이지 중간에 박혀 글을 가린 것처럼 보이므로 이렇게 확인한다.
 // 결과: <out-dir>/<id>-<width>.jpg. 이미 있는 파일은 건너뛰므로 중간에 끊겨도 다시 돌리면 이어서 찍는다.
@@ -16,6 +17,7 @@ import { existsSync, mkdirSync, readFileSync, writeFileSync, mkdtempSync, rmSync
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { createServer } from "node:net";
+import { judgeFillExpr } from "./judge_fill.mjs";
 
 // 설치 위치는 운영체제가 알려 주는 폴더에서 찾는다
 const SCREEN_SLICES = 16; // 맨 위부터 한 화면씩 잘라 따로 저장할 최대 수(screens/ 폴더). 4장만 자르면 페이지 아래쪽(시간표·질문·오시는 길)을 못 봤다
@@ -192,7 +194,7 @@ const OVERFLOW_PROBE = `(() => {
   return out;
 })()`;
 
-async function shoot(port, url, width, steps = [], scrollY = null, keepOverlays = false) {
+async function shoot(port, url, width, steps = [], scrollY = null, keepOverlays = false, judge = false) {
   const target = await (await fetch(`http://127.0.0.1:${port}/json/new?about:blank`, { method: "PUT" })).json();
   const cdp = await Cdp.open(target.webSocketDebuggerUrl);
   try {
@@ -236,6 +238,8 @@ async function shoot(port, url, width, steps = [], scrollY = null, keepOverlays 
     if (url !== CURRENT_PAGE) await go(url);
 
     // 쿠키·동의·알림 창은 사이트의 구성이 아니다 — 기본으로 걷어 낸다(빵집 후보 셋이 창에 덮여 의뢰인이 볼 수 없었다)
+    let marks = [];
+    if (judge) marks = (await cdp.send("Runtime.evaluate", { expression: judgeFillExpr(), returnByValue: true })).result.value || [];
     if (!keepOverlays) {
       await cdp.send("Runtime.evaluate", { expression: HIDE_OVERLAYS });
     }
@@ -252,7 +256,7 @@ async function shoot(port, url, width, steps = [], scrollY = null, keepOverlays 
       await cdp.send("Runtime.evaluate", { expression: `scrollTo(0, ${Number(scrollY)})` });
       await sleep(SETTLE_MS);
       const view = await cdp.send("Page.captureScreenshot", { format: "jpeg", quality: 82 });
-      return { data: Buffer.from(view.data, "base64"), height: phone ? PHONE_HEIGHT : DESKTOP_HEIGHT, status, screens: [] };
+      return { data: Buffer.from(view.data, "base64"), height: phone ? PHONE_HEIGHT : DESKTOP_HEIGHT, status, screens: [], marks };
     }
     // 화면 오른쪽 밖으로 삐져나간 칸 — 폰에서 두 칸 입력이 잘린 것을 의뢰인이 먼저 잡았다(집수리 사장님 화면)
     const spill = (await cdp.send("Runtime.evaluate", { returnByValue: true, expression: OVERFLOW_PROBE })).result.value || [];
@@ -272,7 +276,7 @@ async function shoot(port, url, width, steps = [], scrollY = null, keepOverlays 
       });
       screens.push(Buffer.from(part.data, "base64"));
     }
-    return { data: Buffer.from(shot.data, "base64"), height, status, screens, spill };
+    return { data: Buffer.from(shot.data, "base64"), height, status, screens, spill, marks };
   } finally {
     cdp.close();
     await fetch(`http://127.0.0.1:${port}/json/close/${target.id}`).catch(() => {});
@@ -298,12 +302,13 @@ async function main() {
           continue;
         }
         try {
-          const { data, height, screens, spill = [] } = await shoot(port, job.url, width, job.steps || [], job.scrollY ?? null, Boolean(job.keepOverlays));
+          const { data, height, screens, spill = [], marks = [] } = await shoot(port, job.url, width, job.steps || [], job.scrollY ?? null, Boolean(job.keepOverlays), Boolean(job.judge));
           writeFileSync(file, data);
           const sliceDir = join(outDir, "screens");
           mkdirSync(sliceDir, { recursive: true });
           screens.forEach((buf, i) => writeFileSync(join(sliceDir, `${job.id}-${width}-${i + 1}.jpg`), buf));
           console.log(`[${done}/${total}] 저장  ${job.id}-${width}  ${width}x${height}`);
+          if (marks.length) console.log(`        판정 흔적  아직 보이는 견본 흔적: ${marks.join(", ")} — 판정용 사본에서 지우거나 채울 것`);
           if (spill.length) console.log(`        넘침  화면 밖으로 나간 칸 ${spill.length}개: ${spill.slice(0, 3).join(" | ")}`);
         } catch (err) {
           failed.push(`${job.id}-${width}: ${err.message}`);
