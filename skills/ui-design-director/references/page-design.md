@@ -17,7 +17,7 @@ Build the skeleton from the traits the shortlisted references share, choosing th
 3. Add content patterns the tool cannot see (hours, last drop-off and phone number in one block).
 4. Make the shortlist answer each of the owner's top questions (「출퇴근용으로 뭐 사요?」).
 5. Say in one line which shared traits you used and why.
-6. Before showing, rerun with `--ours <option> --prev <earlier projects' home pages>`. 「공통 범위 밖」, 「이전 시안과 같은 틀」 or 「참고 한 곳과 거의 같은 뼈대」 means redraw, or say in one line why this project departs.
+6. Before showing, rerun with `--ours <option>`. 「공통 범위 밖」, 「참고 한 곳과 거의 같은 뼈대」, 「참고 한 곳과 같은 생김새」, 「상자 위에 상자」 or 「칸 속 칸」 means redraw, or say in one line why this project departs. (`--prev` compares with earlier projects; the client never sees those, so it is only for testing the skill.)
 7. Compose phone and desktop both, starting with the customers' device. A phone stack stretched to desktop is a finding.
 
 Photo corners and button shape come from the shop's own face (a round date disc, an arch), not a majority. The tool flags stacked boxes, not radius. One platform's pages (Naver Place, Instagram) count as one reference.
@@ -44,18 +44,22 @@ Photo corners and button shape come from the shop's own face (a round date disc,
 10. Judge the first screen and sticky parts with one-screen captures at several scroll positions (`capture.mjs` job with `"scrollY"`), not a full-length capture.
 11. Times and prices in the body face with tabular figures; a monospace `14:00 ~ 19:00` read as generated.
 
+### Parts from this project
+
+Before the first layout, list the parts the page needs (name, today's status and hours, the contact action, notices, menu and prices, photos, directions, the owner's story). For each, look at how the shortlisted references show it and count (「시간을 첫 화면 큰 글씨로 3/6곳」), and look at the shop's own objects (the menu board, the sign, the order slip). Pick the form from those and write `DESIGN.md` § 부품 출처: part → form → source. Two projects whose references differ should not end with the same parts; if a part is drawn the way this file's examples are, check it came from this project's references and not from the skill. The rules below say what not to do — they are not a template.
+
 ### A face, not a kit
 
 A gate before the first layout is shown; judges named these in every round.
 
-1. **A face.** A wordmark set like a sign; one accent colour besides black (a second block colour only when the client picks it); icons in one style; one motif from the trade's objects or the name (a wildflower for 들꽃) in at least three places (a ticket stub, the price tag, shelf labels A–D).
-2. **No repeated section formula.** If three sections in a row are 「heading → list → small grey note」, change two: a full-bleed photo band, one big-number answer (「펑크 8,000원」), a section on another background or width.
+1. **A face.** The name, colour and one motif come from the shop (its sign, its trade's objects), one accent colour besides black (a second block colour only when the client picks it), icons in one style.
+2. **No repeated section formula.** Three sections in a row with the same make-up (「heading → list → small grey note」, 「label – value rows」) read as generated; change two, using forms from § Parts from this project.
 3. **No kit parts.** No left-border callouts, equal filled-and-outlined button pair as the main action, status dot before every state, same 6–8px radius on every box, tilted name tag, oversized corner on every photo, pills everywhere, or headline line in a second colour.
-4. **"Too boxy" means stacked boxes.** Remove tinted panels and boxes inside boxes; divide with lines and space. Do not round everything or copy another site's shapes; a café that did heard 「네이버랑 똑같다」.
+4. **"Too boxy" means stacked boxes.** Remove tinted panels and boxes inside boxes. Do not round everything or copy another site's shapes; a café that did heard 「네이버랑 똑같다」.
 5. **The owner's voice, shorter.** Keep computed, kind lines (「지금 맡기시면 내일(목) 저녁」) once each; drop the grey footnote under every block, which reads as 「모범답안」.
 6. **One photo grade.** Same crop logic, white balance and contrast; fewer, larger photos.
 7. **Not the generated formula.** No stock photo with a floating box, headline and two buttons; no four icon cards over the photo edge; no display face on every title (one or two levels); no thin generic line icons.
-8. **What reads as running.** Colour panel and photo side by side; the store's main job as a real input on the first screen (a search box, not a 「책 찾기」 button); a strip of the shop's own rooms; no borrowed chain-store hero; doubled section spacing.
+8. **What reads as running.** The store's main job as a real input on the first screen (a search box, not a 「책 찾기」 button); the shop's own rooms and goods in the photos; no borrowed chain-store hero.
 9. **Filled like a running organisation.** Pick from what the shortlisted sites share — utility bar (hours, phone, messenger), quick links as plain text (not a row of identical icon tiles), dated news, an Instagram strip, a multi-column footer — labelled 「견본」 for the client. No features a small organisation would not have (a filter bar for 50 animals).
 
 ### Questions per surface

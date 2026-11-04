@@ -105,6 +105,10 @@ def check(root: Path) -> list[str]:
             if design and not COUNT_MARK.search(design):
                 out.append("공통점 빠짐: DESIGN.md 에 「n/N곳」으로 센 참고 공통점이 없음 — 묻기 전에 어느 공통점을 왜 썼는지 적고 말할 것")
 
+    # 2b. 부품 출처 — 부품 모양을 스킬 예시가 아니라 이번 참고·가게 물건에서 골랐는지(카페·분식집이 같은 부품으로 나옴)
+    if files(root / "layouts", "*.html") and design and "부품 출처" not in design:
+        out.append("부품 출처 빠짐: DESIGN.md 에 「부품 출처」(부품 → 모양 → 참고 n/N곳 또는 가게 물건)가 없음 — 이름·영업 상태·연락·알림·메뉴·찾아오는 길 모양을 이번 참고에서 골랐는지 적을 것")
+
     # 3. 사장님 화면이 있으면 들어가기·폰 분실
     if OWNER_WORDS.search(said) and plan:  # 계획을 쓰기 전에는 묻지 않는다
         if not LOGIN_WORDS.search(plan):
@@ -134,7 +138,7 @@ def check(root: Path) -> list[str]:
             bp = ButtonPairs()
             bp.feed(read(p))
             for line, cls in bp.pairs[:1]:  # 한 파일에 하나만 — 같은 부품이 반복될 뿐
-                out.append(f"단추 한 쌍: {p.relative_to(root)}:{line} ({cls}) — 주 행동은 하나만 단추로, 나머지는 글자 링크로(같은 크기 채운·선 단추 쌍은 키트 티)")
+                out.append(f"단추 한 쌍: {p.relative_to(root)}:{line} ({cls}) — 같은 크기 채운·선 단추 쌍은 키트 티. 연락 수단을 참고들이 어떻게 놓는지 보고 고를 것")
     return out
 
 

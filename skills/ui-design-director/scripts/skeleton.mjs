@@ -206,7 +206,7 @@ const lookSeen = new Set();
 for (const r of refs.filter(() => me && me.stack >= 0.9))
   if (!lookSeen.has(r.host) && lookSeen.add(r.host) && !!r.hscroll === !!me.hscroll && r.btnShape === me.btnShape && roundPhoto(r) === roundPhoto(me) && r.hscroll > 0)
     notes.push(`참고 한 곳과 같은 생김새(폰): ${r.name} — 모양을 피하려고 다른 곳을 옮겨 오지 말고, 이 가게의 얼굴(사진·이름·자랑거리)에서 다시 잡을 것`);
-for (const p of rows.filter((r) => me && prev.includes(r.name))) {
+for (const p of rows.filter((r) => me && prev.includes(r.name) && !(me.stack >= 0.9 && r.stack >= 0.9))) { // 둘 다 한 줄로 쌓인 폰 화면은 늘 같아서 경고가 늘 떴다 — 폰은 생김새 비교로
   if (Math.abs(p.stack - me.stack) <= SAME_STACK && p.side === me.side && !!p.hscroll === !!me.hscroll && Math.abs(p.roundShare - me.roundShare) <= SAME_STACK)
     notes.push(`이전 시안과 같은 틀: ${p.name}(한 단 ${pct(p.stack)}, 둥근 ${pct(p.roundShare)}) — 컨셉·참고에서 뼈대를 다시 잡을 것`);
 }
