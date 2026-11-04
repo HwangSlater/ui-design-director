@@ -134,7 +134,7 @@ const me = rows.find((r) => r.name === ours);
 const refs = rows.filter((r) => r.name !== ours && !prev.includes(r.name));
 const notes = [];
 // 너무 같아도 문제(사용자): 참고 한 곳의 뼈대를 그대로 옮긴 것은 베낀 짜임 — 분야의 범위 안에서 컨셉으로 바꿔야 함
-for (const r of refs.filter(() => me)) {
+for (const r of refs.filter(() => me && me.stack < 0.9)) { // 둘 다 거의 한 줄로만 쌓인 폰 화면은 뼈대가 같아도 베낀 게 아님(폰의 기본) — 비교하지 않음
   if (Math.abs(r.stack - me.stack) <= CLONE && r.maxCols === me.maxCols && Math.abs(r.changes - me.changes) <= 1 && r.side === me.side && !!r.hscroll === !!me.hscroll && Math.abs(r.roundShare - me.roundShare) <= CLONE)
     notes.push(`참고 한 곳과 거의 같은 뼈대: ${r.name} — 그 사이트를 옮겨 그린 것인지 확인하고 컨셉으로 바꿀 것`);
 }
