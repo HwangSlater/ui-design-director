@@ -162,6 +162,6 @@ for (const [k, label, fmt] of METRICS) {
 lines.push("", "## 색 판(넓은 순)", ...rows.map((r) => `- ${r.name}: ${r.blocks.map((b) => `${b.hex}${b.strong ? "(진함)" : ""} ${Math.round(b.pct * 100)}%`).join(", ") || "없음"}`));
 if (blankRefs.length) lines.push("", `덜 불러온 기준(첫 화면 ${Math.round(BLANK_REF * 100)}% 넘게 빔, 가운데 값에서 뺌): ${blankRefs.map((r) => r.name).join(", ")} — 다시 돌리거나 캡처를 열어 본다.`);
 if (tooFew) lines.push("", `판정 못 함 — 제대로 잰 기준 사이트가 ${refs.length}곳뿐이다(${MIN_REFS}곳 이상 필요). 다시 돌린다.`);
-else if (me) lines.push("", `미달 ${short}개 — 미달이 있으면 보여 주지 않고 구성을 다시 짠다(page-design.md § 구성 판정).`);
+else if (me) lines.push("", `미달 ${short}개 — 미달이 있으면 보여 주지 않고 구성을 다시 짠다(references/blind-judge.md § Composition numbers).`);
 writeFileSync(out, lines.join("\n") + "\n");
 console.log(lines.join("\n"));
