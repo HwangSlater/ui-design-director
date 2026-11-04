@@ -83,7 +83,7 @@ In chat, keep to what the screens cannot show: licence and reuse status, what co
 
 Ask the user for a simple decision:
 
-1. primary reference;
+1. primary reference — it sets tone and direction; the page structure is later built from the traits it shares with the other shortlisted sites (`page-design.md` § 1), not traced from it alone;
 2. definite rejections and why;
 3. optionally one named trait from a secondary reference.
 
