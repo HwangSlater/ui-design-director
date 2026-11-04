@@ -1,6 +1,6 @@
 """큰 덩어리(머리 단추·상태 띠·후원 판·알림…)를 칠한 진한 색이 하나뿐인지 본다 — check_site.py가 쓴다.
 
-- one-colour-blocks (NOTE): 진한 색 하나가 덩어리 역할 다섯 군데 넘게 칠하고, 두 번째 진한 덩어리 색이 없다.
+- one-colour-blocks (NOTE): 진한 색 하나가 덩어리 역할 다섯 군데 넘게 칠하고, 두 번째 진한 덩어리 색이 없다. 고칠 곳은 둘째 색이 아니라 칠한 자리 줄이기(강조색 하나 — 둘이면 원칙 없어 보임).
   색이 한 가지면 단추·띠·판이 모두 같은 무게로 보여 무엇이 먼저인지 흐려진다(color-selection.md).
 """
 
@@ -151,4 +151,4 @@ def check_blocks(sources, report) -> None:
         hexcode = "#" + "".join(f"{round(c * 255):02X}" for c in g["colour"][:3])
         report.add("NOTE", g["where"][0], g["where"][1], "one-colour-blocks",
                    f"same strong colour {hexcode} on {len(g['roles'])} block roles: {', '.join(g['roles'])} — "
-                   "consider a second block colour (color-selection.md)")
+                   "keep it for the main button and status, and let bands and panels go white with lines (one accent — color-selection.md)")

@@ -4,7 +4,7 @@ Every choice the user makes — format reference, palette, layout option — is 
 
 ## Rules
 
-- **Pictures first, words last.** Open the viewer in the user's browser, then ask a short question. Keep chat to what the screen cannot say (licence, what was not verified).
+- **Pictures first, words last.** Give the user the viewer's full address and let them open it (open a window yourself only when they ask), then ask a short question. Keep chat to what the screen cannot say (licence, what was not verified).
 - **Several screens per candidate.** One screenshot is not enough to judge a site. Capture the pages that matter for the product (for a shop: first screen, list, detail, cart or checkout) at a desktop width and a real phone width.
 - **Same frame for every candidate.** The viewer shows one candidate at a time, full screen, in an identical frame, scrolled inside the frame. Never mix image sizes or crops between candidates.
 - **No commentary on the board.** Do not put pros/cons chips, badges, or paragraphs on the viewer. The user judges from the screens; your recommendation and reasoning go in chat, briefly.
