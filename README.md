@@ -211,6 +211,8 @@ $ui-design-director로 렌더링된 UI가 DESIGN.md를 준수하는지 검수해
         │   ├── extract_styles.mjs
         │   ├── capture.mjs
         │   ├── make_board.py
+        │   ├── skeleton.mjs
+        │   ├── preflight.py
         │   └── wait_choice.mjs
         └── references/
             ├── design-selection.md
@@ -221,6 +223,9 @@ $ui-design-director로 렌더링된 UI가 DESIGN.md를 준수하는지 검수해
             ├── design-md-format.md
             ├── site-plan.md
             ├── page-design.md
+            ├── mockup-content.md
+            ├── owner-screens.md
+            ├── blind-judge.md
             ├── site-build.md
             ├── companion-skills.md
             ├── comparison-board.md
@@ -236,7 +241,10 @@ $ui-design-director로 렌더링된 UI가 DESIGN.md를 준수하는지 검수해
 - `reference-extraction.md`: 선택한 레퍼런스에서 디자인 규칙 추출
 - `design-md-format.md`: `DESIGN.md` 구조와 피드백 누적 방식
 - `site-plan.md`: 페이지 목록·이동 경로·`SITE-PLAN.md` 작성
-- `page-design.md`: 페이지 유형별 레이아웃 시안과 완성 시안
+- `page-design.md`: 페이지 유형별 배치 안과 완성 시안 관문
+- `mockup-content.md`: 시안에 들어갈 데이터·계산 값(영업 상태·날짜)·사진·문구·상태
+- `owner-screens.md`: 사장님 화면(들어가기·폰 분실·바꾸기 전 묻기·되돌리기·바뀐 값 확인)
+- `blind-judge.md`: 구성 수치 비교와 블라인드 판정(공정한 판정 그림, 결과 읽기)
 - `site-build.md`: 승인된 시안을 제품 코드로 옮기는 순서와 기준
 - `companion-skills.md`: 다른 오픈소스 디자인 스킬을 단계별 보조로 쓰는 규칙
 - `comparison-board.md`: 후보를 보여 주는 방식(캡처, 전체 화면 보기, 팔레트 바꿔 보기)
@@ -250,23 +258,25 @@ $ui-design-director로 렌더링된 UI가 DESIGN.md를 준수하는지 검수해
 - `compose_metrics.mjs`: 넓은 화면 첫 화면의 구성(사진·색 판·빈 바탕 비율, 가장 큰 글자, 진한 색 덩어리 수, 글 폭)을 실제 사이트 여럿과 숫자로 비교해 미달 항목을 표시(작은 값이 아니라 구성을 맞추기)
 - `extract_styles.mjs`: 기준 사이트에서 실제로 쓰인 글자 크기·둥글기·그림자·여백·사진과 상자 수를 뽑아 표로(글이 아니라 숫자를 보고 짜기)
 - `make_live_board.py`: 참고 사이트를 캡처하지 않고 실제로 띄워 넘겨 보는 화면(다른 페이지 안에 띄우기를 막는 사이트는 표시)
+- `skeleton.mjs`: 참고 사이트들의 화면 짜임을 폰·컴퓨터 따로 재서 공통점을 「n/N곳」으로 뽑고, 우리 시안이 공통 범위 밖이거나 한 곳을 옮겼거나 이전 시안과 같은 틀이거나 상자 위에 상자를 쌓았으면 알림(같은 사이트 여러 쪽은 한 곳으로 셈)
+- `preflight.py`: 의뢰인에게 보내기 전 점검 — 의뢰인이 말한 채널(네이버·인스타·카카오)이 참고와 시안에 있는지, 공통점을 셌는지, 사장님 들어가기·폰 분실, 같은 크기 단추 쌍
 - `side_by_side.py`: 우리 화면과 기준 사이트를 같은 폭으로 나란히 놓고 시각 층 대조표를 붙인 비교 페이지
 
 ## 컨텍스트 크기
 
-전체 스킬 지침은 약 53KB이지만 한 번에 모두 읽지 않습니다. 기본 `SKILL.md`를 읽은 뒤 현재 작업에 필요한 참조 문서만 추가로 로드합니다.
+전체 스킬 지침은 약 141KB이지만 한 번에 모두 읽지 않습니다. 기본 `SKILL.md`(23KB)를 읽은 뒤 현재 작업에 필요한 참조 문서만 추가로 로드합니다. 자주 놓치는 것은 글을 늘리는 대신 `preflight.py`·`skeleton.mjs` 같은 도구가 잡게 합니다.
 
-| 모드 | 대략적인 로드 크기 | 평가 |
-|---|---:|---|
-| 기본 진입 | 9.6KB | 가벼움~보통 |
-| 대화형 전체 선정 | 24.0KB | 보통 |
-| 컨셉·색상 선정 | 19.0KB | 보통 |
-| 코드 시안 | 12.8KB | 가벼움~보통 |
-| DESIGN.md 추출 | 18.5KB | 보통 |
-| 사이트 계획 | 14.2KB | 가벼움~보통 |
-| 페이지 시안 | 18.4KB | 보통 |
-| 코드 제작 | 17.1KB | 보통 |
-| UI 검수 | 13.5KB | 가벼움~보통 |
+| 모드 | 대략적인 로드 크기 |
+|---|---:|
+| 기본 진입 | 23KB |
+| 대화형 전체 선정 | 71KB |
+| 컨셉·색상 선정 | 45KB |
+| 코드 시안 | 26KB |
+| DESIGN.md 추출 | 35KB |
+| 사이트 계획 | 32KB |
+| 페이지 시안 | 48KB |
+| 코드 제작 | 27KB |
+| UI 검수 | 33KB |
 
 필요한 문서만 단계적으로 읽는 구조이므로 프로젝트 컨텍스트를 과도하게 소비하지 않습니다.
 
