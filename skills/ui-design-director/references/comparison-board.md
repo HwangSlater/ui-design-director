@@ -19,7 +19,9 @@ Capturing every candidate at two widths and several pages is slow (a batch of se
 
 Capture the part you are comparing, not just the top of the page, and look at every capture before naming it: a "list" image of a shelter site showed only a purple banner and a headline, the animal grid sat two screens further down, and another candidate's "adopt" page had no animals at all — the client could not compare and said so. Name each image by what it actually shows. When you summarise a measurement for the user ("all three use square corners"), check it against the images first; one of the three had visibly rounded cards and the client noticed the mismatch.
 
-Capture with `capture.mjs` only what the live page cannot show: blocked sites, a user (or client session) who can only look at images — give them one first-screen image per candidate, not a full set — and the side-by-side critique in `ui-review.md`.
+**Blocked sites through the local proxy.** When the board reports blocked candidates (Naver Place, Daangn and most platform pages forbid framing), run `node scripts/live_proxy.mjs <board.html> <spec.json>` in the background and give the user the `OPEN` address it prints instead of the file: it shows those sites inside the board by removing the framing headers on this machine. It loads them without their own scripts (a script-run page rebuilt its head under our address and lost every style), so carousels do not move but first screens show; give a candidate `"js": true` only when it is empty without scripts. It listens on 127.0.0.1 only, accepts only the spec's sites, only reads, and passes no cookies. Login-walled apps (Instagram) still show a splash screen — capture those. Stop the proxy when the choice is made. Approach after willyogo/iframe-proxy (MIT); public proxies, hosted workers and paid remote browsers were ruled out.
+
+Capture with `capture.mjs` only what the live page cannot show: login-walled sites, a user (or client session) who can only look at images — give them one first-screen image per candidate, not a full set — and the side-by-side critique in `ui-review.md`.
 
 ## Capturing sites — `scripts/capture.mjs`
 

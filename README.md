@@ -214,6 +214,7 @@ $ui-design-director로 렌더링된 UI가 DESIGN.md를 준수하는지 검수해
         │   ├── skeleton.mjs
         │   ├── preflight.py
         │   ├── judge_fill.mjs
+        │   ├── live_proxy.mjs
         │   └── wait_choice.mjs
         └── references/
             ├── design-selection.md
@@ -262,6 +263,7 @@ $ui-design-director로 렌더링된 UI가 DESIGN.md를 준수하는지 검수해
 - `skeleton.mjs`: 참고 사이트들의 화면 짜임을 폰·컴퓨터 따로 재서 공통점을 「n/N곳」으로 뽑고, 우리 시안이 공통 범위 밖이거나 한 곳을 옮겼거나 이전 시안과 같은 틀이거나 상자 위에 상자를 쌓았으면 알림(같은 사이트 여러 쪽은 한 곳으로 셈)
 - `preflight.py`: 의뢰인에게 보내기 전 점검 — 의뢰인이 말한 채널(네이버·인스타·카카오)이 참고와 시안에 있는지, 공통점을 셌는지, 사장님 들어가기·폰 분실, 같은 크기 단추 쌍
 - `judge_fill.mjs`: 블라인드 판정용 사본만 — 견본 표시·빗금 자리 숨기기, 0000 전화번호를 그럴듯한 번호로, 남은 흔적 알림(`capture.mjs` 일감에 `"judge": true`)
+- `live_proxy.mjs`: 다른 페이지 안에 띄우기를 막는 참고 사이트(네이버 지도·당근 등)도 실시간 보기 화면에 띄우는 내 컴퓨터 안 프록시 — 막는 머리 지우기, 사이트 스크립트 빼기, 후보 사이트만·읽기만·쿠키 없음
 - `side_by_side.py`: 우리 화면과 기준 사이트를 같은 폭으로 나란히 놓고 시각 층 대조표를 붙인 비교 페이지
 
 ## 컨텍스트 크기
@@ -295,6 +297,7 @@ python3 scripts/validate_skill.py
 ```bash
 python -m unittest discover tests
 node --test tests/test_judge_fill.mjs
+node --test tests/test_live_proxy.mjs
 ```
 
 공식 `skill-creator` 검증기가 설치된 개발 환경에서는 스킬 폴더를 직접 검사할 수도 있습니다.

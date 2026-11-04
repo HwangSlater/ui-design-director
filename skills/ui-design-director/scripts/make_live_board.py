@@ -10,6 +10,7 @@ spec: { "title": "참고 사이트 고르기 · 솔담",
 후보마다 첫 페이지 응답 머리(X-Frame-Options, CSP frame-ancestors)를 보고, 다른 페이지 안에 띄우는 걸
 막는 사이트는 「새 창으로 열기」 안내로 바꾼다. 인증서 오류·접속 실패도 같이 알려 준다.
 막지 않아도 스크립트로 빠져나가는 사이트가 있으니, 만든 뒤 한 번 열어 보고 확인한다.
+막힌 사이트는 live_proxy.mjs 로 띄운다(사이트 스크립트는 빼고 — 스크립트 없이는 빈 화면인 후보만 "js": true).
 막힌 사이트에 "shot"(capture.mjs 로 찍은 첫 화면 그림 경로)이 있으면 빈 안내 대신 그 그림을 보여 준다 —
 그림만 볼 수 있는 의뢰인이 「흰 화면에 새 창으로 열기 글만 있다, 왜 넣었냐」고 물었다.
 처음에 애니메이션이나 로딩 화면이 있는 사이트는 첫 화면 그림이 까맣게 찍힌다. 그런 후보는 다른 페이지(객실)를 먼저 보이거나 뺀다.
@@ -27,7 +28,7 @@ from pathlib import Path
 
 TEMPLATE = Path(__file__).resolve().parent.parent / "assets" / "live-board.html"
 TIMEOUT_S = 15
-UA = "Mozilla/5.0 (compatible; ui-design-director live board)"
+UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0 Safari/537.36"  # 봇 이름으로 가면 네이버 지도가 막아 「열리지 않아요」로 잘못 나왔다
 
 
 def frame_policy(url: str) -> str:
@@ -52,7 +53,7 @@ def frame_policy(url: str) -> str:
     return "ok"
 
 
-NOTE = {"blocked": "다른 페이지 안에 띄우는 걸 막는 사이트예요 → 「새 창으로 열기」",
+NOTE = {"blocked": "다른 페이지 안에 띄우는 걸 막는 사이트예요 — live_proxy.mjs 로 열면 보여요, 아니면 「새 창으로 열기」",
         "cert": "보안 인증서 오류로 브라우저가 경고를 띄워요",
         "error": "지금 열리지 않아요"}
 
@@ -72,11 +73,13 @@ def main(argv: list[str]) -> int:
         print(f'{c["n"]} {c["name"]}: {state}')
         if state != "ok":
             c["blocked"] = True
-            c["meta"] = f'{c.get("meta", "")} · {NOTE[state]}'.strip(" ·")
+            c["note"] = NOTE[state]  # live_proxy.mjs 로 띄우면 보이지 않는다
     data = json.dumps(cands, ensure_ascii=False, indent=1).replace("</", "<\\/")
     page = TEMPLATE.read_text(encoding="utf-8").replace("__DATA__", data).replace("__TITLE__", html.escape(spec.get("title", "참고 사이트 고르기")))
     Path(argv[1]).write_text(page, encoding="utf-8")
     print(f"wrote {argv[1]}")
+    if any(c.get("blocked") for c in cands):
+        print(f"막힌 후보가 있어요 → node scripts/live_proxy.mjs {argv[1]} {argv[0]} 로 띄우고 찍힌 OPEN 주소를 주세요")
     return 0
 
 
