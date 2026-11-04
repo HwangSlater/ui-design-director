@@ -21,9 +21,14 @@ const GAP = 24;            // 이보다 가까운 글·사진 덩어리는 한 �
 const MIN_COL = 64;        // 이보다 좁은 것(아이콘·색 점·작은 링크)은 단으로 세지 않는다 — 폰에서 아이콘 줄을 「7단」으로 세던 것
 const MIN_BOX = 20000;     // 모양을 볼 상자 최소 넓이(px²)
 const ROUND_PX = 20;       // 이 이상 둥글면 「둥근 모양」
+const MIN_PHOTO = 10000;   // 모서리를 볼 사진 최소 넓이(px²)
+const PHOTO_ROUND = 4;     // 사진 모서리가 이 이상이면 둥근 사진
+const BOX_OVER = 0.15;     // 바탕·테두리 상자 넓이가 참고 가장 많은 곳보다 이만큼 넘으면 「상자 위에 상자」
 const SAME_STACK = 0.12;   // 한 단 비율 차이가 이 안이면 같은 틀로 본다
 const DIFF_STACK = 0.2;    // 참고들의 한 단 비율 범위에서 이만큼 넘게 벗어나면 「공통 범위 밖」
 const CLONE = 0.05;        // 참고 한 곳과 비율 차이가 모두 이 안이고 단·띠·안내판이 같으면 「참고 한 곳과 거의 같음」(베낀 짜임)
+// capture.mjs 와 같은 값 — 머리 없는 브라우저 이름(HeadlessChrome)으로 가면 네이버 지도가 빈 화면을 줘서 사진이 「없음」으로 나왔다
+const PHONE_UA = "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1";
 const WIN_DIRS = [process.env["ProgramFiles(x86)"], process.env.ProgramFiles, process.env.LOCALAPPDATA].filter(Boolean);
 const BROWSERS = [process.env.CAPTURE_BROWSER,
   ...WIN_DIRS.flatMap((d) => [join(d, "Microsoft/Edge/Application/msedge.exe"), join(d, "Google/Chrome/Application/chrome.exe")]),
@@ -88,7 +93,61 @@ const PROBE = `(() => {
   const imgs = [...document.querySelectorAll("img")].map((i) => i.getBoundingClientRect()).filter((r) => r.width * r.height > 40000);
   for (const t of document.querySelectorAll("h1,h2,p")) { const r = t.getBoundingClientRect(); if ((t.innerText || "").trim() && imgs.some((m) => r.left >= m.left && r.right <= m.right && r.top >= m.top && r.bottom <= m.bottom)) overText++; }
   radii.sort((a, b) => a - b);
-  return { stack, maxCols: Math.max(1, ...bands), changes, side, hscroll, roundShare: radii.length ? radii.filter((v) => v >= ${ROUND_PX}).length / radii.length : 0, radMed: radii.length ? radii[Math.floor(radii.length / 2)] : 0, shapes, overText, bands: bands.length, order, heroPhoto: firstImg > 0.4, searchFirst, navTop, callEnd };
+  // 모양은 큰 상자 하나로 말하지 않는다(사용자 2026-11-04: 「직사각형을 너무 의식해서 오히려 AI 티」) —
+  // 참고에 큰 둥근 상자가 없던 것을 「모서리 0」으로 읽어 사진·단추·칸까지 전부 네모로 만들었다. 실제로는 큰 상자 자체가 적고 사진·단추는 둥글었다.
+  const rad = (cs, w, h) => Math.max(...[cs.borderTopLeftRadius, cs.borderBottomRightRadius].map((v) => v.endsWith("%") ? parseFloat(v) / 100 * Math.min(w, h) : parseFloat(v) || 0));
+  const photoR = [];
+  for (const im of document.querySelectorAll("img,video")) {
+    const r = im.getBoundingClientRect(); if (r.width * r.height < ${MIN_PHOTO}) continue;
+    let best = rad(getComputedStyle(im), r.width, r.height), el = im.parentElement;
+    for (let i = 0; i < 3 && el && !best; i++, el = el.parentElement) { const c = getComputedStyle(el); if (c.overflow !== "visible") best = rad(c, r.width, r.height); }
+    photoR.push(best);
+  }
+  photoR.sort((a, b) => a - b);
+  const btn = { 알약: 0, 둥근: 0, 각진: 0 }; let wideBtn = 0;
+  for (const b of document.querySelectorAll("a,button")) {
+    const cs = getComputedStyle(b), r = b.getBoundingClientRect();
+    if (r.height < 24 || r.height > 90 || r.width < 40 || r.top + scrollY > H) continue;
+    if (!((cs.backgroundColor !== "rgba(0, 0, 0, 0)" && cs.backgroundColor !== "transparent") || parseFloat(cs.borderTopWidth) > 0)) continue; // lint:allow color 계산된 투명 값과 비교
+    const k = rad(cs, r.width, r.height); btn[k >= r.height / 2 - 1 ? "알약" : k >= 4 ? "둥근" : "각진"]++;
+    if (r.width > W * 0.8) wideBtn++;
+  }
+  // 바탕 넓이: 격자 점마다 가장 안쪽 바탕을 찾아, 가장 넓은 바탕(그 페이지의 「종이」)이 아닌 곳의 비율과 상자 속 상자 비율을 잰다.
+  // 네이버처럼 회색 몸통 위에 흰 띠를 깐 곳은 흰 띠가 종이가 된다(몸통 색과 비교하면 100% 상자로 잘못 나옴).
+  const TRANSPARENT = ["rgba(0, 0, 0, 0)", "transparent"]; // lint:allow color 계산된 투명 값과 비교
+  const fills = [];
+  for (const el of document.querySelectorAll("body, body *")) {
+    if (/^(IMG|VIDEO|PICTURE|svg)$/i.test(el.tagName)) continue;
+    const cs = getComputedStyle(el); const r = el.getBoundingClientRect(); if (r.width < ${MIN_COL} || r.height < 24) continue;
+    const framed = ["Top", "Right", "Bottom", "Left"].filter((x) => parseFloat(cs["border" + x + "Width"]) > 0).length >= 3;
+    const bg = cs.backgroundImage !== "none" ? "img" : TRANSPARENT.includes(cs.backgroundColor) ? null : cs.backgroundColor;
+    if (!bg && !framed) continue;
+    fills.push({ x: r.left, y: r.top + scrollY, w: r.width, h: r.height, bg: bg || "frame", img: bg === "img" });
+  }
+  const STEP = 24, hits = {}; let pts = 0; const deep = [];
+  for (let y = 0; y < H; y += STEP) for (let x = STEP / 2; x < W; x += STEP) {
+    const on = fills.filter((f) => x >= f.x && x < f.x + f.w && y >= f.y && y < f.y + f.h);
+    pts++; const top = on[on.length - 1]; const k = top ? top.bg : "none"; hits[k] = (hits[k] || 0) + 1; deep.push(on);
+  }
+  const paper = Object.entries(hits).filter(([k]) => k !== "img").sort((a, b) => b[1] - a[1])[0]?.[0] || "none";
+  let boxed = 0, nested = 0;
+  for (const on of deep) {
+    if (on.some((f) => f.img)) continue;
+    const paperAt = on.map((f) => f.bg).lastIndexOf(paper);
+    const above = on.slice(paperAt + 1).filter((f) => f.bg !== paper); // 종이 위에 올린 바탕·테두리
+    if (above.length) boxed++; if (above.length >= 2) nested++;
+  }
+  const boxShare = boxed / pts, nestShare = nested / pts;
+  for (const el of document.querySelectorAll("body *")) {
+    const cs = getComputedStyle(el); if (cs.backgroundImage === "none" || !cs.backgroundImage.includes("url(")) continue;
+    const r = el.getBoundingClientRect(); if (r.width * r.height < ${MIN_PHOTO} || r.top + scrollY > H) continue;
+    let best = rad(cs, r.width, r.height), p = el.parentElement;
+    for (let i = 0; i < 3 && p && !best; i++, p = p.parentElement) { const c = getComputedStyle(p); if (c.overflow !== "visible") best = rad(c, r.width, r.height); }
+    photoR.push(best);
+  }
+  photoR.sort((a, b) => a - b);
+  const btnTop = Object.entries(btn).sort((a, b) => b[1] - a[1])[0];
+  return { photoRad: photoR.length ? photoR[Math.floor(photoR.length / 2)] : null, photoN: photoR.length, btnShape: btnTop[1] ? btnTop[0] : "—", btnN: btn.알약 + btn.둥근 + btn.각진, wideBtn, boxShare, nestShare, stack, maxCols: Math.max(1, ...bands), changes, side, hscroll, roundShare: radii.length ? radii.filter((v) => v >= ${ROUND_PX}).length / radii.length : 0, radMed: radii.length ? radii[Math.floor(radii.length / 2)] : 0, shapes, overText, bands: bands.length, order, heroPhoto: firstImg > 0.4, searchFirst, navTop, callEnd };
 })()`;
 
 const exe = BROWSERS.find((p) => existsSync(p));
@@ -109,6 +168,7 @@ try {
   await cdp("Page.enable");
   const phone = width <= 600; // 폰 너비는 따로 잰다 — 넓은 화면의 칸 나눔을 폰 공통점으로 말하면 안 됨(의뢰인 지적)
   await cdp("Emulation.setDeviceMetricsOverride", { width, height: phone ? 844 : DESKTOP_H, deviceScaleFactor: 1, mobile: phone });
+  if (phone) await cdp("Emulation.setUserAgentOverride", { userAgent: PHONE_UA });
   for (const [name, url] of targets) {
     await cdp("Page.navigate", { url });
     await sleep(SETTLE_MS);
@@ -117,7 +177,7 @@ try {
     const r = await cdp("Runtime.evaluate", { expression: PROBE, returnByValue: true });
     const v = r.result?.result?.value;
     if (!v) { console.log(`실패  ${name}`); continue; }
-    rows.push({ name, ...v });
+    rows.push({ name, host: url.startsWith("file:") ? `file:${name}` : new URL(url).host, ...v });
     console.log(`잼  ${name}`);
   }
 } finally {
@@ -127,7 +187,8 @@ try {
 
 const pct = (x) => `${Math.round(x * 100)}%`;
 const COLS = [["stack", "한 단으로만 쌓인 비율", pct], ["maxCols", "가장 많은 단", String], ["changes", "단 수가 바뀐 횟수", String], ["side", "옆에 붙은 안내판", (x) => (x ? "있음" : "—")],
-  ["hscroll", "옆으로 넘기는 띠", String], ["roundShare", "둥근 상자 비율", pct], ["radMed", "모서리 가운데 값", (x) => `${Math.round(x)}px`], ["shapes", "원·아치·자른 모양", String], ["overText", "사진 위 글", String]];
+  ["hscroll", "옆으로 넘기는 띠", String], ["roundShare", "둥근 큰 상자 비율", pct], ["radMed", "큰 상자 모서리 가운데 값", (x) => `${Math.round(x)}px`],
+  ["photoRad", "사진 모서리 가운데 값", (x) => (x == null ? "사진 없음" : `${Math.round(x)}px`)], ["btnShape", "단추 모양(가장 많은 것)", String], ["btnN", "단추 수", String], ["wideBtn", "폭 가득 단추", String], ["boxShare", "종이 위 바탕·테두리 칸 넓이", pct], ["nestShare", "칸 속 칸 넓이", pct], ["shapes", "원·아치·자른 모양", String], ["overText", "사진 위 글", String]];
 const lines = [`# 뼈대 비교 — ${width}px`, "", `| 항목 | ${rows.map((r) => r.name).join(" | ")} |`, `|---|${rows.map(() => "---").join("|")}|`];
 for (const [k, label, f] of COLS) lines.push(`| ${label} | ${rows.map((r) => f(r[k])).join(" | ")} |`);
 const me = rows.find((r) => r.name === ours);
@@ -138,6 +199,13 @@ for (const r of refs.filter(() => me && me.stack < 0.9)) { // 둘 다 거의 한
   if (Math.abs(r.stack - me.stack) <= CLONE && r.maxCols === me.maxCols && Math.abs(r.changes - me.changes) <= 1 && r.side === me.side && !!r.hscroll === !!me.hscroll && Math.abs(r.roundShare - me.roundShare) <= CLONE)
     notes.push(`참고 한 곳과 거의 같은 뼈대: ${r.name} — 그 사이트를 옮겨 그린 것인지 확인하고 컨셉으로 바꿀 것`);
 }
+// 폰은 다 한 줄로 쌓여 뼈대로는 못 가른다 — 생김새(옆으로 넘기는 사진·단추 모양·사진 모서리·칸 넓이)가 참고 한 곳과 같으면 그 화면을 옮긴 것
+// (마당집 카페: 네모를 풀라는 말에 네이버 지도 화면의 둥근 사진 띠 + 알약 단추를 그대로 옮겨 「네이버랑 똑같다」)
+const roundPhoto = (r) => r.photoRad != null && r.photoRad >= PHOTO_ROUND;
+const lookSeen = new Set();
+for (const r of refs.filter(() => me && me.stack >= 0.9))
+  if (!lookSeen.has(r.host) && lookSeen.add(r.host) && !!r.hscroll === !!me.hscroll && r.btnShape === me.btnShape && roundPhoto(r) === roundPhoto(me) && r.hscroll > 0)
+    notes.push(`참고 한 곳과 같은 생김새(폰): ${r.name} — 모양을 피하려고 다른 곳을 옮겨 오지 말고, 이 가게의 얼굴(사진·이름·자랑거리)에서 다시 잡을 것`);
 for (const p of rows.filter((r) => me && prev.includes(r.name))) {
   if (Math.abs(p.stack - me.stack) <= SAME_STACK && p.side === me.side && !!p.hscroll === !!me.hscroll && Math.abs(p.roundShare - me.roundShare) <= SAME_STACK)
     notes.push(`이전 시안과 같은 틀: ${p.name}(한 단 ${pct(p.stack)}, 둥근 ${pct(p.roundShare)}) — 컨셉·참고에서 뼈대를 다시 잡을 것`);
@@ -145,18 +213,30 @@ for (const p of rows.filter((r) => me && prev.includes(r.name))) {
 // 참고 공통점 — 사이트에 순위를 매겨 한 곳을 고르는 게 아니라, 여러 곳에 함께 있는 것을 모아 그중 이 프로젝트에 써도 좋은 것을 고른다(사용자).
 // 한 곳에만 있는 것은 그 사이트의 개성이라 옮기지 않는다.
 if (refs.length >= 2) {
-  const half = (f) => refs.filter(f).length >= Math.ceil(refs.length / 2);
-  const cnt = (f) => `${refs.filter(f).length}/${refs.length}곳`; // 몇 곳 중 몇 곳인지 함께 — 「일곱 곳 공통」처럼 넉넉하게 말하지 않게
+  // 한 사이트(같은 주소)의 여러 쪽은 한 곳으로 센다 — 네이버 지도 가게 셋이 한 틀이라 「4/7곳」으로 공통점을 끌고 갔다
+  const hosts = [...new Set(refs.map((r) => r.host))];
+  const hostHas = (f) => hosts.filter((h) => { const pg = refs.filter((r) => r.host === h); return pg.filter(f).length * 2 >= pg.length; }).length;
+  const half = (f) => hostHas(f) >= Math.ceil(hosts.length / 2);
+  const cnt = (f) => `${hostHas(f)}/${hosts.length}곳`; // 몇 곳 중 몇 곳인지 함께 — 「일곱 곳 공통」처럼 넉넉하게 말하지 않게
   const st = refs.map((r) => r.stack).sort((a, b) => a - b), mc = refs.map((r) => r.maxCols).sort((a, b) => a - b);
   const common = [`한 단 세로 나열 ${pct(st[0])}~${pct(st[st.length - 1])}(가운데 ${pct(st[Math.floor(st.length / 2)])})`, `가장 많은 단 가운데 ${mc[Math.floor(mc.length / 2)]}`];
   const traits = [["navTop", "맨 위 메뉴 줄"], ["heroPhoto", "첫 화면이 큰 사진"], ["searchFirst", "첫 화면에 검색창"], ["callEnd", "끝에 전화·연락"], ["side", "옆에 붙은 안내판"], ["hscroll", "옆으로 넘기는 띠"]];
   for (const [k, label] of traits) if (half((r) => r[k])) common.push(`${label} (${cnt((r) => r[k])})`);
   if (half((r) => r.maxCols >= 3)) common.push(`3단 이상 칸이 있음 (${cnt((r) => r.maxCols >= 3)})`);
   if (half((r) => r.changes >= 4)) common.push(`내려가며 단 수가 자주 바뀜 (${cnt((r) => r.changes >= 4)})`);
-  const rd = cnt((r) => r.roundShare > 0.1);
-  common.push(half((r) => r.roundShare > 0.1) ? `둥근 상자 (${rd})` : `모서리는 각진 쪽이 많음 — 둥근 곳 ${rd}`);
-  if (half((r) => r.shapes > 0)) common.push(`원·아치 같은 모양 (${cnt((r) => r.shapes > 0)})`);
-  if (half((r) => r.overText > 0)) common.push(`사진 위 글 (${cnt((r) => r.overText > 0)})`);
+  // 모양은 부품마다 따로 — 「큰 상자가 각지다」를 「전부 모서리 0」으로 읽지 않게
+  const bs = refs.map((r) => r.boxShare).sort((a, b) => a - b);
+  common.push(`종이 위 바탕·테두리 칸 넓이 ${pct(bs[0])}~${pct(bs[bs.length - 1])}(가운데 ${pct(bs[Math.floor(bs.length / 2)])}) — 적으면 「큰 상자 없이 흰 바탕에 글·사진·줄」이라는 뜻이지, 상자를 네모로 그리라는 뜻이 아님`);
+  if (half((r) => r.roundShare > 0.1)) common.push(`둥근 큰 상자 (${cnt((r) => r.roundShare > 0.1)})`);
+  const withPhoto = refs.filter((r) => r.photoRad != null);
+  if (withPhoto.length) common.push(`사진 모서리: 둥긂 ${cnt((r) => r.photoRad != null && r.photoRad >= PHOTO_ROUND)}, 각짐 ${cnt((r) => r.photoRad != null && r.photoRad < PHOTO_ROUND)}`);
+  const shapeCnt = {}; for (const k of ["알약", "둥근", "각진"]) { const n = hostHas((r) => r.btnShape === k); if (n) shapeCnt[k] = n; }
+  common.push(`단추 모양: ${Object.entries(shapeCnt).map(([k, n]) => `${k} ${n}곳`).join(", ") || "단추 없음"} (/${hosts.length}) · 폭 가득 단추 있는 곳 ${cnt((r) => r.wideBtn > 0)}`);
+  // 사진 모서리·단추 모양은 판정하지 않는다(사용자 2026-11-04 「직사각형을 너무 의식해서 오히려 AI 티」): 네모를 피하라는 말에 둥글게 바꾸면 그게 또 만든 티이고,
+  // 다수 쪽 모양으로 맞추면 그 사이트를 옮긴 것이 된다. 모양은 가게 얼굴(사진·이름·자랑거리)에 맞춰 고르고, 걸러 낼 것은 칸이 쌓이는 것뿐.
+  if (me && me.boxShare > bs[bs.length - 1] + BOX_OVER) notes.push(`상자 위에 상자: 우리 종이 위 칸 넓이 ${pct(me.boxShare)} — 참고는 ${pct(bs[0])}~${pct(bs[bs.length - 1])}. 칸 바탕·테두리를 걷어 흰 바탕에 줄·여백으로 나눌 것`);
+  const ns = refs.map((r) => r.nestShare).sort((a, b) => a - b);
+  if (me && me.nestShare > ns[ns.length - 1] + BOX_OVER / 3) notes.push(`칸 속 칸: 우리 ${pct(me.nestShare)} — 참고 가장 많은 곳 ${pct(ns[ns.length - 1])}. 바탕 칸 안에 또 흰 칸을 넣지 말 것`);
   // 배치 순서 공통점: 자리마다 절반 넘게 같은 것
   const seq = [];
   for (let i = 0; i < 6; i++) {
@@ -166,7 +246,7 @@ if (refs.length >= 2) {
     seq.push(top[0]);
   }
   if (seq.length) common.push(`위에서부터 배치: ${seq.join(" → ")} (자리마다 절반 넘게 같은 것만 — 모든 곳 공통이 아님)`);
-  const only = refs.flatMap((r) => traits.filter(([k]) => r[k] && !half((x) => x[k])).map(([, l]) => `${r.name}의 ${l}`));
+  const only = [...new Set(refs.flatMap((r) => traits.filter(([k]) => r[k] && !half((x) => x[k])).map(([, l]) => `${r.name}의 ${l}`)))];
   lines.push("", "## 참고 공통점 — 이 중 이 프로젝트에 써도 좋은 것을 고른다", "(짜임만 잰다. 영업시간·접수 마감·전화를 한 덩어리로 두는 것 같은 내용 짜임은 화면을 보고 따로 적는다)", ...common.map((c) => `- ${c}`));
   if (only.length) lines.push("", `절반이 안 되는 곳에만 있는 것(공통이 아님 — 쓰려면 이유를 대고 이름으로): ${only.join(", ")}`);
   if (me && (me.stack < st[0] - DIFF_STACK || me.stack > st[st.length - 1] + DIFF_STACK)) notes.push(`공통 범위 밖: 우리 한 단 ${pct(me.stack)} — 참고 ${pct(st[0])}~${pct(st[st.length - 1])}`);
