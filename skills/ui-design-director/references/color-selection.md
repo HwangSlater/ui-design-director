@@ -2,6 +2,10 @@
 
 Choose the palette independently from the template's default colors so the user can retain a layout they like without inheriting an unsuitable brand mood.
 
+## Start from the field's measured colours
+
+Before looking at palette libraries, measure the background, text and button colours of the reference sites (computed styles, weighted by area). Running local-shop sites in Korea and abroad are almost all white background, light-grey panels, near-black text (#000–#1A1C20) and one strong accent or none: six bike shops measured white/#F2–#F7/#111 with red, pink or black buttons. Show at least one candidate built that way, and treat a warm beige background with a brown or olive button as a known generated look, not a neutral default — five projects in a row drifted there from 「차분한」 Color Hunt palettes, and a blind judge called it 「개성 없는 베이지 톤」. Keep to one colour besides black: an open/closed green plus a red or blue button read as 「강조색이 두 개, 근거 없음」. Colour alone is a small lever (white+black moved a blind judge from 85% to 80% AI and from 6 to 7 for finish, within the judge's noise); do not expect it to fix a page with no brand mark, uniform section rhythm or mismatched photos.
+
 ## Find real palette candidates
 
 Use current palette libraries and link to individual palettes or reproducible combinations. Suitable sources include:
