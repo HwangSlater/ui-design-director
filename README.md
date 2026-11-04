@@ -213,6 +213,7 @@ $ui-design-director로 렌더링된 UI가 DESIGN.md를 준수하는지 검수해
         │   ├── make_board.py
         │   ├── skeleton.mjs
         │   ├── preflight.py
+        │   ├── judge_fill.mjs
         │   └── wait_choice.mjs
         └── references/
             ├── design-selection.md
@@ -260,6 +261,7 @@ $ui-design-director로 렌더링된 UI가 DESIGN.md를 준수하는지 검수해
 - `make_live_board.py`: 참고 사이트를 캡처하지 않고 실제로 띄워 넘겨 보는 화면(다른 페이지 안에 띄우기를 막는 사이트는 표시)
 - `skeleton.mjs`: 참고 사이트들의 화면 짜임을 폰·컴퓨터 따로 재서 공통점을 「n/N곳」으로 뽑고, 우리 시안이 공통 범위 밖이거나 한 곳을 옮겼거나 이전 시안과 같은 틀이거나 상자 위에 상자를 쌓았으면 알림(같은 사이트 여러 쪽은 한 곳으로 셈)
 - `preflight.py`: 의뢰인에게 보내기 전 점검 — 의뢰인이 말한 채널(네이버·인스타·카카오)이 참고와 시안에 있는지, 공통점을 셌는지, 사장님 들어가기·폰 분실, 같은 크기 단추 쌍
+- `judge_fill.mjs`: 블라인드 판정용 사본만 — 견본 표시·빗금 자리 숨기기, 0000 전화번호를 그럴듯한 번호로, 남은 흔적 알림(`capture.mjs` 일감에 `"judge": true`)
 - `side_by_side.py`: 우리 화면과 기준 사이트를 같은 폭으로 나란히 놓고 시각 층 대조표를 붙인 비교 페이지
 
 ## 컨텍스트 크기
@@ -286,6 +288,13 @@ $ui-design-director로 렌더링된 UI가 DESIGN.md를 준수하는지 검수해
 
 ```bash
 python3 scripts/validate_skill.py
+```
+
+도구 시험(실제 역할극에서 잘못 걸리거나 놓친 경우를 옮긴 것):
+
+```bash
+python -m unittest discover tests
+node --test tests/test_judge_fill.mjs
 ```
 
 공식 `skill-creator` 검증기가 설치된 개발 환경에서는 스킬 폴더를 직접 검사할 수도 있습니다.
