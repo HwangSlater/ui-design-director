@@ -107,7 +107,7 @@ Before extraction, state the proposed selection record and obtain confirmation:
 - rejected directions and the reason;
 - known licensing/reuse status;
 - confirmed product-specific departures from the reference;
-- whether the template's original palette is rejected, retained as a finalist, or undecided.
+- the base's colour combination as the default palette, or why the client changed it.
 
 Hold this format-selection record until the palette decision is also recorded. Together they become the first entries in `DESIGN.md`'s decision log. A requested coded preview may be created before final approval, but it is not the design system or production UI.
 

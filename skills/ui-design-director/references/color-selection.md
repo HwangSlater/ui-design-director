@@ -1,6 +1,6 @@
 # Selecting a color direction
 
-Choose the palette independently from the template's default colors so the user can retain a layout they like without inheriting an unsuitable brand mood.
+The default palette is the base's colour combination (`design-selection.md` § 4): measure its background, surfaces, bands, text and button colours by area (`scripts/extract_styles.mjs` on its home and main-job pages), apply them to the client's content, and fix contrast within the same hues. The sections below apply only when the client asks for other colours or the base's colours fight the shop's sign or brand. User (2026-11-05): 「색상은 흔한 색. 아니다, 그냥 뼈대가 된 사이트의 색상 조합으로」.
 
 ## Start from the field's measured colours
 

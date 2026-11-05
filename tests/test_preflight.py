@@ -84,6 +84,13 @@ class Parts(unittest.TestCase):
         root = project({"layouts/home-1.html": "<p>x</p>", "DESIGN.md": "부품 출처\n## 바탕에서 바꾼 곳\n- 끝에 전화 3/3곳"})
         self.assertFalse(found(root, "바탕 빠짐"))
 
+    def test_index_shows_base(self):
+        design = "부품 출처\n바탕: 아트앤오브젝트\n## 바탕에서 바꾼 곳"
+        root = project({"layouts/home-1.html": "<p>x</p>", "layouts/index.html": "<p>1안 2안</p>", "DESIGN.md": design})
+        self.assertTrue(found(root, "바탕 빠짐(보기)"))
+        root = project({"layouts/home-1.html": "<p>x</p>", "layouts/index.html": "<p>바탕 — 아트앤오브젝트</p>", "DESIGN.md": design})
+        self.assertFalse(found(root, "바탕 빠짐(보기)"))
+
 
 if __name__ == "__main__":
     unittest.main()

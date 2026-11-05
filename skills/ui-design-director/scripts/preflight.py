@@ -26,6 +26,7 @@ CHANNELS = {
     "유튜브": ("youtube", ["youtube.com", "youtu.be"]),
     "블로그": ("blog", ["blog.naver", "tistory", "brunch"]),
 }
+BASE_NAME = re.compile(r"^\s*[-*]?\s*바탕\s*[:：]\s*(.+?)\s*$", re.M)  # DESIGN.md 의 「바탕: 이름」
 OWNER_WORDS = re.compile(r"사장님 화면|관리 화면|관리자|사장님이 (고치|바꾸|올리)")
 LOGIN_WORDS = re.compile(r"들어가기|로그인|문자로 온|인증 번호|비밀번호")
 LOST_WORDS = re.compile(r"잃어버|분실|폰을 바꾸|비밀번호를 잊|비밀번호 찾기")
@@ -116,7 +117,12 @@ def check(root: Path) -> list[str]:
     # 2c. 바탕 — 의뢰인이 고른 템플릿 하나의 디자인·레이아웃을 따르고, 관련 사이트 여럿이 다르게 하는 곳만 바꾼다(사용자 2026-11-05).
     # 공통점만으로 짜니 카페·분식집·구제 가게가 같은 평균 웹사이트로 나왔다.
     if files(root / "layouts", "*.html") and design and "바탕에서 바꾼 곳" not in design:
-        out.append("바탕 빠짐: DESIGN.md 에 「바탕에서 바꾼 곳」이 없음 — 의뢰인이 고른 템플릿(바탕) 이름과, skeleton.mjs --base 가 뽑은 바꿀 곳 중 고른 것·뺀 것을 n/N과 함께 적을 것")
+        out.append("바탕 빠짐: DESIGN.md 에 「바탕: 이름」과 「바탕에서 바꾼 곳」이 없음 — 의뢰인이 고른 템플릿(바탕)과, skeleton.mjs --base 가 뽑은 바꿀 곳 중 고른 것·뺀 것을 n/N과 함께 적을 것")
+    # 2d. 보기(index.html)에 바탕 화면 — 사용자가 시안과 바탕을 나란히 보게(사용자 2026-11-05 「index.html 에는 뼈대가 된 사이트를 포함해 줘」)
+    base = BASE_NAME.search(design or "")
+    for idx in (root / "layouts" / "index.html", root / "mockups" / "index.html", root / "mockup" / "index.html"):
+        if base and idx.is_file() and base.group(1) not in read(idx):
+            out.append(f"바탕 빠짐(보기): {idx.relative_to(root)} 에 바탕 「{base.group(1)}」 화면이 없음 — 첫 칸에 「바탕 — {base.group(1)}」(같은 폭 캡처·주소)를 넣을 것")
 
     # 3. 사장님 화면이 있으면 들어가기·폰 분실
     if OWNER_WORDS.search(said) and plan:  # 계획을 쓰기 전에는 묻지 않는다
