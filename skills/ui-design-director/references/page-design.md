@@ -10,7 +10,7 @@ For each page type, offer 2–3 numbered options that differ in **structure**, n
 
 ### Skeleton from the base
 
-The base the client picked (`design-selection.md` § 4) is the starting design and layout. Follow it closely — its section order, column split, type contrast, colour fields, photo placement and part shapes — and change it only where several field sites do something differently. Commonality alone gives the average website: a café, a snack stall and a vintage shop built from shared traits all came out as white page, hairlines, square boxes and one accent.
+The base the client picked (`design-selection.md` § 4) gives the look — type contrast, colour fields, photo placement, part shapes — and the starting layout. The layout follows the field where the field agrees: where several field sites share a trait the base does not (or lack one it has), take theirs; everywhere else keep the base's section order and column split. Commonality alone gives the average website: a café, a snack stall and a vintage shop built from shared traits all came out as white page, hairlines, square boxes and one accent.
 
 1. Run `scripts/skeleton.mjs out.md --base <name> name=url …` on the base and the field sites, separately at `--width 390` and `--width 1280`. Its 「바탕과 다르게 할 곳」 lists only what two or more sites, more than half, do differently from the base (「옆으로 넘기는 띠: 바탕은 없음, 3/5곳은 있음」).
 2. Take each listed change or leave it, and record both in `DESIGN.md` § 바탕에서 바꾼 곳 with the count. Everything else follows the base.
