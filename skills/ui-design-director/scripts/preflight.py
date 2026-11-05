@@ -92,7 +92,7 @@ def check(root: Path) -> list[str]:
     formats = root / "formats"
     known = ["concept-brief.md", "formats", "DESIGN.md", "SITE-PLAN.md", "layouts", "mockups", "mockup"]
     if not any((root / k).exists() for k in known):
-        return [f"폴더 구조 다름: {', '.join(known)} 중 아무것도 없음 — SKILL.md § Durable outputs 의 이름으로 두어야 이 점검이 돈다(지금은 아무것도 보지 못함)"]
+        return [f"폴더 구조 다름: {', '.join(known)} 중 아무것도 없음 — SKILL.md § Project folder 의 이름으로 두어야 이 점검이 돈다(지금은 아무것도 보지 못함)"]
 
     # 1. 의뢰인이 말한 채널이 참고에 있는가
     if formats.is_dir():
