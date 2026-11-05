@@ -5,35 +5,34 @@ description: 화면 문구·용어를 비슷한 서비스들이 쓰는 말에 �
 
 # UI Wording
 
-화면의 말은 디자인보다 먼저 손님에게 닿는다. 같은 것을 세 가지 이름으로 부르면 손님은 세 가지가 있다고 읽는다. 이 스킬은 **비슷한 서비스들이 이미 쓰는 말**을 기준으로 용어표를 만들고, 그 표로 전체를 통일한다. 새 말을 지어내지 않는다.
+Build a term table from the words similar services already use, then apply it everywhere. Never coin new words.
 
-## 순서
+## Steps
 
-1. **서비스 종류 정하기.** 저장소·브리프에서 읽는다(쇼핑, 예약, 학원·교습소, 공방·클래스, 앱 설정 등). 여럿이면 다 적는다. 모르면 한 번만 묻는다.
-2. **문구 모두 뽑기.**
+1. **Service type.** Read it from the repository and brief (shopping, booking, academy or lessons, workshop or class, marketplace, app settings …); list all that apply. If unknown, ask once.
+2. **Extract every string.**
    ```bash
-   python <skill-dir>/scripts/extract_ui_text.py <폴더> --out ui-text.json
+   python <skill-dir>/scripts/extract_ui_text.py <folder> --out ui-text.json
    ```
-   HTML, JSX/TSX/Vue, Swift, Kotlin·strings.xml, 번역 JSON을 읽는다. 시안 폴더와 실제 코드 폴더를 같이 넣으면 둘이 같은 말을 쓰는지도 본다.
-3. **흔들리는 곳 찾기.**
+   Pass the mockup folder and the code folder together to see whether both use the same words.
+3. **Find the drift.**
    ```bash
    python <skill-dir>/scripts/term_check.py ui-text.json --suggest
    ```
-   같은 말이 띄어쓰기·「하기」만 다르게 섞인 곳, 해요체·합니다체가 섞인 곳, 버튼 이름 꼴이 섞인 곳, 한국어 화면의 영어 단어를 보여 준다.
-4. **용어표 만들기.** [references/conventions-ko.md](references/conventions-ko.md)에서 그 업종의 관행을 가져오고, 확신이 없는 말은 **같은 업종 실제 서비스 2~3곳을 직접 열어 확인**한다. 본 곳을 「why」에 적는다. 사용자가 이미 고른 말(DESIGN.md 의 말투·용어, 사용자가 쓴 표현)은 관행보다 앞선다. 표는 `wording.json`(형식은 `term_check.py` 머리말)으로 둔다.
-5. **사용자에게 보여 주기.** 「쓰인 말 → 바꿀 말 → 이유 → 몇 곳」 표와 말투·버튼 꼴 결정을 짧게. 사용자가 개발자가 아니면 파일 이름 대신 화면에 보이는 말로 설명한다. 승인 전에는 고치지 않는다.
-6. **한꺼번에 고치기.**
+4. **Term table.** Start from that service type's conventions in [references/conventions-ko.md](references/conventions-ko.md). For any word you are unsure of — or a service type the file has no table for (e.g. marketplace) — **open 2–3 real services of the same type** and write which ones in 「why」. Words the user already chose (`DESIGN.md` voice and terms, the user's own phrasing) override convention. Save the table as `wording.json` (format in the header of `term_check.py`).
+5. **Show the user.** A table of 「쓰인 말 → 바꿀 말 → 이유 → 몇 곳」 plus the tone and button-form decisions, briefly. For a non-developer, describe on-screen words, not file names. Change nothing before approval.
+6. **Apply all at once.**
    ```bash
    python <skill-dir>/scripts/term_check.py ui-text.json --glossary wording.json --apply
    ```
-   그다음 2·3을 다시 돌려 남은 것이 없는지 확인한다. 말투·버튼 꼴처럼 기계로 못 바꾸는 것은 직접 고친다.
-7. **기록하기.** 승인된 표를 프로젝트의 디자인 규칙(DESIGN.md § Voice and terminology가 있으면 거기, 없으면 `WORDING.md`)에 옮겨, 다음 화면도 같은 말을 쓰게 한다.
+   Then rerun steps 2 and 3 to confirm nothing is left. Fix by hand what the script cannot (tone, button form).
+7. **Record.** Copy the approved table into the project's design rules (`DESIGN.md` § Voice and terminology if it exists, otherwise `WORDING.md`) so the next screen uses the same words.
 
-## 원칙
+## Rules
 
-- 기준은 「우리 마음에 드는 말」이 아니라 **같은 업종 손님이 이미 익숙한 말**이다.
-- 한 대상에는 한 이름. 소개 문장, 버튼, 질문, 안내 문자, 오류 문구까지 같은 이름.
-- 말투는 하나. 동네 가게·교습소는 대개 「~해요」.
-- 버튼은 같은 꼴. 같은 동작은 화면마다 같은 말.
-- 숫자·시간·금액 표기를 하나로(「14만 원」과 「140,000원」을 섞지 않는다).
-- 고친 뒤 다시 뽑아서 0건을 확인하기 전에는 「통일했다」고 말하지 않는다.
+- The standard is the words customers of that trade already know, not the words we like.
+- One name per thing — in intro text, buttons, questions, notification messages and error messages alike.
+- One tone across the product (see conventions-ko.md § Tone for which).
+- One button form; the same action has the same label on every screen.
+- One way to write numbers, times and amounts (do not mix 「14만 원」 and 「140,000원」, or 「오후 2시」 and 「14:00」).
+- Do not say "unified" until a fresh extraction shows zero remaining.

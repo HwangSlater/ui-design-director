@@ -1,8 +1,10 @@
-# 국내 서비스에서 흔히 쓰는 화면 용어
+# Common UI terms in Korean services
 
-용어표를 만들 때 출발점이다. **정답표가 아니라 관행의 기록**이다. 업종 안에서 갈리는 말은 둘 다 적었다. 확신이 없으면 같은 업종의 실제 서비스 2~3곳을 직접 열어 보고, 본 곳을 용어표 「why」에 적는다. 여기 없는 말을 새로 지어 쓰지 않는다.
+The starting point for a term table. Where a trade is split, both words are listed.
 
-## 공통
+Gap: there is no marketplace / second-hand trading table yet; for those, check 2–3 real services (SKILL.md step 4).
+
+## Common
 
 | 쓰는 말 | 피하는 말 | 메모 |
 |---|---|---|
@@ -17,7 +19,7 @@
 | 문의하기 · 고객센터 | 컨택트, 연락하기 | |
 | 이용약관 · 개인정보 처리방침 | 약관, 개인정보정책 | 법령 용어를 따른다 |
 
-## 쇼핑
+## Shopping
 
 | 쓰는 말 | 피하는 말 |
 |---|---|
@@ -30,7 +32,7 @@
 | 품절 · 일시품절 | Sold out, 재고 없음(버튼에서) |
 | 찜 / 관심 상품 · 쿠폰 · 적립금 | 위시리스트, 포인트(적립금과 혼용) |
 
-## 예약 (숙소·식당·체험·공간)
+## Booking (stays, restaurants, experiences, spaces)
 
 | 쓰는 말 | 피하는 말 |
 |---|---|
@@ -38,7 +40,7 @@
 | 날짜 선택 · 인원 · 남은 자리 | 잔여석(일반 손님용 화면) |
 | 노쇼 · 당일 취소 | |
 
-## 학원·교습소·클래스
+## Academies, lessons, classes
 
 | 쓰는 말 | 피하는 말 | 메모 |
 |---|---|---|
@@ -49,10 +51,8 @@
 | 레벨 테스트 · 개인 레슨 · 그룹 수업 · ○○반 | | |
 | 원장 · 선생님 | 강사(동네 교습소 화면에서), 쌤 | |
 
-## 말투
+## Tone
 
-- 안내 문장은 한 가지로: 동네 가게·교습소·공방은 「~해요」, 공공·금융·법률 안내는 「~합니다」.
-- 버튼은 한 가지 꼴로: 동작 버튼은 「~하기」 또는 동작 명사 하나(「예약」, 「저장」)로 통일하고, 같은 동작은 화면마다 같은 말.
-- 같은 대상은 같은 이름: 「체험 수업」을 소개에서 쓰면 버튼·질문·안내 문자도 「체험 수업」.
-- 숫자: 「14만 원」 / 「140,000원」 중 하나. 시간: 「오후 2시」 / 「14:00」 중 하나.
-- 조어 금지: 업계에서 안 쓰는 말을 멋있게 지어내지 않는다(예: 「흙 만지는 시간」을 메뉴 이름으로).
+- Local shops, academies and workshops: 「~해요」. Public, financial and legal notices: 「~합니다」.
+- Action buttons: either 「~하기」 or a single action noun (「예약」, 「저장」), one form throughout.
+- A coined menu name nobody in the trade uses (「흙 만지는 시간」) is drift, not style.

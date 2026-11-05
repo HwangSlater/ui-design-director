@@ -1,6 +1,6 @@
 # DESIGN.md specification
 
-Create `DESIGN.md` at the project root unless the repository has another canonical location. It is the durable contract for future UI work, not a scrapbook of extracted values.
+Create `DESIGN.md` at the project root unless the repository has another canonical location.
 
 ## Required structure
 
@@ -32,6 +32,15 @@ Product, audience, desired impression, content reality, and selected concept.
 What was inspected; observed/inferred/adapted/provisional distinctions; known
 license/reuse constraints; chosen format and palette; deliberate departures
 from the reference; preview combination approved by the user.
+
+## 바탕에서 바꾼 곳
+Each change from the base that `skeleton.mjs --base` listed, taken or left,
+with its count (「옆으로 넘기는 띠: 넣음 — 3/5곳」), and any other departure
+with its reason.
+
+## 부품 출처
+One line per part: part → form → source (the base, a field trait as n/N, or
+the client's own object such as the menu board or sign).
 
 ## Principles
 Three to five testable rules with “do” and “avoid” guidance.
@@ -86,15 +95,11 @@ Only unresolved decisions that materially affect implementation, with provisiona
 ## Writing rules
 
 - Prefer semantic component-facing names such as `color.action.primary` over visual names such as `blue.500`; a primitive palette may sit underneath.
-- Use a small intentional scale and consolidate browser-computed noise.
-- Include units, modes, responsive conditions, and state mappings where relevant.
 - Pair unusual values and exceptions with rationale or evidence.
-- Record on-screen wording as rules, not samples. Colour and spacing survive in one token file, but words live in every component and drift back toward the data model’s vocabulary on the next screen; only a term table and message patterns prevent that.
+- Record on-screen wording as rules — a term table and message patterns — not samples.
 - Keep product requirements distinct from reference observations.
 - Preserve the original selected palette separately from derived accessible UI tokens, so later agents do not confuse inspiration swatches with usable semantic colors.
-- Do not claim `approved` status without explicit user approval.
-- Use `approved-delegated` only when the user explicitly authorized the agent to make that choice; record the rationale in the decision log.
-- Approval requires confirmed format, palette, derived accessibility adjustments, high-impact adaptations, and requested preview feedback. Otherwise keep `status: draft` and name the unresolved items.
+- `approved` needs explicit user approval of format, palette, derived accessibility adjustments, high-impact adaptations, and requested preview feedback; otherwise keep `status: draft` and name the unresolved items. Use `approved-delegated` only when the user explicitly delegated that choice, with the rationale in the decision log.
 - When an approved rule changes, increment the version, mark the earlier decision superseded, and update shared implementation mapping.
 
 ## Feedback protocol
@@ -109,6 +114,6 @@ Propose the rule-level change, name affected components/pages, obtain approval f
 
 ## Agent handoff contract
 
-Use a short prompt; do not paste and fork the entire design system:
+For the subagents SKILL.md § Budget allows, use a short prompt of file paths; do not paste the design system:
 
 > Read project-root `DESIGN.md` before UI work. Treat approved rules as constraints. Reuse mapped tokens and shared components. If a requirement conflicts or a needed rule is absent, report it and propose a `DESIGN.md` update rather than inventing a page-local convention. Verify the rendered result at relevant sizes and states.
