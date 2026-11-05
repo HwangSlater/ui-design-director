@@ -36,6 +36,11 @@ WORK_PAGE = re.compile(r"owner|admin|login|code|lost|confirm|check|404|not-found
 SKIP = {"node_modules", ".git", "__pycache__", "cap", "captures", "blind"}
 
 
+def mock_dir(root: Path) -> Path:
+    """시안 폴더 — mockups/ 가 기본, 없으면 mockup/(깡통구제 시안이 이 이름이라 채널·사장님 화면 검사를 통째로 건너뜀)."""
+    return root / "mockups" if (root / "mockups").is_dir() else root / "mockup"
+
+
 def read(p: Path) -> str:
     return p.read_text(encoding="utf-8", errors="replace") if p.is_file() else ""
 
@@ -85,7 +90,7 @@ def check(root: Path) -> list[str]:
     design = read(root / "DESIGN.md")
     said = brief + plan
     formats = root / "formats"
-    known = ["concept-brief.md", "formats", "DESIGN.md", "SITE-PLAN.md", "layouts", "mockups"]
+    known = ["concept-brief.md", "formats", "DESIGN.md", "SITE-PLAN.md", "layouts", "mockups", "mockup"]
     if not any((root / k).exists() for k in known):
         return [f"폴더 구조 다름: {', '.join(known)} 중 아무것도 없음 — SKILL.md § Durable outputs 의 이름으로 두어야 이 점검이 돈다(지금은 아무것도 보지 못함)"]
 
@@ -115,7 +120,7 @@ def check(root: Path) -> list[str]:
             out.append("사장님 화면 빠짐: SITE-PLAN.md 에 들어가는 방법(문자 번호·로그인)이 없음")
         if not LOST_WORDS.search(plan):
             out.append("사장님 화면 빠짐: SITE-PLAN.md 에 폰을 잃어버렸을 때 할 일이 없음")
-        mock_html = " ".join(read(p) for p in files(root / "mockups", "*.html"))
+        mock_html = " ".join(read(p) for p in files(mock_dir(root), "*.html"))
         if mock_html:
             if not LOGIN_WORDS.search(mock_html):
                 out.append("사장님 화면 빠짐: mockups/ 에 들어가기 화면이 없음")
@@ -123,16 +128,16 @@ def check(root: Path) -> list[str]:
                 out.append("사장님 화면 빠짐: mockups/ 에 폰 분실 안내가 없음")
 
     # 4. 시안에 의뢰인이 말한 채널 연결이 있는가
-    pages = list((root / "mockups").glob("*.html")) if (root / "mockups").is_dir() else []  # 시안 쪽이 생긴 뒤에만(공유 부품만 있을 때는 묻지 않음)
-    mock_html = " ".join(read(p) for pat in ("*.html", "*.js") for p in files(root / "mockups", pat)) if pages else ""
+    pages = list((mock_dir(root)).glob("*.html")) if (mock_dir(root)).is_dir() else []  # 시안 쪽이 생긴 뒤에만(공유 부품만 있을 때는 묻지 않음)
+    mock_html = " ".join(read(p) for pat in ("*.html", "*.js") for p in files(mock_dir(root), pat)) if pages else ""
     if mock_html:
         for name in client_channels(brief):
-            if not any(s in mock_html for s in CHANNELS[name][1] if "." in s or s == "kakao"):
+            if not any(s in mock_html for s in CHANNELS[name][1] if not s.endswith("-")):  # 「ig-」「np-」은 캡처 파일 이름 조각 — 시안 주소에는 안 씀(점 없는 daangn 이 빠지던 것)
                 out.append(f"연결 빠짐: 의뢰인이 「{name}」를 말했는데 시안에 {CHANNELS[name][0]} 연결이 없음(견본 주소라도 자리를 둘 것)")
 
     # 5. 같은 크기 단추 한 쌍(채운 것 + 선)
-    for folder in ("layouts", "mockups"):
-        for p in files(root / folder, "*.html"):
+    for folder in (root / "layouts", mock_dir(root)):
+        for p in files(folder, "*.html"):
             if WORK_PAGE.search(p.name):
                 continue
             bp = ButtonPairs()

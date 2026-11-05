@@ -45,6 +45,15 @@ class Channels(unittest.TestCase):
         root = project({"concept-brief.md": "카카오톡 채널로 주문 받아요", "formats/jobs.json": "[]", "formats/a.jpg": ""})
         self.assertTrue(found(root, "참고 빠짐: 의뢰인이 「카카오」"))
 
+    def test_daangn_link_in_mockup_folder_is_found(self):
+        # 깡통구제: 시안에 daangn.com 링크가 있는데 「당근 연결 없음」 — 점 없는 낱말이 걸러졌고, mockup/ 폴더는 아예 안 읽었다
+        brief = "인스타, 당근 씀."
+        page = '<a href="https://www.instagram.com/x">인스타</a>'
+        with_link = project({"concept-brief.md": brief, "mockup/home.html": page, "mockup/data.js": 'daangn: "https://www.daangn.com/kr/x"'})
+        self.assertFalse(found(with_link, "「당근」"))
+        without = project({"concept-brief.md": brief, "mockup/home.html": page})
+        self.assertTrue(found(without, "연결 빠짐: 의뢰인이 「당근」"))
+
 
 class OwnerScreens(unittest.TestCase):
     def test_not_asked_before_site_plan(self):
