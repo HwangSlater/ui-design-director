@@ -77,6 +77,8 @@ Recommend one option with a reason tied to the job; the user picks a number, com
 
 Build the approved layout with only `DESIGN.md` tokens and components.
 
+Each page is built by its own subagent with a brief of file paths, and the main conversation opens only the pictures it sends (SKILL.md § Budget).
+
 ### Where mockups live
 
 Outside production routes in one folder (default `mockups/`) with an `index.html` linking every page and state; static HTML/CSS loading one `tokens.css` and one `components.css`, pages holding layout only. If a local component library exists, use it on a non-production route instead.
