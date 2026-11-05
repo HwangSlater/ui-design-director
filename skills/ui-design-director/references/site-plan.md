@@ -1,10 +1,10 @@
 # Planning the whole site
 
-Use this after `DESIGN.md` exists (draft or approved) and the user wants the full website or app designed, not only its visual language. The output is project-root `SITE-PLAN.md`: the page inventory, flows, and per-page status that every later step reads and updates.
+The output is project-root `SITE-PLAN.md`: the page inventory, flows, and per-page status that every later step reads and updates.
 
 ## 1. Decide the scope of each surface
 
-A site usually mixes two kinds of surface. Classify every page before planning it, because the rules differ:
+Classify every page before planning it:
 
 - **Read surfaces** — marketing, landing, pricing, about, blog, docs, legal. The visitor scans and decides. Hierarchy, a single primary action per page, and section rhythm govern them.
 - **Work surfaces** — dashboard, list/detail, settings, editor, multi-step form, account. The user repeats a task. Density, navigation stability, keyboard paths, and every data state govern them. Hero sections, section rhythm, decorative imagery, and load-in reveals do not apply.
@@ -19,7 +19,7 @@ For each page record:
 
 | Field | Meaning |
 |---|---|
-| Name | The page's name in the user's language (「첫 화면」, 「사례 모음」) — the table is read by the client; keep the file slug (`home`, `cases`) in a separate designer line below the table. A renovation client read `home`, `admin-case` and `status: draft` in the first column and asked for Korean. |
+| Name | The page's name in the client's language (「첫 화면」, 「사례 모음」) — the client reads this table; keep the file slug (`home`, `cases`) in a separate designer line below it. |
 | Surface | read or work |
 | Page type | Shared layout it belongs to; pages of one type share one design |
 | Job | The one thing the visitor or user comes to do here |
@@ -27,20 +27,20 @@ For each page record:
 | Entry points | Where users arrive from |
 | Content source | Supplied by user / exists in repo / needs writing / sample data |
 | Required states | Empty, loading, error, no-permission, long content, success, as applicable |
-| Kept up to date by | For content that changes (dates, seats, prices, menus, hours, staff): who updates it, where, how often |
+| Kept up to date by | For content that changes (dates, seats, prices, menus, hours, staff, listings): who updates it, where, how often |
 | Priority | Core / secondary / later |
 
-Group pages by **page type**. Ten blog posts are one page type; designing the type once is what keeps the site consistent and the work finite. Design every page type, and only the pages whose content changes the layout.
+Group pages by **page type** (ten blog posts are one type). Design every page type, and only the pages whose content changes the layout.
 
-Always include the pages users meet when something goes wrong or is missing: 404, error, empty first-run, signed-out, and no-permission where the product has accounts. These are routinely forgotten and the first to look unfinished.
+Always include the pages users meet when something goes wrong or is missing: 404, error, empty first-run, signed-out, and no-permission where the product has accounts.
 
-**When the owner updates anything, plan their screens now, not at the mockup step.** List in `SITE-PLAN.md`: how they sign in (for a shop owner, a text code once and then stay signed in on that phone; another phone needs their approval), what to do when the phone is lost (who to call), the few jobs they actually do (often two: today closed, change a price), and who to contact for what is not on their screen. `scripts/preflight.py` reports a plan with owner screens but no sign-in or lost-phone line. The behaviour of those screens (ask before a change customers see, a large undo, prices as number fields) is in `owner-screens.md`.
+**When the owner or staff update anything, plan their screens now, not at the mockup step.** List in `SITE-PLAN.md` how they sign in, what to do when the phone is lost, the few jobs they actually do (often two, e.g. today closed, change a price), and who to contact for what is not on their screen; rules in `owner-screens.md`. `scripts/preflight.py` reports a plan with owner screens but no sign-in or lost-phone line.
 
-**Forms that take a name, phone or address:** before drawing them, ask the owner which answers change the price or the date, and plan a consent line with purpose and retention (period marked 견본 until the owner sets it).
+**Every field a page shows needs an input someone fills.** Trace each label on a public page back to the form that feeds it and design both together; show nothing the upload form does not collect. Prefer taps over typing (yes / no / don't know, hidden when unknown: 「개와 지내요: 예」). Never pre-fill a free-amount or free-text field with a sample value — a grey "5,000" reads as already entered. Every field a customer fills shows on the staff screen that handles it. When a status change hands work to someone else (「방문 약속」 sends the owner to measure), draw the fields that change needs (date, time) and an alert to that person that is always on, not a tick box.
 
-**Every field a page shows needs an input someone fills.** Trace each label on a public page back to the form that feeds it, and design both together: a shelter detail page showed sex, "fine in an apartment" and "gets on with other animals" while the owner had asked for a six-field upload form for a volunteer in her fifties, and asked how those rows would ever get filled. Prefer taps over typing for anything added (yes / no / don't know, hidden when unknown), and show nothing the upload form does not collect. In the same spirit, never pre-fill a free-amount or free-text field with a sample value — older donors read a grey "5,000" as already entered. The reverse holds too: every field a customer fills shows up on the staff screen that handles it — a renovation quote card showed only name, job and timing while the form had collected bathroom count, floor area, move-in date and whether the family lives there, and the manager needs all of it before calling. When a status change hands work to someone else (「방문 약속」 sends the owner to measure), draw the fields that change needs (date, time) and the alert that reaches that person, always on rather than a tick box someone can leave off.
+**Design out content nobody will maintain.** For every piece of changing content, ask who updates it and where; a small team rarely keeps a second copy in sync. When the data already lives in another system (a booking platform, Instagram, a menu tool, a marketplace listing), link to it for the live part and design a version that cannot go stale on the site: a recurring timetable instead of dated slots, "see live availability" instead of seat counts, prices that change rarely. Use a live embed only when that system offers one and its terms allow it. Record the decision in the page inventory. Mark payment methods 견본 until the payment provider is chosen. Prefer timeless phrasing ("every weekend") over words that go false the first week nobody updates them ("this weekend", "seats left", "new this month") unless the text comes live from the source.
 
-**Design out content nobody will maintain.** For every piece of changing content, ask who updates it and where. A small business owner usually cannot keep a second copy in sync — a client said of a "seats left this month" list, "I'll never keep these numbers right." When the data already lives in another system (a booking platform, Instagram, a menu tool), link to it for the live part and design a version that cannot go stale on the site: a recurring timetable instead of dated slots, "see live availability" instead of seat counts, prices that change rarely. Use a live embed only when that system offers one and its terms allow it. Record the decision in the page inventory. For pickup or made-to-order businesses, ask for a per-hour limit as well as the per-day one (eight cakes a day all at 2 pm is more than one person at the counter can hand over), and mark the payment methods 견본 until the payment provider is chosen. Ask who the order belongs to: 「받는 분」 was read as the birthday person, so label the form 「주문하시는 분」 with a gift checkbox for a different person picking up, and send messages only to the orderer. Watch the copy too: words that imply a specific time or availability ("this weekend", "seats left", "new this month") become false the first week nobody updates them; prefer timeless phrasing ("every weekend") unless the text comes live from the source.
+**Orders and bookings.** For pickup or made-to-order work, ask for a per-hour limit as well as the per-day one. Ask who the order belongs to: label the form 「주문하시는 분」 (「받는 분」 is misread), add a gift checkbox for a different person picking up, and send messages only to the orderer.
 
 ## 3. Map the flows
 
@@ -56,7 +56,7 @@ Navigation follows from the inventory: global navigation holds only core pages; 
 
 ## 4. Check content reality
 
-Design fails quietly when it is drawn around invented copy. For each core page note what real content exists. Where it does not, plan sample content that matches the real length and shape (a real-length product name, a realistic price table, a 40-row list), and mark it as sample. Never present invented testimonials, customer logos, statistics, or awards as if they were real; leave a labelled slot instead. The same applies to small practical facts (address details, directions, hours, policies): keep a list of what the user has confirmed and mark everything else as unconfirmed until they do.
+For each core page note what real content exists. Where it does not, plan sample content of the real length and shape (a real-length product name, a realistic price table, a 40-row list), marked as sample. Keep a list of the practical facts the user has confirmed (address, directions, hours, policies); everything else stays unconfirmed (`mockup-content.md` § Facts and wording).
 
 ## 5. Write SITE-PLAN.md
 
@@ -83,8 +83,8 @@ Global: … · Footer: … · Mobile: …
 - YYYY-MM-DD — approved — page inventory — rationale
 ```
 
-The `Layout`, `Mockup`, and `Code` columns track progress per page: `pending` → `options-shown` → `approved` (or `done` for code). Update the row the moment a state changes. This file is how a later session resumes multi-page work without redoing approved pages.
+The `Layout`, `Mockup`, and `Code` columns track progress per page: `pending` → `options-shown` → `approved` (or `done` for code). Update the row the moment a state changes.
 
 ## 6. Approval
 
-Present the inventory table and the flows, recommend what to cut or defer, and ask the user to approve the list. Adding a page later is cheap; designing a page nobody needs is not. Do not start page layouts until the inventory is approved or the user explicitly delegates it.
+Present the inventory table and the flows, recommend what to cut or defer, and ask the user to approve the list. Do not start page layouts until the inventory is approved or the user explicitly delegates it.
