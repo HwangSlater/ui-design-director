@@ -56,4 +56,4 @@ Run after `check_site.py`, as pass 4 of `ui-review.md` § Site check, together w
 
 ## Reporting
 
-At every gate after the first, and in the site-check report, list each companion as `ran`, `skipped (not installed)`, `skipped (user declined download)`, or `failed (reason)`, with its finding counts after mapping to this skill's tiers.
+In the site-check report (not at every gate), list each companion as `ran`, `skipped (not installed)`, `skipped (user declined download)`, or `failed (reason)`, with its finding counts after mapping to this skill's tiers.
