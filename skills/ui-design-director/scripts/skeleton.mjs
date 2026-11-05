@@ -1,16 +1,18 @@
 #!/usr/bin/env node
 // 화면의 「뼈대」를 숫자로 잰다 — 칸이 세로로만 쌓이는지(한 단 비율), 몇 단으로 나뉘는지, 옆에 붙어 있는 안내판, 둥근 모양, 옆으로 넘기는 띠, 사진 위 글.
 // 사용자 지적(2026-11-04): 시안 셋이 업종과 참고 사이트가 달라도 「머리 → 전폭 칸 세로 나열 · 직사각형」 한 틀로 나왔다. 참고한 실제 사이트들은 다 달랐다.
-// 사용: node skeleton.mjs <out.md> [--width 1280] 이름=주소 ... [--ours 이름] [--prev 이름,이름]
-//   --ours: 우리 시안. 참고들의 공통 범위를 벗어나면 「공통 범위 밖」. 참고는 순위를 매겨 한 곳을 따르는 게 아니라 공통점을 모은다.
+// 사용: node skeleton.mjs <out.md> [--width 1280] 이름=주소 ... [--base 이름] [--ours 이름] [--prev 이름,이름]
+//   --base: 의뢰인이 고른 템플릿·대표 사이트. 짜임은 이것을 따르고, 관련 사이트 여럿이 함께 다르게 하는 곳만 「바꿀 곳」으로 뽑는다(skeleton_base.mjs).
+//   --ours: 우리 시안. --base 가 있으면 바탕과 다른 곳(바꿀 곳 말고)을 알린다. 없으면 참고들의 공통 범위와 견준다.
 //   --prev: 이전 프로젝트 시안. 우리 시안과 뼈대가 거의 같으면 「이전 시안과 같은 틀」.
-//   참고 한 곳과 거의 같으면 「참고 한 곳과 거의 같은 뼈대」 — 범위 안에 들되 한 곳을 베끼지 않는다.
+//   바탕이 아닌 참고 한 곳과 거의 같으면 「참고 한 곳과 거의 같은 뼈대」.
 // 외부 패키지 없음. Edge/Chrome DevTools 프로토콜만 쓴다.
 import { spawn } from "node:child_process";
 import { existsSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { createServer } from "node:net";
+import { baseDiff } from "./skeleton_base.mjs";
 
 const SETTLE_MS = 3000;
 const SCROLL_STEP_MS = 150;
@@ -40,9 +42,10 @@ const args = process.argv.slice(2);
 const out = args[0];
 const width = args.includes("--width") ? Number(args[args.indexOf("--width") + 1]) : 1280;
 const ours = args.includes("--ours") ? args[args.indexOf("--ours") + 1] : null;
+const base = args.includes("--base") ? args[args.indexOf("--base") + 1] : null;
 const prev = args.includes("--prev") ? args[args.indexOf("--prev") + 1].split(",") : [];
 const targets = args.slice(1).filter((a) => a.includes("=") && !a.startsWith("--")).map((a) => { const i = a.indexOf("="); return [a.slice(0, i), a.slice(i + 1)]; });
-if (!out || !targets.length) { console.error("사용: node skeleton.mjs <out.md> [--width 1280] 이름=주소 ... [--ours 이름] [--prev 이름,이름]"); process.exit(1); }
+if (!out || !targets.length) { console.error("사용: node skeleton.mjs <out.md> [--width 1280] 이름=주소 ... [--base 이름] [--ours 이름] [--prev 이름,이름]"); process.exit(1); }
 
 const PROBE = `(() => {
   const H = Math.min(document.documentElement.scrollHeight, ${MAX_PAGE}), W = innerWidth, VH = innerHeight;
@@ -194,8 +197,11 @@ for (const [k, label, f] of COLS) lines.push(`| ${label} | ${rows.map((r) => f(r
 const me = rows.find((r) => r.name === ours);
 const refs = rows.filter((r) => r.name !== ours && !prev.includes(r.name));
 const notes = [];
+const baseRow = rows.find((r) => r.name === base);
+if (base && !baseRow) notes.push(`바탕 ${base} 을(를) 못 잼 — 이름=주소 목록에 넣을 것`);
+const others = refs.filter((r) => r !== baseRow);
 // 너무 같아도 문제(사용자): 참고 한 곳의 뼈대를 그대로 옮긴 것은 베낀 짜임 — 분야의 범위 안에서 컨셉으로 바꿔야 함
-for (const r of refs.filter(() => me && me.stack < 0.9)) { // 둘 다 거의 한 줄로만 쌓인 폰 화면은 뼈대가 같아도 베낀 게 아님(폰의 기본) — 비교하지 않음
+for (const r of others.filter(() => me && me.stack < 0.9)) { // 둘 다 거의 한 줄로만 쌓인 폰 화면은 뼈대가 같아도 베낀 게 아님(폰의 기본) — 비교하지 않음
   if (Math.abs(r.stack - me.stack) <= CLONE && r.maxCols === me.maxCols && Math.abs(r.changes - me.changes) <= 1 && r.side === me.side && !!r.hscroll === !!me.hscroll && Math.abs(r.roundShare - me.roundShare) <= CLONE)
     notes.push(`참고 한 곳과 거의 같은 뼈대: ${r.name} — 그 사이트를 옮겨 그린 것인지 확인하고 컨셉으로 바꿀 것`);
 }
@@ -203,15 +209,14 @@ for (const r of refs.filter(() => me && me.stack < 0.9)) { // 둘 다 거의 한
 // (마당집 카페: 네모를 풀라는 말에 네이버 지도 화면의 둥근 사진 띠 + 알약 단추를 그대로 옮겨 「네이버랑 똑같다」)
 const roundPhoto = (r) => r.photoRad != null && r.photoRad >= PHOTO_ROUND;
 const lookSeen = new Set();
-for (const r of refs.filter(() => me && me.stack >= 0.9))
+for (const r of others.filter(() => me && me.stack >= 0.9))
   if (!lookSeen.has(r.host) && lookSeen.add(r.host) && !!r.hscroll === !!me.hscroll && r.btnShape === me.btnShape && roundPhoto(r) === roundPhoto(me) && r.hscroll > 0)
     notes.push(`참고 한 곳과 같은 생김새(폰): ${r.name} — 모양을 피하려고 다른 곳을 옮겨 오지 말고, 이 가게의 얼굴(사진·이름·자랑거리)에서 다시 잡을 것`);
 for (const p of rows.filter((r) => me && prev.includes(r.name) && !(me.stack >= 0.9 && r.stack >= 0.9))) { // 둘 다 한 줄로 쌓인 폰 화면은 늘 같아서 경고가 늘 떴다 — 폰은 생김새 비교로
   if (Math.abs(p.stack - me.stack) <= SAME_STACK && p.side === me.side && !!p.hscroll === !!me.hscroll && Math.abs(p.roundShare - me.roundShare) <= SAME_STACK)
     notes.push(`이전 시안과 같은 틀: ${p.name}(한 단 ${pct(p.stack)}, 둥근 ${pct(p.roundShare)}) — 컨셉·참고에서 뼈대를 다시 잡을 것`);
 }
-// 참고 공통점 — 사이트에 순위를 매겨 한 곳을 고르는 게 아니라, 여러 곳에 함께 있는 것을 모아 그중 이 프로젝트에 써도 좋은 것을 고른다(사용자).
-// 한 곳에만 있는 것은 그 사이트의 개성이라 옮기지 않는다.
+// 참고 공통점 — 바탕(의뢰인이 고른 템플릿)을 어디서 바꿀지 정하는 근거. 공통점만으로 짜면 어느 업종이든 같은 평균 웹사이트가 나왔다(사용자 2026-11-05).
 if (refs.length >= 2) {
   // 한 사이트(같은 주소)의 여러 쪽은 한 곳으로 센다 — 네이버 지도 가게 셋이 한 틀이라 「4/7곳」으로 공통점을 끌고 갔다
   const hosts = [...new Set(refs.map((r) => r.host))];
@@ -247,9 +252,15 @@ if (refs.length >= 2) {
   }
   if (seq.length) common.push(`위에서부터 배치: ${seq.join(" → ")} (자리마다 절반 넘게 같은 것만 — 모든 곳 공통이 아님)`);
   const only = [...new Set(refs.flatMap((r) => traits.filter(([k]) => r[k] && !half((x) => x[k])).map(([, l]) => `${r.name}의 ${l}`)))];
-  lines.push("", "## 참고 공통점 — 이 중 이 프로젝트에 써도 좋은 것을 고른다", "(짜임만 잰다. 영업시간·접수 마감·전화를 한 덩어리로 두는 것 같은 내용 짜임은 화면을 보고 따로 적는다)", ...common.map((c) => `- ${c}`));
+  lines.push("", baseRow ? "## 참고 공통점 — 바탕을 바꿀 곳은 아래 「바탕과 다르게 할 곳」만" : "## 참고 공통점 — 바탕(--base)을 아직 안 골랐다면 의뢰인이 고르게 하고 다시 잴 것", "(짜임만 잰다. 영업시간·접수 마감·전화를 한 덩어리로 두는 것 같은 내용 짜임은 화면을 보고 따로 적는다)", ...common.map((c) => `- ${c}`));
   if (only.length) lines.push("", `절반이 안 되는 곳에만 있는 것(공통이 아님 — 쓰려면 이유를 대고 이름으로): ${only.join(", ")}`);
-  if (me && (me.stack < st[0] - DIFF_STACK || me.stack > st[st.length - 1] + DIFF_STACK)) notes.push(`공통 범위 밖: 우리 한 단 ${pct(me.stack)} — 참고 ${pct(st[0])}~${pct(st[st.length - 1])}`);
+  if (me && !baseRow && (me.stack < st[0] - DIFF_STACK || me.stack > st[st.length - 1] + DIFF_STACK)) notes.push(`공통 범위 밖: 우리 한 단 ${pct(me.stack)} — 참고 ${pct(st[0])}~${pct(st[st.length - 1])}`);
+}
+if (baseRow && others.length) {
+  const d = baseDiff(baseRow, others, me);
+  lines.push("", `## 바탕(${base})과 다르게 할 곳 — 관련 사이트 여럿이 함께 다르게 하는 것만`, ...(d.changes.length ? d.changes.map((c) => `- ${c.text}`) : ["- 없음 — 바탕을 그대로 따른다"]),
+    `(나머지는 바탕을 따른다: ${d.keep.join(", ")}. 글·사진·로고는 우리 것으로)`);
+  notes.push(...d.notes);
 }
 lines.push("", "## 판정", notes.length ? notes.map((n) => `- ${n}`).join("\n") : "- 걸린 것 없음");
 writeFileSync(out, lines.join("\n") + "\n", "utf8");

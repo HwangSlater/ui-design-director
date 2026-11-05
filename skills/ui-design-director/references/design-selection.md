@@ -82,13 +82,13 @@ Do not state unverified prices, licenses, responsiveness, or page coverage as fa
 
 Include running sites from the user's own country and language in the first set, not only famous foreign ones, show each at phone width first (that is where most of their customers look), and never send a capture with a cookie bar, popup or loading spinner over it — a bakery owner had to ask for all three. Show the candidates in the full-screen viewer described in `comparison-board.md`: capture the product's key pages at desktop and phone width, build the viewer, check it, and give the user its full address to open. Do not present a table of links or a folder of screenshots as the comparison.
 
-Before asking, run `node scripts/skeleton.mjs formats/뼈대-390.md --width 390 name=url …` and again at 1280 on the shortlist (pages from one platform such as Naver Place count as one site), and put the shared traits in the message with their counts (「사진이 첫 화면을 채움 4/6곳」), phone and desktop separately — say them before the client asks. Include the channels the owner named (Naver Place, Instagram, Kakao) as references; customers see those screens first.
+Before asking, run `node scripts/skeleton.mjs formats/뼈대-390.md --width 390 name=url …` and again at 1280 on the shortlist, templates included (pages from one platform such as Naver Place count as one site), and put the shared traits in the message with their counts (「사진이 첫 화면을 채움 4/6곳」), phone and desktop separately — say them before the client asks. They tell the client where the base they pick would be changed, not what to build. Include the channels the owner named (Naver Place, Instagram, Kakao) as references; customers see those screens first.
 
 In chat, keep to what the screens cannot show: licence and reuse status, what could not be verified, and a recommendation of one or two finalists tied to the brief. Explain why the recommendation fits the real content and user task, not merely why it looks fashionable.
 
 Ask the user for a simple decision:
 
-1. the sites whose tone they like — the pick sets tone; the page structure is built from what the shortlisted sites share, never traced from one;
+1. **one base** — the template (or site) the whole site will look and be laid out like: its type contrast, colour fields, photo placement, part shapes and page layout. When the client names several, ask which one is the base; the others become named traits. A site built only from what the shortlist shares came out the same for a café, a snack stall and a vintage shop, because every set of websites shares the same average;
 2. definite rejections and why;
 3. optionally one named trait from a secondary reference.
 

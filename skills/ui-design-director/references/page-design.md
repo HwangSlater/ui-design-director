@@ -8,23 +8,23 @@ Use this after `SITE-PLAN.md` is approved. Each page type passes a **layout** ch
 
 For each page type, offer 2–3 numbered options that differ in **structure**, not styling: what leads, content order, how the main action is reached, how the page reflows on a phone.
 
-### Skeleton from what the references share
+### Skeleton from the base
 
-Build the skeleton from the traits the shortlisted references share, choosing those that suit this project. Never trace one site, rank sites and copy the winner, or reuse the last project's skeleton. Four projects in a row came out as one stacked column.
+The base the client picked (`design-selection.md` § 4) is the starting design and layout. Follow it closely — its section order, column split, type contrast, colour fields, photo placement and part shapes — and change it only where several field sites do something differently. Commonality alone gives the average website: a café, a snack stall and a vintage shop built from shared traits all came out as white page, hairlines, square boxes and one accent.
 
-1. Run `scripts/skeleton.mjs` on the shortlist (the client's pick and the field sites shown with it) separately at `--width 390` and `--width 1280`. A trait only one site has stays that site's own.
-2. Count each trait (「5/9곳」); never call a trait common to all when it is not.
-3. Add content patterns the tool cannot see (hours, last drop-off and phone number in one block).
-4. Make the shortlist answer each of the owner's top questions (「출퇴근용으로 뭐 사요?」).
-5. Say in one line which shared traits you used and why.
-6. Before showing, rerun with `--ours <option>`. 「공통 범위 밖」, 「참고 한 곳과 거의 같은 뼈대」, 「참고 한 곳과 같은 생김새」, 「상자 위에 상자」 or 「칸 속 칸」 means redraw, or say in one line why this project departs. (`--prev` compares with earlier projects; the client never sees those, so it is only for testing the skill.)
-7. Compose phone and desktop both, starting with the customers' device. A phone stack stretched to desktop is a finding.
+1. Run `scripts/skeleton.mjs out.md --base <name> name=url …` on the base and the field sites, separately at `--width 390` and `--width 1280`. Its 「바탕과 다르게 할 곳」 lists only what two or more sites, more than half, do differently from the base (「옆으로 넘기는 띠: 바탕은 없음, 3/5곳은 있음」).
+2. Take each listed change or leave it, and record both in `DESIGN.md` § 바탕에서 바꾼 곳 with the count. Everything else follows the base.
+3. Replace the base's text, photos, logo and illustrations with this shop's; a template's own content left in place is what made a pottery site look like its template.
+4. Add content patterns the tool cannot see (hours, last drop-off and phone number in one block), and check the base answers each of the owner's top questions (「출퇴근용으로 뭐 사요?」); a missing answer is a change, taken from the field sites.
+5. Options (2–3) are variations within the base: what leads, which listed change is taken, how the main action is reached.
+6. Before showing, rerun with `--ours <option>`. 「바탕과 다름」, 「바탕의 짜임을 버림」, 「상자 위에 상자」 or 「칸 속 칸」 means redraw, or say in one line why. (`--prev` compares with earlier projects; the client never sees those, so it is only for testing the skill.)
+7. Compose phone and desktop both, starting with the customers' device, from the base's own phone and desktop pages. A phone stack stretched to desktop is a finding.
 
-Photo corners and button shape come from the shop's own face (a round date disc, an arch), not a majority. The tool flags stacked boxes, not radius. One platform's pages (Naver Place, Instagram) count as one reference.
+One platform's pages (Naver Place, Instagram) count as one reference.
 
 ### Measure the reference pages
 
-1. Run `node scripts/extract_styles.mjs <url> <out.json> --width 390`, then at 1280, on the page doing the same job on two or more shortlisted sites. Correct any `DESIGN.md` token outside their shared range (type scale, shadow, button and input size, section spacing, photos against boxes), citing the sites. Keep their screenshots open while building.
+1. Run `node scripts/extract_styles.mjs <url> <out.json> --width 390`, then at 1280, on the base's page doing the same job, and on two or more field sites. `DESIGN.md` tokens (type scale, radius, shadow, button and input size, section spacing, photos against boxes) take the base's values; move one only where the field sites agree against it, citing them. Keep the base's screenshots open while building.
 2. Take components (calendar, sheet, gallery, form, tabs) from a known design system or the reference's pattern, and name the source.
 3. Borrow a pattern whole: list its parts and check them off. A donation form lost the 「다른 금액」 field its pattern had.
 4. Carry the `DESIGN.md` visual layers (identity, item faces, icons, colour blocks, data marks, wide-screen columns) into every option; text on grey with white cards is a wireframe.
@@ -44,23 +44,23 @@ Photo corners and button shape come from the shop's own face (a round date disc,
 10. Judge the first screen and sticky parts with one-screen captures at several scroll positions (`capture.mjs` job with `"scrollY"`), not a full-length capture.
 11. Times and prices in the body face with tabular figures; a monospace `14:00 ~ 19:00` read as generated.
 
-### Parts from this project
+### Parts from the base
 
-Before the first layout, list the parts the page needs (name, today's status and hours, the contact action, notices, menu and prices, photos, directions, the owner's story). For each, look at how the shortlisted references show it and count (「시간을 첫 화면 큰 글씨로 3/6곳」), and look at the shop's own objects (the menu board, the sign, the order slip). Pick the form from those and write `DESIGN.md` § 부품 출처: part → form → source. Two projects whose references differ should not end with the same parts; if a part is drawn the way this file's examples are, check it came from this project's references and not from the skill. The rules below say what not to do — they are not a template.
+Before the first layout, list the parts the page needs (name, today's status and hours, the contact action, notices, menu and prices, photos, directions, the owner's story). Each takes the base's form for it. For a part the base lacks, look at how the field sites show it and count (「시간을 첫 화면 큰 글씨로 3/6곳」), or at the shop's own objects (the menu board, the sign, the order slip). Write `DESIGN.md` § 부품 출처: part → form → source (base, n/N, or the shop's object). Two projects whose references differ should not end with the same parts; if a part is drawn the way this file's examples are, check it came from this project's references and not from the skill. The rules below say what not to do — they are not a template.
 
 ### A face, not a kit
 
 A gate before the first layout is shown; judges named these in every round.
 
-1. **A face.** The name, colour and one motif come from the shop (its sign, its trade's objects), one accent colour besides black (a second block colour only when the client picks it), icons in one style.
-2. **No repeated section formula.** Three sections in a row with the same make-up (「heading → list → small grey note」, 「label – value rows」) read as generated; change two, using forms from § Parts from this project.
+1. **A face.** The name, colour and one motif come from the shop (its sign, its trade's objects), set in the base's type and colour fields (a second accent only when the client picks it), icons in one style.
+2. **No repeated section formula.** Three sections in a row with the same make-up (「heading → list → small grey note」, 「label – value rows」) read as generated; change two, using the base's forms (§ Parts from the base).
 3. **No kit parts.** No left-border callouts, equal filled-and-outlined button pair as the main action, status dot before every state, same 6–8px radius on every box, tilted name tag, oversized corner on every photo, pills everywhere, or headline line in a second colour.
 4. **"Too boxy" means stacked boxes.** Remove tinted panels and boxes inside boxes. Do not round everything or copy another site's shapes; a café that did heard 「네이버랑 똑같다」.
 5. **The owner's voice, shorter.** Keep computed, kind lines (「지금 맡기시면 내일(목) 저녁」) once each; drop the grey footnote under every block, which reads as 「모범답안」.
 6. **One photo grade.** Same crop logic, white balance and contrast; fewer, larger photos.
 7. **Not the generated formula.** No stock photo with a floating box, headline and two buttons; no four icon cards over the photo edge; no display face on every title (one or two levels); no thin generic line icons.
 8. **What reads as running.** The store's main job as a real input on the first screen (a search box, not a 「책 찾기」 button); the shop's own rooms and goods in the photos; no borrowed chain-store hero.
-9. **Filled like a running organisation.** Pick from what the shortlisted sites share — utility bar (hours, phone, messenger), quick links as plain text (not a row of identical icon tiles), dated news, an Instagram strip, a multi-column footer — labelled 「견본」 for the client. No features a small organisation would not have (a filter bar for 50 animals).
+9. **Filled like a running organisation.** Keep what the base has and add what the field sites share — utility bar (hours, phone, messenger), quick links as plain text (not a row of identical icon tiles), dated news, an Instagram strip, a multi-column footer — labelled 「견본」 for the client. No features a small organisation would not have (a filter bar for 50 animals).
 
 ### Questions per surface
 

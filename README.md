@@ -212,6 +212,7 @@ $ui-design-director로 렌더링된 UI가 DESIGN.md를 준수하는지 검수해
         │   ├── capture.mjs
         │   ├── make_board.py
         │   ├── skeleton.mjs
+        │   ├── skeleton_base.mjs
         │   ├── preflight.py
         │   ├── judge_fill.mjs
         │   ├── live_proxy.mjs
@@ -260,7 +261,7 @@ $ui-design-director로 렌더링된 UI가 DESIGN.md를 준수하는지 검수해
 - `compose_metrics.mjs`: 넓은 화면 첫 화면의 구성(사진·색 판·빈 바탕 비율, 가장 큰 글자, 진한 색 덩어리 수, 글 폭)을 실제 사이트 여럿과 숫자로 비교해 미달 항목을 표시(작은 값이 아니라 구성을 맞추기)
 - `extract_styles.mjs`: 기준 사이트에서 실제로 쓰인 글자 크기·둥글기·그림자·여백·사진과 상자 수를 뽑아 표로(글이 아니라 숫자를 보고 짜기)
 - `make_live_board.py`: 참고 사이트를 캡처하지 않고 실제로 띄워 넘겨 보는 화면(다른 페이지 안에 띄우기를 막는 사이트는 표시)
-- `skeleton.mjs`: 참고 사이트들의 화면 짜임을 폰·컴퓨터 따로 재서 공통점을 「n/N곳」으로 뽑고, 우리 시안이 공통 범위 밖이거나 한 곳을 옮겼거나 이전 시안과 같은 틀이거나 상자 위에 상자를 쌓았으면 알림(같은 사이트 여러 쪽은 한 곳으로 셈)
+- `skeleton.mjs`: 참고 사이트들의 화면 짜임을 폰·컴퓨터 따로 잰다. `--base` 로 의뢰인이 고른 템플릿을 주면 관련 사이트 여럿이 바탕과 다르게 하는 곳만 「바꿀 곳」(n/N)으로 뽑고(`skeleton_base.mjs`), 우리 시안이 바탕과 달라졌거나 상자 위에 상자를 쌓았으면 알림(같은 사이트 여러 쪽은 한 곳으로 셈)
 - `preflight.py`: 의뢰인에게 보내기 전 점검 — 의뢰인이 말한 채널(네이버·인스타·카카오)이 참고와 시안에 있는지, 공통점을 셌는지, 사장님 들어가기·폰 분실, 같은 크기 단추 쌍
 - `judge_fill.mjs`: 블라인드 판정용 사본만 — 견본 표시·빗금 자리 숨기기, 0000 전화번호를 그럴듯한 번호로, 남은 흔적 알림(`capture.mjs` 일감에 `"judge": true`)
 - `live_proxy.mjs`: 다른 페이지 안에 띄우기를 막는 참고 사이트(네이버 지도·당근 등)도 실시간 보기 화면에 띄우는 내 컴퓨터 안 프록시 — 막는 머리 지우기, 사이트 스크립트 빼기, 후보 사이트만·읽기만·쿠키 없음
@@ -298,6 +299,7 @@ python3 scripts/validate_skill.py
 python -m unittest discover tests
 node --test tests/test_judge_fill.mjs
 node --test tests/test_live_proxy.mjs
+node --test tests/test_skeleton_base.mjs
 ```
 
 스킬을 고친 근거(역할극 결과·토큰)는 `docs/역할극-기록.md`, 구간별 토큰은 `python -X utf8 scripts/roleplay_tokens.py <세션 ID> <구간 파일>`.

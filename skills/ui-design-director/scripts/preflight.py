@@ -113,6 +113,10 @@ def check(root: Path) -> list[str]:
     # 2b. 부품 출처 — 부품 모양을 스킬 예시가 아니라 이번 참고·가게 물건에서 골랐는지(카페·분식집이 같은 부품으로 나옴)
     if files(root / "layouts", "*.html") and design and "부품 출처" not in design:
         out.append("부품 출처 빠짐: DESIGN.md 에 「부품 출처」(부품 → 모양 → 참고 n/N곳 또는 가게 물건)가 없음 — 이름·영업 상태·연락·알림·메뉴·찾아오는 길 모양을 이번 참고에서 골랐는지 적을 것")
+    # 2c. 바탕 — 의뢰인이 고른 템플릿 하나의 디자인·레이아웃을 따르고, 관련 사이트 여럿이 다르게 하는 곳만 바꾼다(사용자 2026-11-05).
+    # 공통점만으로 짜니 카페·분식집·구제 가게가 같은 평균 웹사이트로 나왔다.
+    if files(root / "layouts", "*.html") and design and "바탕에서 바꾼 곳" not in design:
+        out.append("바탕 빠짐: DESIGN.md 에 「바탕에서 바꾼 곳」이 없음 — 의뢰인이 고른 템플릿(바탕) 이름과, skeleton.mjs --base 가 뽑은 바꿀 곳 중 고른 것·뺀 것을 n/N과 함께 적을 것")
 
     # 3. 사장님 화면이 있으면 들어가기·폰 분실
     if OWNER_WORDS.search(said) and plan:  # 계획을 쓰기 전에는 묻지 않는다
