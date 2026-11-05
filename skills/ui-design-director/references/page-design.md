@@ -34,7 +34,7 @@ One platform's pages (Naver Place, Instagram) count as one reference.
 
 1. Approved tokens and a licence-checked sample photo in every slot (`comparison-board.md` § Sample photos); colour, type and photos identical across options.
 2. Real or planned `SITE-PLAN.md` content at real length.
-3. Capture wide and phone with `scripts/capture.mjs`; show options in the `comparison-board.md` viewer, with the base's matching page as the first entry (「바탕 — <name>」, not numbered, same widths) so the client can see what each option follows.
+3. Capture wide and phone with `scripts/capture.mjs`; show options in the `comparison-board.md` viewer.
 4. One line per option: what it prioritises and what it gives up.
 5. At least one option changes the **first screen** itself (full-width photo, type only, price list first, one strong object). Three options opening text-left, photo-right are one option.
 6. Options differ on the first phone screen, or the name says where they start to differ (「2 — 사진 바로 밑에 객실」).
@@ -79,7 +79,7 @@ Build the approved layout with only `DESIGN.md` tokens and components.
 
 ### Where mockups live
 
-Outside production routes in one folder (default `mockups/`) with an `index.html` linking every page and state and, next to each page, the base's matching page (its capture and live address, labelled 「바탕 — <name>」); static HTML/CSS loading one `tokens.css` and one `components.css`, pages holding layout only. If a local component library exists, use it on a non-production route instead.
+Outside production routes in one folder (default `mockups/`) with an `index.html` linking every page and state; static HTML/CSS loading one `tokens.css` and one `components.css`, pages holding layout only. If a local component library exists, use it on a non-production route instead.
 
 ### Composition first
 
