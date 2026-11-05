@@ -6,7 +6,7 @@ Use this after `SITE-PLAN.md` is approved. Each page type passes a **layout** ch
 
 ## 1. Layout options
 
-For each page type, offer 2–3 numbered options that differ in **structure**, not styling: what leads, content order, how the main action is reached, how the page reflows on a phone.
+For the home page, offer 2 numbered options (other page types follow it with one option each unless the client asks); options that differ in **structure**, not styling: what leads, content order, how the main action is reached, how the page reflows on a phone.
 
 ### Skeleton from the base
 
@@ -16,7 +16,7 @@ The base the client picked (`design-selection.md` § 4) gives the look — type 
 2. Take each listed change or leave it, and record both in `DESIGN.md` § 바탕에서 바꾼 곳 with the count. Everything else follows the base.
 3. Replace the base's text, photos, logo and illustrations with this shop's; a template's own content left in place is what made a pottery site look like its template.
 4. Add content patterns the tool cannot see (hours, last drop-off and phone number in one block), and check the base answers each of the owner's top questions (「출퇴근용으로 뭐 사요?」); a missing answer is a change, taken from the field sites.
-5. Options (2–3) are variations within the base: what leads, which listed change is taken, how the main action is reached.
+5. Options (2) are variations within the base: what leads, which listed change is taken, how the main action is reached.
 6. Before showing, rerun with `--ours <option>`. 「바탕과 다름」, 「바탕의 짜임을 버림」, 「상자 위에 상자」 or 「칸 속 칸」 means redraw, or say in one line why. (`--prev` compares with earlier projects; the client never sees those, so it is only for testing the skill.)
 7. Compose phone and desktop both, starting with the customers' device, from the base's own phone and desktop pages. A phone stack stretched to desktop is a finding.
 
@@ -83,7 +83,7 @@ Outside production routes in one folder (default `mockups/`) with an `index.html
 
 ### Composition first
 
-Every first screen and page type passes the composition numbers and blind judge before the client sees it: [blind-judge.md](blind-judge.md).
+Every first screen and page type passes the composition numbers before the client sees it; the blind judge runs only when the client asks: [blind-judge.md](blind-judge.md).
 
 ### Self-check before showing
 
@@ -94,7 +94,7 @@ Every first screen and page type passes the composition numbers and blind judge 
 5. Build `python scripts/side_by_side.py <out.html> <ours.jpg> <reference.jpg> …` for the first screen and densest page at both widths; fix every layer the reference has and ours lacks without a recorded reason.
 6. Name and fix three places flatter, denser, more generic or less finished than the reference.
 7. Fix everything you notice in your own screenshots, however small.
-8. Check narrow overflow, the longest label, sticky regions and claimed states at three widths; without a renderer, say the check was structural only.
+8. Check narrow overflow, the longest label, sticky regions and claimed states at phone and desktop width; without a renderer, say the check was structural only.
 9. Capture again right before sending and send only those paths.
 
 ### Handing over

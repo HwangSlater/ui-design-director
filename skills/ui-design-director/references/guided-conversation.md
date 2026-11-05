@@ -37,7 +37,7 @@ When the user wants the whole site or app, continue:
 
 9. **Pages:** Propose the page inventory and 2–5 main flows from `site-plan.md`; ask what to cut or add, not to invent the list.
 10. **Layouts:** Page type by page type, show numbered layout options from `page-design.md`; the user answers with a number or a combination of named parts.
-11. **Mockups:** Show screenshots of each full-fidelity page at three widths; ask for approval or one concrete change per page.
+11. **Mockups:** Show screenshots of each full-fidelity page at phone and desktop width; ask for approval or one concrete change per page.
 12. **Build:** Only on request, move approved mockups into code with `site-build.md`, starting with one representative page.
 
 ## Help an uncertain user
