@@ -30,12 +30,20 @@ def usage_rows(project: Path, session: str):
         if not f.is_file():
             continue
         sub = "subagents" in f.parts
+        seen: set[str] = set()
         for line in f.open(encoding="utf-8"):
             try:
                 o = json.loads(line)
             except json.JSONDecodeError:
                 continue
-            u = o.get("message", {}).get("usage") if o.get("type") == "assistant" else None
+            m = o.get("message", {}) if o.get("type") == "assistant" else {}
+            u = m.get("usage")
+            # 한 응답이 생각·글·도구 호출마다 따로 한 줄씩 기록되고 줄마다 같은 usage 가 붙는다 — 응답 id 로 한 번만 센다
+            mid = m.get("id")
+            if mid in seen:
+                continue
+            if mid:
+                seen.add(mid)
             if u:
                 yield dt.datetime.fromisoformat(o["timestamp"].replace("Z", "+00:00")), sub, u
 
