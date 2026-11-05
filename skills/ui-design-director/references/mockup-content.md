@@ -49,7 +49,7 @@ Layout and gates: [page-design.md](page-design.md). Owner screens: [owner-screen
 
 ## States and forms
 
-1. Phone (≈390) and desktop (≈1280+) for every page; ≈768 only for work surfaces or when the layout changes there.
+1. Phone (≈390) and desktop (≈1280+) for every page; ≈768 only for work surfaces or when the layout changes there. Desktop takes the reference's desktop composition for that page; a phone column centred in empty space is a finding — use the width the reference uses (a side column, a live preview, help next to the fields).
 2. Work surfaces: each `SITE-PLAN.md` state as a frame (empty, loading, error, no permission, dense); controls in default, hover, focus, active, disabled, invalid.
 3. Submit with gaps: a banner naming what is missing with links, a jump to the first, a message per field. Over-length text stays with 「2자 넘었어요」. A slot taken meanwhile says so and keeps the rest. A failed payment says no money left, in words fitting every method.
 4. When the customer must know the seller saw the order, show paid → sent → confirmed; the last line changes only on staff confirm.
