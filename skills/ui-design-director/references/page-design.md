@@ -28,7 +28,7 @@ One platform's pages (Naver Place, Instagram) count as one reference.
 2. Take components (calendar, sheet, gallery, form, tabs) from a known design system or the reference's pattern, and name the source.
 3. Borrow a pattern whole: list its parts and check them off (a donation form lost its 「다른 금액」 field).
 4. Carry the `DESIGN.md` visual layers into every option.
-5. Note what the shortlisted sites do well in common (image size, white space, type hierarchy, density); every option keeps it. One site's signature component stays theirs.
+5. Note what the shortlisted sites do well in common (image size, white space, type hierarchy, density); every option keeps it. Follow the base's composition and rhythm closely; only a component that identifies one site (its mascot, a trademark widget) stays theirs.
 
 ### Checks for each option
 

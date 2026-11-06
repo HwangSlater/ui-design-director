@@ -42,6 +42,7 @@ For a broad request ("I want to choose a design") read [references/guided-conver
 
 On entry, read project-root `DESIGN.md` and `SITE-PLAN.md` if they exist and resume from the first open gate; do not redo approved decisions. Advance only to the next gate the user authorised: "find a design" is not approval to implement, "design the site" is not approval to write production code.
 
+- **Main page only** (the user wants just the home/first page): gates 1–3, then build that one page by the § Main page recipe; skip the site plan, layout options and other pages. Aim for under 80 turns.
 - **Concept** (format or palette undecided): [design-selection.md](references/design-selection.md), [color-selection.md](references/color-selection.md). Format and palette are separate decisions.
 - **Preview** (finalists exist, user wants them applied): [concept-preview.md](references/concept-preview.md).
 - **Extract** (format and palette approved, or a partial draft requested): [reference-extraction.md](references/reference-extraction.md), [design-md-format.md](references/design-md-format.md) → `DESIGN.md`; a partial draft stays provisional.
@@ -50,6 +51,16 @@ On entry, read project-root `DESIGN.md` and `SITE-PLAN.md` if they exist and res
 - **Build** (mockups approved, production code requested): [site-build.md](references/site-build.md).
 - **Apply** (restyle an existing product from an approved `DESIGN.md`): map it to shared tokens and primitives; implement one representative slice before spreading it.
 - **Review** (consistency check, or work about to be shown as finished): [ui-review.md](references/ui-review.md), including § Site check for mockups and sites.
+
+## Main page recipe
+
+The answer key is the base's own home page; reproduce its design, then make it ours so it does not read as copied.
+1. Capture the base home at 390 and 1280 and run `scripts/extract_styles.mjs` on it. Write `formats/바탕-구성.md`: its sections top to bottom, each with height share of the page, photo share, type sizes, columns, and what the section does.
+2. Build our page section by section from that table: same order, proportions, density, photo share, type scale, spacing, radius and shadow. Do not invent a structure and do not rebuild from generic rules.
+3. Make it ours: our name, content, photos and the chosen colours; this product's own character leads the first screen (§ Before each message 4); change the one or two places where several field sites share something the base lacks (n/N); take at most one section from another shortlisted site, by name.
+4. Not a copy: at first glance nobody says 「이거 ○○ 아냐?」 — no base logo, mascot, brand colour, set phrases or a component only the base has; run the logo-swap test.
+5. Before sending, put ours beside the base at both widths (`scripts/side_by_side.py`) and fix every place where ours is emptier, plainer or more boxed than the base.
+6. Send `index.html` with the base first and ours next, at both widths.
 
 ## Gates
 
