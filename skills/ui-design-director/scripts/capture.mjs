@@ -9,177 +9,52 @@
 //   "judge": true — 블라인드 판정용 사본만: 견본 표시·빗금 자리를 숨기고 0000 번호를 그럴듯한 번호로(judge_fill.mjs). 남은 흔적은 「판정 흔적」으로 알린다.
 //   "scrollY": 숫자 를 주면 전체 길이 대신 그 위치의 한 화면만 찍는다 — 아래에 붙는 단추·위에 붙는 칩처럼
 //   스크롤해도 따라오는 것은 전체 길이 캡처에선 페이지 중간에 박혀 글을 가린 것처럼 보이므로 이렇게 확인한다.
+// 배율: 기본 2배(--scale 1~3, job 마다 "scale"). 그림 크기는 폭×배율 — 그림을 재는 도구는 폭으로 나눠 본다.
 // 결과: <out-dir>/<id>-<width>.jpg. 이미 있는 파일은 건너뛰므로 중간에 끊겨도 다시 돌리면 이어서 찍는다.
 // 문서 응답이 400 이상이면 저장하지 않고 실패로 보고한다.
 
-import { spawn } from "node:child_process";
-import { existsSync, mkdirSync, readFileSync, writeFileSync, mkdtempSync, rmSync } from "node:fs";
-import { tmpdir } from "node:os";
+import { existsSync, mkdirSync, readFileSync, writeFileSync, rmSync } from "node:fs";
 import { join } from "node:path";
-import { createServer } from "node:net";
 import { judgeFillExpr } from "./judge_fill.mjs";
+import { Cdp, launch, sleep, HIDE_OVERLAYS } from "./browser.mjs";
 
-// 설치 위치는 운영체제가 알려 주는 폴더에서 찾는다
 const SCREEN_SLICES = 16; // 맨 위부터 한 화면씩 잘라 따로 저장할 최대 수(screens/ 폴더). 4장만 자르면 페이지 아래쪽(시간표·질문·오시는 길)을 못 봤다
-const WIN_DIRS = [process.env["ProgramFiles(x86)"], process.env.ProgramFiles, process.env.LOCALAPPDATA].filter(Boolean);
-const BROWSERS = [
-  process.env.CAPTURE_BROWSER,
-  ...WIN_DIRS.map((d) => join(d, "Microsoft", "Edge", "Application", "msedge.exe")),
-  ...WIN_DIRS.map((d) => join(d, "Google", "Chrome", "Application", "chrome.exe")),
-  "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
-  "/usr/bin/google-chrome",
-  "/usr/bin/chromium",
-].filter(Boolean);
 const PHONE_MAX = 600;
 const PHONE_HEIGHT = 844;
 const DESKTOP_HEIGHT = 900;
-const MAX_PAGE_HEIGHT = 8000;
+const MAX_PAGE_HEIGHT = 16000; // 8000 에서 잘려 긴 페이지(나이키 12,857px)의 아래쪽을 못 봤다
 const SETTLE_MS = 2500;
-const SCROLL_STEP_MS = 120;
-// 이름으로 못 찾는 덮개: 화면에 붙어 있고(fixed/sticky) 「쿠키」 문구가 있으며 화면 절반보다 작은 것. Flour 메뉴의 아래 쿠키 띠가 이름으로는 안 잡혔다
-// 빵집 메뉴의 「쿠키」처럼 상품 이름과 겹치지 않게 문장 꼴로만 찾고, 머리·메뉴(header·nav)는 건드리지 않는다
-// 한국 사이트의 광고·공지 팝업은 「오늘 하루 그만 보기」「오늘 하루 보지 않기」로 닫는다(집닥 시공사례에 이사 광고 팝업)
-const OVERLAY_WORDS = /use (of )?cookies|cookies help|cookie (policy|settings|preferences)|accept (all )?cookies|쿠키(를| 사용| 정책| 설정)|개인정보 수집|오늘(은)? (하루 ?)?(그만 ?보기|보지 않기|열지 않기)|하루 동안 보지 않기|앱(으로|에서) ?(보기|열기|이용하기)|APP ?(열기|설치)|앱 ?설치|모바일 ?웹으로 (볼래요|보기)/i; // 앱 설치 권유 창(오늘의집)
-const hideOverlaysExpr = (sel, words) => `(() => {
-  const off = (n) => n.style.setProperty("display", "none", "important");
-  document.querySelectorAll(${JSON.stringify(sel)}).forEach(off);
-  for (const n of document.querySelectorAll("body *")) {
-    const cs = getComputedStyle(n), pos = cs.position;
-    const floating = pos === "fixed" || pos === "sticky" || (pos === "absolute" && Number(cs.zIndex) >= 1); // 한국 사이트 팝업은 absolute + z-index가 많다
-    if (!floating) continue;
-    if (n.matches("header, nav") || n.querySelector("nav")) continue;
-    const r = n.getBoundingClientRect();
-    if (r.height > innerHeight / 2 || !${words}.test(n.textContent || "")) continue;
-    off(n);
-  }
-  // 흐름 안에 박힌 광고 상자(집닥: 「오늘 하루 그만 보기 · 닫기」가 달린 오른쪽 광고): 그 글자에서 위로 올라가며
-  // 화면보다 작은 가장 큰 상자를 가린다 — 머리·메뉴·본문 전체는 크기 제한에 걸려 남는다
-  const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
-  for (let t = walker.nextNode(); t; t = walker.nextNode()) {
-    if (!/오늘(은)? (하루 ?)?(그만 ?보기|보지 않기|열지 않기)|하루 동안 보지 않기/.test(t.textContent)) continue;
-    let box = null;
-    for (let el = t.parentElement; el && el !== document.body; el = el.parentElement) {
-      const r = el.getBoundingClientRect();
-      if (r.width > innerWidth * 0.6 || r.height > innerHeight * 0.85 || el.matches("header, nav, main")) break;
-      box = el;
-    }
-    if (box) off(box);
-    // 화면 전체를 덮는 광고 창(교보·예스24 「오늘은 그만보기」): 위로 올라가며 떠 있는(fixed) 가장 바깥 상자를 가린다
-    let fixed = null;
-    for (let el = t.parentElement; el && el !== document.body; el = el.parentElement) {
-      if (el.matches("header, nav, main")) break;
-      if (getComputedStyle(el).position === "fixed") fixed = el;
-    }
-    if (fixed) off(fixed);
-  }
-  // 글자 없이 화면을 어둡게 덮는 판(광고 창 뒤 그늘)
-  for (const n of document.querySelectorAll("body *")) {
-    const cs = getComputedStyle(n);
-    if (cs.position !== "fixed" || (n.textContent || "").trim()) continue;
-    const r = n.getBoundingClientRect();
-    if (r.width >= innerWidth * 0.9 && r.height >= innerHeight * 0.8) off(n);
-  }
-})()`;
-const OVERLAY_SELECTORS = '[id*="cookie" i],[class*="cookie" i],[id*="consent" i],[class*="consent" i],[id*="onetrust" i],[class*="onetrust" i],[id*="termly" i],[id*="klaviyo" i],[class*="klaviyo" i],[id*="onesignal" i],[class*="newsletter-popup" i],[aria-modal="true"]';
-const HIDE_OVERLAYS = hideOverlaysExpr(OVERLAY_SELECTORS, OVERLAY_WORDS);
+const SCROLL_STEP_MS = 300; // 120ms 로 휙 내리면 늦게 불러오는 사진이 빈칸으로 남았다
 const CURRENT_PAGE = "@current"; // url 에 이 값을 주면 steps 를 마친 그 화면을 찍는다
 const NAV_TIMEOUT_MS = 45000;
 const PHONE_UA =
   "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1";
+// 컴퓨터 폭도 실제 브라우저 이름으로 — 기본 이름의 「HeadlessChrome」을 보고 거절(403)하는 사이트가 있다(우회 시험 50곳)
+const DESKTOP_UA =
+  "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36 Edg/142.0.0.0";
+const HIDE_WEBDRIVER = "Object.defineProperty(navigator, 'webdriver', { get: () => undefined })";
+// 2배로 찍는다: 1배 JPEG 82는 작은 글자·가는 선·단추 테두리가 뭉개져 바탕의 마감을 사람도 AI도 못 읽었다
+const DEFAULT_SCALE = 2;
+const JPEG_QUALITY = 92;
+const JPEG_MAX_PX = 65000; // JPEG 한 장의 최대 높이(픽셀) — 넘으면 배율을 낮춰 찍는다
 
-const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
-function freePort() {
-  return new Promise((resolve, reject) => {
-    const srv = createServer();
-    srv.once("error", reject);
-    srv.listen(0, "127.0.0.1", () => {
-      const { port } = srv.address();
-      srv.close(() => resolve(port));
-    });
-  });
-}
 
 function parseArgs(argv) {
-  const args = { widths: [1280, 390], rest: [] };
+  const args = { widths: [1280, 390], scale: DEFAULT_SCALE, rest: [] };
   for (let i = 0; i < argv.length; i++) {
     if (argv[i] === "--widths") args.widths = argv[++i].split(",").map(Number);
+    else if (argv[i] === "--scale") args.scale = Math.min(3, Math.max(1, Number(argv[++i]) || DEFAULT_SCALE));
     else args.rest.push(argv[i]);
   }
   if (args.rest.length !== 2 || args.widths.some((w) => !Number.isFinite(w) || w < 200)) {
-    console.error("사용: node capture.mjs <jobs.json> <out-dir> [--widths 1280,390]");
+    console.error("사용: node capture.mjs <jobs.json> <out-dir> [--widths 1280,390] [--scale 2]");
     process.exit(2);
   }
   return args;
 }
 
-class Cdp {
-  constructor(ws) {
-    this.ws = ws;
-    this.id = 0;
-    this.pending = new Map();
-    this.listeners = [];
-    ws.addEventListener("message", (ev) => {
-      const msg = JSON.parse(ev.data);
-      if (msg.id && this.pending.has(msg.id)) {
-        const { resolve, reject } = this.pending.get(msg.id);
-        this.pending.delete(msg.id);
-        msg.error ? reject(new Error(msg.error.message)) : resolve(msg.result);
-      } else if (msg.method) {
-        this.listeners.forEach((fn) => fn(msg));
-      }
-    });
-  }
-  static async open(url) {
-    const ws = new WebSocket(url);
-    await new Promise((res, rej) => {
-      ws.addEventListener("open", res, { once: true });
-      ws.addEventListener("error", rej, { once: true });
-    });
-    return new Cdp(ws);
-  }
-  send(method, params = {}) {
-    const id = ++this.id;
-    this.ws.send(JSON.stringify({ id, method, params }));
-    return new Promise((resolve, reject) => this.pending.set(id, { resolve, reject }));
-  }
-  waitFor(method, timeout) {
-    return new Promise((resolve, reject) => {
-      const timer = setTimeout(() => reject(new Error(`${method} 대기 시간 초과`)), timeout);
-      const fn = (msg) => {
-        if (msg.method === method) {
-          clearTimeout(timer);
-          this.listeners = this.listeners.filter((f) => f !== fn);
-          resolve(msg.params);
-        }
-      };
-      this.listeners.push(fn);
-    });
-  }
-  close() {
-    this.ws.close();
-  }
-}
 
-async function launch() {
-  const exe = BROWSERS.find((p) => existsSync(p));
-  if (!exe) throw new Error("Edge 또는 Chrome을 찾지 못했습니다. CAPTURE_BROWSER 로 경로를 지정하세요.");
-  const port = await freePort();
-  const profile = mkdtempSync(join(tmpdir(), "capture-"));
-  const proc = spawn(exe, [
-    "--headless=new", "--disable-gpu", "--hide-scrollbars", "--no-first-run", "--mute-audio",
-    `--remote-debugging-port=${port}`, `--user-data-dir=${profile}`, "about:blank",
-  ], { stdio: "ignore" });
-  for (let i = 0; i < 50; i++) {
-    try {
-      const res = await fetch(`http://127.0.0.1:${port}/json/version`);
-      if (res.ok) return { proc, port, profile };
-    } catch { /* 아직 뜨는 중 */ }
-    await sleep(200);
-  }
-  proc.kill();
-  throw new Error("브라우저 디버깅 포트가 열리지 않았습니다.");
-}
 
 // 글·입력·사진 중 오른쪽 끝이 화면 너비를 넘는 것(가로로 미는 목록 안은 뺌)
 const OVERFLOW_PROBE = `(() => {
@@ -194,7 +69,7 @@ const OVERFLOW_PROBE = `(() => {
   return out;
 })()`;
 
-async function shoot(port, url, width, steps = [], scrollY = null, keepOverlays = false, judge = false) {
+async function shoot(port, url, width, steps = [], scrollY = null, keepOverlays = false, judge = false, scale = DEFAULT_SCALE) {
   const target = await (await fetch(`http://127.0.0.1:${port}/json/new?about:blank`, { method: "PUT" })).json();
   const cdp = await Cdp.open(target.webSocketDebuggerUrl);
   try {
@@ -202,9 +77,10 @@ async function shoot(port, url, width, steps = [], scrollY = null, keepOverlays 
     await cdp.send("Page.enable");
     await cdp.send("Network.enable");
     await cdp.send("Emulation.setDeviceMetricsOverride", {
-      width, height: phone ? PHONE_HEIGHT : DESKTOP_HEIGHT, deviceScaleFactor: 1, mobile: phone,
+      width, height: phone ? PHONE_HEIGHT : DESKTOP_HEIGHT, deviceScaleFactor: scale, mobile: phone,
     });
-    if (phone) await cdp.send("Emulation.setUserAgentOverride", { userAgent: PHONE_UA });
+    await cdp.send("Emulation.setUserAgentOverride", { userAgent: phone ? PHONE_UA : DESKTOP_UA, acceptLanguage: "ko-KR,ko;q=0.9,en;q=0.8" });
+    await cdp.send("Page.addScriptToEvaluateOnNewDocument", { source: HIDE_WEBDRIVER });
 
     let status = 0;
     cdp.listeners.push((msg) => {
@@ -255,23 +131,25 @@ async function shoot(port, url, width, steps = [], scrollY = null, keepOverlays 
       // 실제 폰처럼 한 화면만: 붙어 다니는 막대가 제자리에 보인다
       await cdp.send("Runtime.evaluate", { expression: `scrollTo(0, ${Number(scrollY)})` });
       await sleep(SETTLE_MS);
-      const view = await cdp.send("Page.captureScreenshot", { format: "jpeg", quality: 82 });
+      const view = await cdp.send("Page.captureScreenshot", { format: "jpeg", quality: JPEG_QUALITY });
       return { data: Buffer.from(view.data, "base64"), height: phone ? PHONE_HEIGHT : DESKTOP_HEIGHT, status, screens: [], marks };
     }
     // 화면 오른쪽 밖으로 삐져나간 칸 — 폰에서 두 칸 입력이 잘린 것을 의뢰인이 먼저 잡았다(집수리 사장님 화면)
     const spill = (await cdp.send("Runtime.evaluate", { returnByValue: true, expression: OVERFLOW_PROBE })).result.value || [];
     const { cssContentSize } = await cdp.send("Page.getLayoutMetrics");
     const height = Math.min(Math.ceil(cssContentSize.height), MAX_PAGE_HEIGHT);
+    // 전체 한 장은 JPEG 최대 높이를 넘지 않게 배율을 낮춘다(조각은 늘 원래 배율)
+    const fullScale = Math.min(1, JPEG_MAX_PX / (height * scale));
     const shot = await cdp.send("Page.captureScreenshot", {
-      format: "jpeg", quality: 82, captureBeyondViewport: true,
-      clip: { x: 0, y: 0, width, height, scale: 1 },
+      format: "jpeg", quality: JPEG_QUALITY, captureBeyondViewport: true,
+      clip: { x: 0, y: 0, width, height, scale: fullScale },
     });
     // 한 화면 크기 조각 — 긴 전체 캡처는 파일로 열면 글씨가 너무 작아 안 읽힌다
     const viewH = phone ? PHONE_HEIGHT : DESKTOP_HEIGHT;
     const screens = [];
     for (let i = 0; i < SCREEN_SLICES && i * viewH < height; i++) {
       const part = await cdp.send("Page.captureScreenshot", {
-        format: "jpeg", quality: 82, captureBeyondViewport: true,
+        format: "jpeg", quality: JPEG_QUALITY, captureBeyondViewport: true,
         clip: { x: 0, y: i * viewH, width, height: Math.min(viewH, height - i * viewH), scale: 1 },
       });
       screens.push(Buffer.from(part.data, "base64"));
@@ -284,7 +162,7 @@ async function shoot(port, url, width, steps = [], scrollY = null, keepOverlays 
 }
 
 async function main() {
-  const { widths, rest } = parseArgs(process.argv.slice(2));
+  const { widths, scale, rest } = parseArgs(process.argv.slice(2));
   const [jobsPath, outDir] = rest;
   const jobs = JSON.parse(readFileSync(jobsPath, "utf8"));
   mkdirSync(outDir, { recursive: true });
@@ -302,7 +180,7 @@ async function main() {
           continue;
         }
         try {
-          const { data, height, screens, spill = [], marks = [] } = await shoot(port, job.url, width, job.steps || [], job.scrollY ?? null, Boolean(job.keepOverlays), Boolean(job.judge));
+          const { data, height, screens, spill = [], marks = [] } = await shoot(port, job.url, width, job.steps || [], job.scrollY ?? null, Boolean(job.keepOverlays), Boolean(job.judge), job.scale ?? scale);
           writeFileSync(file, data);
           const sliceDir = join(outDir, "screens");
           mkdirSync(sliceDir, { recursive: true });

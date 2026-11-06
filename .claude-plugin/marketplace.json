@@ -1,0 +1,12 @@
+{
+  "name": "ui-design-director",
+  "owner": { "name": "HwangSlater" },
+  "description": "UI 디자인 선정·시안 스킬 모음",
+  "plugins": [
+    {
+      "name": "ui-design-director",
+      "source": "./",
+      "description": "디자인 선정·시안 스킬과 단계·공용 틀을 지키는 훅"
+    }
+  ]
+}

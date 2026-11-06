@@ -7,6 +7,7 @@ Usage:
 
 Spec (paths relative to the spec file):
   { "project": "...", "step": "뼈대 고르기", "dock": 1 | 2 | 3, "pages_mode": "tabs" | "stack",
+    "live": true  -> 실제 사이트 모드: 가운데에 실제 페이지(막힌 곳은 live_proxy.mjs 로), 캡처는 썸네일과 대신 보기로만
     "captures": "captures", "widths": [1280, 390],
     "pages": [{"key": "home", "label": "첫 화면"}, ...],
     "candidates": [{ "id": "1", "slug": "1-craft", "title": "Craft", "meta": "Shopify · 무료",
@@ -26,6 +27,9 @@ import os
 import shutil
 import sys
 from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from frame_check import frame_policy  # noqa: E402  틀 안에 띄울 수 있는지(실제 사이트 모드)
 
 ASSETS = Path(__file__).resolve().parent.parent / "assets"
 DEFAULT_WIDTHS = (1440, 390)
@@ -106,13 +110,20 @@ def resolve_pages(spec: dict, spec_dir: Path, out_dir: Path) -> list[dict]:
                     size = jpeg_size(f)
                     if size:
                         entry[f"{kind}_size"] = size
-            if "desktop" in entry or "phone" in entry:
+            if "desktop" in entry or "phone" in entry or (spec.get("live") and entry["url"]):
                 pages[p["key"]] = entry
         if not pages:
             print(f'WARN: no captures for candidate {c["id"]} ({c["slug"]}); skipped', file=sys.stderr)
             continue
         item = {k: c[k] for k in ("id", "title", "meta", "recommended", "demo") if k in c}
         item["pages"] = pages
+        if spec.get("live"):
+            # 실제 사이트 모드: 틀 안 띄우기를 막거나 열리지 않는 후보는 우회(live_proxy.mjs)로 띄운다
+            first = next((e["url"] for e in pages.values() if e.get("url")), "")
+            state = frame_policy(first) if first else "error"
+            print(f'{c["id"]} {c.get("title", "")}: {state}')
+            if state != "ok":
+                item["blocked"] = True
         candidates.append(item)
     if not candidates:
         raise ValueError("no candidate has any captured page")
@@ -126,7 +137,7 @@ def build(spec: dict, candidates: list[dict]) -> str:
     mode = spec.get("pages_mode", "tabs")
     if mode not in PAGE_MODES:
         raise ValueError(f"pages_mode must be one of {sorted(PAGE_MODES)}")
-    data = {"step": spec.get("step", ""), "mode": mode, "pages": spec["pages"], "candidates": candidates}
+    data = {"step": spec.get("step", ""), "mode": mode, "pages": spec["pages"], "candidates": candidates, "live": bool(spec.get("live"))}
     total = len(candidates)
     payload = json.dumps(data, ensure_ascii=False).replace("</", "<\\/")  # 데이터 안의 </script> 가 태그를 닫지 않게
     project = html.escape(spec.get("project", ""))
@@ -190,6 +201,8 @@ def main(argv: list[str]) -> int:
     for name in ("dock.css", "dock.js", "board.css", "board.js"):
         shutil.copyfile(ASSETS / name, target.parent / name)
     print(f"wrote {target} ({len(candidates)} candidates)")
+    if spec.get("live") and any(c.get("blocked") for c in candidates):
+        print(f"막힌 후보가 있어요 → node scripts/live_proxy.mjs {target} {spec_path} 로 띄우고 찍힌 OPEN 주소를 주세요")
     return 0
 
 

@@ -2,7 +2,7 @@
 
 ## Evidence coverage
 
-Inspect representative pages at phone and desktop width with rendered captures and computed styles (`scripts/extract_styles.mjs`, SKILL § Always), covering type, spacing and grid, shape and elevation, imagery, components, and their states and responsive changes. DOM/CSS reveals values but not intent; screenshots reveal appearance but not exact values or hidden states. Record which evidence exists.
+Inspect representative pages at phone and desktop width with rendered captures and computed styles (`scripts/extract_styles.mjs` and the snapshot, build-rules.md § Follow the base), covering type, spacing and grid, shape and elevation, imagery, components, and their states and responsive changes. DOM/CSS reveals values but not intent; screenshots reveal appearance but not exact values or hidden states. Record which evidence exists.
 
 ## Visual layers — what makes the reference look made
 
@@ -10,7 +10,7 @@ Structure is the easy part to borrow; finish is what gets lost. Before writing t
 
 For each layer record **adopt**, **replace with …**, or **drop because …**. A dislike removes a form, not the layer: "no big player photos" becomes team crests or monogram badges, "no black background with neon" becomes one dark scoreboard panel on a light page. Two or more layers dropped without a replacement means the result will look generated; take it back to the user before building. Missing assets get a designed stand-in (a wordmark and simple mark for a league without a logo, monogram badges for teams without crests), labelled as such, not an empty space.
 
-When the reference shares the user's audience (donors who also give to the large groups), keep its patterns and numbers but make the identity layers the user's own — palette, wordmark, photo treatment, signature element (SKILL § Before each message, item 4).
+When the reference shares the user's audience (donors who also give to the large groups), keep its patterns and numbers but make the identity layers the user's own — palette, wordmark, photo treatment, signature element (build-rules.md § Make it ours, not a copy).
 
 ## Classify every important rule
 

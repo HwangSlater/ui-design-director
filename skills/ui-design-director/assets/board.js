@@ -35,9 +35,39 @@
     return first ? first.desktop : "";
   }
 
+  // 실제 사이트 모드(data.live): 가운데에 캡처 대신 실제 페이지를 띄운다. 막대·썸네일·확정은 그대로.
+  // 막는 사이트(cand.blocked)는 live_proxy.mjs(주소 ?proxy=)로, 우회가 없으면 캡처로 대신한다.
+  const PROXY = new URLSearchParams(location.search).get("proxy") || "";
+  const LIVE_W = { desktop: 1280, phone: 390 };
+  const live = { x: false, js: {} }; // x: 바로 띄운 곳도 우회로 보기 · js: 후보별 스크립트 켬(자동 판단 뒤 사용자가 바꿈)
+  function liveFrame(box, kind, cand, url, alt) {
+    box.replaceChildren();
+    box.style.overflow = "hidden";
+    const proxied = (cand.blocked || live.x) && PROXY;
+    const make = (src, sandbox) => {
+      const f = el("iframe");
+      f.title = alt;
+      f.src = src;
+      if (sandbox !== null) f.setAttribute("sandbox", sandbox);
+      const k = Math.min(1, box.clientWidth / LIVE_W[kind]);
+      Object.assign(f.style, { width: `${LIVE_W[kind]}px`, height: `${box.clientHeight / k}px`, transform: `scale(${k})`, transformOrigin: "0 0", border: "0", display: "block" });
+      box.replaceChildren(f);
+    };
+    if (!proxied) { make(url, null); return; }
+    const src = `${PROXY}${encodeURIComponent(url)}?ua=${kind === "phone" ? "phone" : "pc"}`;
+    // 맨 위 창을 바꾸지 못하게 샌드박스. 스크립트는 스크립트로 그리는 사이트에만
+    const place = (js) => make(src + (js ? "&js=1" : ""), (js ? "allow-scripts " : "") + "allow-same-origin allow-popups allow-popups-to-escape-sandbox");
+    const known = live.js[cand.id];
+    if (typeof known === "boolean") { place(known); return; }
+    box.append(el("p", "v-empty", `${cand.title} 불러오는 중…`));
+    fetch(`${src}&probe=1`).then((r) => r.json()).then((j) => { live.js[cand.id] = !!j.js; refreshLiveButtons(); place(live.js[cand.id]); }).catch(() => place(false));
+  }
+  let refreshLiveButtons = () => {};
+
   function fill(box, src, alt, emptyText) {
     box.replaceChildren();
     box.scrollTop = 0;
+    box.style.overflow = "";
     if (src) {
       const img = el("img");
       img.src = src;
@@ -56,8 +86,12 @@
     const page = cand.pages[state.p];
     const label = labelOf(state.p);
     const none = `${cand.title}에는 「${label}」 화면이 없어요. 다른 화면을 골라 보세요.`;
-    frames().forEach(([sel, kind, name]) =>
-      fill($(sel), page && page[kind], `${cand.title} ${label} ${name} 화면`, page ? `${name} 화면 캡처 없음` : none));
+    frames().forEach(([sel, kind, name]) => {
+      const alt = `${cand.title} ${label} ${name} 화면`;
+      const showLive = data.live && page && page.url && (!cand.blocked || PROXY || !page[kind]);
+      if (showLive) liveFrame($(sel), kind, cand, page.url, alt);
+      else fill($(sel), page && page[kind], alt, page ? `${name} 화면 캡처 없음` : none);
+    });
   }
 
   function renderStackFrames(cand) {
@@ -155,6 +189,7 @@
 
   function moveCandidate(step) {
     state.c = (state.c + step + data.candidates.length) % data.candidates.length;
+    live.x = false; // 우회로 보기는 후보마다 다시 고른다
     render();
   }
 
@@ -179,6 +214,51 @@
     const box = document.body.classList.contains("is-phone") ? $(".v-phone .v-scroll") : $(".v-desktop .v-scroll");
     box.scrollBy({ top: e.deltaY });
     e.preventDefault();
+  }
+
+  // 실제 사이트 모드 단추: 우회로 보기 · 스크립트 켜기 · 실제 창으로 보기. 같은 막대, 같은 단추 모양
+  let win = null;
+  const WIN = { pc: [1280, 800], phone: [390, 844] };
+  function currentUrl() { const p = data.candidates[state.c].pages[state.p]; return p && p.url; }
+  function followWindow() {
+    if (!win || win.closed) { win = null; return; }
+    const [w, h] = WIN[state.v];
+    try { win.resizeTo(w + 16, h + 88); } catch (e) { /* 브라우저가 막으면 크기는 그대로 */ }
+    const url = currentUrl();
+    if (url) win = window.open(url, "live-candidate") || win; // 다른 출처로 넘어간 창은 location 대입이 무시돼 같은 이름으로 다시 연다
+  }
+  function buildLive() {
+    const confirm = $(".v-confirm");
+    const add = (cls, label, tip, onClick) => {
+      const b = el("button", `v-btn ${cls}`);
+      b.type = "button";
+      b.append(el("span", "v-label", label));
+      b.dataset.tip = tip;
+      b.setAttribute("aria-pressed", "false");
+      b.addEventListener("click", onClick);
+      confirm.before(b);
+      return b;
+    };
+    const bx = add("v-live-proxy", "우회로 보기", "바로 띄운 화면이 막히거나 비면 우회해서 띄워요", () => { live.x = !live.x; render(); });
+    const bj = add("v-live-js", "스크립트 켜기", "우회 화면이 비거나 사진이 안 나오면 사이트 스크립트를 켜요", () => { const c = data.candidates[state.c]; live.js[c.id] = live.js[c.id] !== true; render(); });
+    const bw = add("v-live-win", "실제 창으로", "실제 사이트를 휴대폰·PC 크기 창으로 열어요. 후보를 넘기면 창도 따라가요 — 움직임·쓰는 느낌은 여기서", () => {
+      if (win && !win.closed) { win.close(); win = null; refreshLiveButtons(); return; }
+      const [w, h] = WIN[state.v];
+      const left = Math.max(0, Math.min(screen.availWidth - w - 16, window.screenX + window.outerWidth));
+      win = window.open("about:blank", "live-candidate", `popup,width=${w},height=${h},left=${left},top=${Math.max(0, window.screenY)}`);
+      if (!win) { $(".v-meta").textContent = "브라우저가 새 창을 막았어요. 주소창 오른쪽의 팝업 차단을 풀어 주세요."; return; }
+      followWindow(); refreshLiveButtons();
+    });
+    refreshLiveButtons = () => {
+      const c = data.candidates[state.c];
+      bx.hidden = !PROXY || !!c.blocked; // 막힌 곳은 늘 우회로 띄운다
+      bx.setAttribute("aria-pressed", String(live.x));
+      bj.hidden = !PROXY || !(c.blocked || live.x);
+      bj.setAttribute("aria-pressed", String(live.js[c.id] === true));
+      bw.setAttribute("aria-pressed", String(!!(win && !win.closed)));
+    };
+    const plain = render;
+    render = function () { plain(); refreshLiveButtons(); followWindow(); };
   }
 
   function build() {
@@ -219,6 +299,7 @@
     $$(".v-view .v-btn").forEach((b) => b.addEventListener("click", () => { state.v = b.dataset.view; render(); }));
     $(".v-hide").addEventListener("click", toggleDock);
     $(".v-reveal").addEventListener("click", toggleDock);
+    if (data.live) buildLive();
 
     hideTip = window.Dock.installTip($(".v-nav"));
     refreshConfirm = window.Dock.installConfirm($(".v-nav"), $(".v-confirm"), () => {

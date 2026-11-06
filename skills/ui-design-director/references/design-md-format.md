@@ -2,6 +2,24 @@
 
 Create `DESIGN.md` at the project root unless the repository has another canonical location.
 
+## Contents
+- Required structure
+- Source and adaptation record
+- 바탕에서 바꾼 곳
+- 부품 출처
+- Principles
+- Voice and terminology
+- Tokens
+- Components
+- Page and interaction patterns
+- Accessibility requirements
+- Implementation mapping
+- Decision log
+- Open questions
+- Writing rules
+- Feedback protocol
+- Agent handoff contract
+
 ## Required structure
 
 ```markdown

@@ -130,7 +130,24 @@ repository/skills/ui-design-director/
 
 동일한 이름의 디렉터리가 이미 있다면 덮어쓰지 말고 기존 설치를 먼저 확인하세요. 설치 후 스킬이 목록에 나타나지 않으면 Codex를 다시 시작하거나 새 세션을 여세요.
 
-### Claude Code: 개인 스킬 디렉터리에 연결
+Codex 에서는 SKILL.md 맨 앞의 단계 표 자동 실행 줄(`!`python …stage.py``)이 명령 글자 그대로 보입니다. 그 명령을 프로젝트 폴더에서 직접 돌리면 같은 단계 표가 나옵니다. `${CLAUDE_SKILL_DIR}` 는 스킬 폴더(`~/.codex/skills/ui-design-director`)입니다.
+
+### Claude Code: 플러그인으로 설치 (권장)
+
+```text
+/plugin marketplace add HwangSlater/ui-design-director
+/plugin install ui-design-director@ui-design-director
+```
+
+플러그인에는 두 스킬(`ui-design-director`, `ui-wording`)과 훅이 같이 들어 있습니다. 훅은 스킬 프로젝트(`concept-brief.md`·`decisions.json`·`formats/board-spec.json` 이 있는 폴더) 안에서만 동작하며 이런 파일 쓰기를 막습니다.
+
+- `formats/` 에 공용 틀이 아닌 보기 화면 HTML을 쓸 때 → `make_live_board.py` 로 만들라고 알려 줍니다
+- `palette/` 에 palette-switcher 틀이 아닌 화면을 쓸 때
+- 앞 단계가 확정되기 전에 바탕 자료·팔레트·`DESIGN.md`·`layouts/`·`mockups/` 를 쓸 때
+
+훅을 SKILL.md 안에 넣지 않은 까닭은 claude.ai 업로드 때문입니다. claude.ai는 정해진 설정 항목만 받아서, `hooks` 가 있으면 업로드가 실패합니다. 그래서 SKILL.md는 어디서나 쓸 수 있게 두고, 막는 기능은 Claude Code 플러그인에만 넣었습니다. 아래처럼 스킬 폴더를 연결해 두었다면 플러그인을 설치할 때 그 연결은 지우세요. 그대로 두면 같은 스킬이 두 번 보입니다.
+
+### Claude Code: 개인 스킬 디렉터리에 연결 (훅 없음)
 
 `skills/ui-design-director` 디렉터리를 `~/.claude/skills/` 아래에 두면 됩니다. `SKILL.md`의 frontmatter가 그대로 호환되므로 파일은 수정할 필요가 없고, `agents/openai.yaml`이 함께 있어도 무해합니다.
 
@@ -253,7 +270,6 @@ $ui-design-director로 렌더링된 UI가 DESIGN.md를 준수하는지 검수해
         ├── assets/
         │   ├── dock.css · dock.js
         │   ├── board.css · board.js
-        │   ├── live-board.html
         │   └── palette-switcher.css · palette-switcher.js
         ├── scripts/
         │   ├── check_site.py

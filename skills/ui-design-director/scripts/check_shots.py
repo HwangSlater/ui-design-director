@@ -12,6 +12,7 @@ from __future__ import annotations
 import sys
 from pathlib import Path
 
+import re
 from PIL import Image, ImageStat
 
 FLAT_STD = 14          # 밝기 표준편차가 이보다 작으면 거의 한 색
@@ -21,7 +22,10 @@ SMALL = 64             # 비교용으로 줄이는 크기
 
 def verdict(path: Path, height: int) -> str:
     im = Image.open(path).convert("L")
-    top = im.crop((0, 0, im.width, min(im.height, height)))
+    # capture.mjs 는 2배로 찍는다: 파일 이름 끝의 폭(-1280.jpg)으로 배율을 알아내 첫 화면 높이를 맞춘다
+    m = re.search(r"-(\d{3,4})(?:-\d+)?\.(?:jpg|png)$", path.name)
+    scale = im.width / int(m.group(1)) if m and int(m.group(1)) else 1
+    top = im.crop((0, 0, im.width, min(im.height, round(height * scale))))
     std = ImageStat.Stat(top).stddev[0]
     hist = top.resize((SMALL, SMALL)).histogram()
     peak = max(range(256), key=lambda v: hist[v])

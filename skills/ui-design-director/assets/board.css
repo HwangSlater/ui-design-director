@@ -25,3 +25,6 @@ svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width:
 .v-sec-empty { display: grid; place-items: center; min-height: 240px; margin: 0; color: var(--v-muted); font-size: var(--v-sm); background: var(--v-raise); }
 .mode-stack .v-sec:last-child { min-height: 100%; background: var(--v-stage); }
 .v-empty { display: grid; place-items: center; height: 100%; margin: 0; padding: var(--v-6); color: var(--v-muted); font-size: var(--v-md); text-align: center; }
+
+/* 실제 사이트 모드: 숨긴 단추는 늘 숨김(.v-btn 의 display 가 hidden 을 덮어썼다) */
+.v-btn[hidden] { display: none !important; }

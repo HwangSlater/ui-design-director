@@ -130,7 +130,24 @@ repository/skills/ui-design-director/
 
 Do not overwrite an existing directory with the same name without inspecting it first. If the skill does not appear after installation, restart Codex or open a new session.
 
-### Claude Code: link it into the personal skills directory
+In Codex, the stage-table line at the top of SKILL.md (`!`python …stage.py``) shows as plain text; run that command in the project folder to get the same table. `${CLAUDE_SKILL_DIR}` is the skill folder (`~/.codex/skills/ui-design-director`).
+
+### Claude Code: install as a plugin (recommended)
+
+```text
+/plugin marketplace add HwangSlater/ui-design-director
+/plugin install ui-design-director@ui-design-director
+```
+
+The plugin carries both skills (`ui-design-director`, `ui-wording`) and a hook. The hook acts only inside a skill project (a folder with `concept-brief.md`, `decisions.json` or `formats/board-spec.json`) and refuses:
+
+- a viewer HTML in `formats/` that is not the shared template (it points to `make_live_board.py`)
+- a page in `palette/` not built on the palette-switcher template
+- base material, palette, `DESIGN.md`, `layouts/` or `mockups/` written before the earlier stages are decided
+
+The hook is not in SKILL.md because claude.ai accepts only a fixed set of frontmatter keys and rejects an upload containing `hooks`. SKILL.md stays portable; enforcement lives in the Claude Code plugin. If you linked the skill folder as below, remove that link when you install the plugin, or the skill is listed twice.
+
+### Claude Code: link it into the personal skills directory (no hook)
 
 Place the `skills/ui-design-director` directory under `~/.claude/skills/`. The `SKILL.md` frontmatter is already compatible, so no file needs editing, and the accompanying `agents/openai.yaml` is harmless.
 
@@ -252,7 +269,6 @@ The open-source skills and tools below assist specific stages only when installe
         ├── assets/
         │   ├── dock.css · dock.js
         │   ├── board.css · board.js
-        │   ├── live-board.html
         │   └── palette-switcher.css · palette-switcher.js
         ├── scripts/
         │   ├── check_site.py

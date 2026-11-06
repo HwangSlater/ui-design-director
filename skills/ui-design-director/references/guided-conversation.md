@@ -16,6 +16,8 @@ Use this when the user wants help choosing a design but has not given a complete
 
 Do not dump the entire workflow, a large questionnaire, or all unresolved choices into one message.
 
+**Read the dislikes back.** After writing `concept-brief.md`, repeat the client's likes and dislikes in one line each and ask them to correct it ("싫은 것: 큰 서점 느낌, 꾸민 감성 카페 — 맞나요?"). A test run recorded a dislike as a wish.
+
 ## At each gate
 
 Follow SKILL § Gates and skip resolved ones. What to ask the user:

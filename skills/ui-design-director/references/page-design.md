@@ -1,8 +1,14 @@
 # Designing every page
 
-> Checks before each message: SKILL.md § Before each message with a picture or page. Content rules: [mockup-content.md](mockup-content.md). Owner screens: [owner-screens.md](owner-screens.md). Composition numbers: [blind-judge.md](blind-judge.md) § Composition numbers.
+> Checks before each message: SKILL.md § Before each message with a picture or page. Building rules: [build-rules.md](build-rules.md). Content rules: [mockup-content.md](mockup-content.md). Owner screens: [owner-screens.md](owner-screens.md). Composition numbers: [blind-judge.md](blind-judge.md) § Composition numbers.
 
 Keep the `SITE-PLAN.md` status columns current.
+
+## Contents
+- 1. Layout options
+- 2. Mockups
+- 3. Consistency across pages
+- 4. Mockup approval gate
 
 ## 1. Layout options
 
