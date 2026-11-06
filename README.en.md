@@ -1,53 +1,110 @@
+<div align="center">
+
 # UI Design Director
 
-[한국어](README.md)
+### You know which sites you like. You don't know how to make yours.
 
-`ui-design-director` is a skill for establishing the overall UI concept of a project and carrying it through a complete website or web app, working in both Codex and Claude Code. It researches well-known real sites in the project's field and template-marketplace candidates side by side as motifs, and 3–4 color palettes, helps the user choose the visual format and color direction independently, compares finalists through small coded previews, and turns approved decisions into a reusable `DESIGN.md`. It then plans the pages, gets a layout and a full-fidelity mockup approved for each page type, and only then moves them into production code.
+A design skill that puts well-known real sites from your field side by side, lets you pick one,<br>
+then measures its structure and finish and rebuilds that first page for your own shop or service.
 
-The user does not need to know design terminology or provide a complete brief. Starting with “I want to choose a design” makes the skill ask one consequential question at a time, offer concrete choices and recommendations, and guide the user to the next decision.
+[![Claude Code](https://img.shields.io/badge/Claude%20Code-skill-d97757.svg)](#installation)
+[![Codex](https://img.shields.io/badge/Codex-skill-555.svg)](#installation)
+![Tested](https://img.shields.io/badge/roleplay%20tests-10-6b8f71.svg)
 
-Its purpose is to replace vague requests such as “make it feel like Linear” with explicit rules for color, typography, spacing, layout, components, interaction states, and accessibility.
+[한국어](README.md) · **English**
 
-## Features
+<img src="docs/images/bookshop-hero.jpg" alt="Home page mockup for the independent bookshop 「책방 오후」 on desktop and phone: handwritten name in the centre, a pencil-line hanok-roof background and a 'book of the month, November' card" width="820">
 
-- Research two kinds of source together from the brief's field, main job, concept words and audience: well-known real sites in the field (a futsal league → K League, Premier League, FotMob, PLAB; then neighbouring-field leaders and award entries) and template marketplaces (Framer, Webflow, ThemeForest) whose previews show whole page sets and phone layouts
-- Establish each candidate and recommended dependency's licence from its published text, and rule out commercially unusable options before taste enters
-- Select the overall design format and color palette independently
-- Compare 3–4 color combinations from sources such as Coolors, Color Hunt, Adobe Color, and Huemint
-- Explain semantic UI roles and distribution for each palette, with contrast ratios computed from hex values rather than eyeballed
-- Compare 2–3 finalists using the same content in small coded UI previews, self-checked for overflow, wrapping, and states before they are shown
-- Convert the approved design language into project-root `DESIGN.md`
-- Fix on-screen wording and terminology as rules pitched at the audience's expertise
-- Guide later implementation toward shared tokens and components
-- Accumulate feedback as durable design rules instead of one-off CSS
-- Review responsive behavior, focus, error, loading, empty states, and accessibility
-- Guide vague requests through a step-by-step design conversation
-- Plan the whole site in `SITE-PLAN.md`: page inventory, main flows, navigation, and per-page status
-- Treat read surfaces (marketing, docs) and work surfaces (dashboards, forms) by their own rules
-- Offer 2–3 numbered layout options per page type (in the approved colours and fonts, with sample photos), then build full-fidelity mockups from the chosen one
-- Share one token and component stylesheet across mockups so approved pages transfer into code intact
-- Run a dependency-free static check (`check_site.py`) that reports accessibility floor, token drift, and common generic patterns in three tiers
-- Check rendering at three widths and get a review from a reviewer that never saw the builder's reasoning
-- Compare candidates in a full-screen browser viewer, not a table of links: key pages captured at desktop and real phone width (`capture.mjs`) shown in identical frames (`make_board.py`)
-- Choose palettes by clicking them on a live preview of the chosen format (`palette-switcher.js`), with contrast computed automatically
+<sub>Home page mockup for 「책방 오후」, an independent bookshop in Jeonju's hanok village. It follows the structure of Title, the Tokyo bookshop chosen as the base; the name, drawing, colours and text are the shop's own.</sub>
 
-## Workflow
+</div>
+
+---
+
+## So nobody says "this looks AI-made"
+
+Ask an AI for a bookshop home page and you usually get the same screen: white background, one accent colour, rounded chips, photo cards, the usual fonts. There are plenty of good sites to learn from, but the model redraws the average it remembers instead of looking at them.
+
+**ui-design-director** changes the order.
+
+- It shows about five real sites people in your field already know, plus one or two templates, **side by side at the same size**, and asks you to pick one as the **base**.
+- It measures the base's first page section by section: heights, photo share, type sizes, how the name and buttons are drawn, the colour combination. It rebuilds that, then swaps in your name, photos, colours and words.
+- It leaves out what identifies the base (its logo, mascot, signature parts), so nobody looking at yours thinks "isn't this ○○?".
+- Every choice is shown as a picture and answered with a number. No design vocabulary needed.
+
+## What it makes
+
+Both mockups below were made with this skill. A person played the client; the photos are credited free samples.
+
+### Independent bookshop 「책방 오후」 — home page only
+
+<table>
+<tr>
+<td width="46%" valign="top"><img src="docs/images/bookshop-phone-full.jpg" alt="The whole 책방 오후 phone page split into three columns: book of the month, shop photo, November calendar, news, meetup sign-up, coffee, directions" width="100%"></td>
+<td valign="top">
+
+**Client** a bookseller who runs a small shop alone in a back alley of Jeonju's hanok village<br>
+**Wants** book-talk and copying-circle sign-ups and the monthly picks to stand out<br>
+**Dislikes** big-chain bookstore feel, over-styled "aesthetic café" looks
+
+1. Five bookshop sites (Thanks Books, Daunt Books, Books Are Magic, Title, one template) side by side; **Title** chosen as the base, because its "book of the day" card matches the monthly picks.
+2. Title's structure measured and rebuilt: centred name over a pencil drawing, a framed book card with the month on its border, a large shop photo, a calendar tab, news divided by rules.
+3. Title's own sky-blue square logo and street drawing left out; replaced with the shop's sign lettering and hanok-roof lines.
+4. Colours from late-afternoon ochre and pine green; fonts other than the ones models always reach for.
+5. "Open now · until 8 pm" updates itself from the Monday closing day and opening hours.
+
+</td>
+</tr>
+</table>
+
+### Jinju Namgang Lantern Festival — a first screen that changes with the date
+
+<table>
+<tr>
+<td valign="top"><img src="docs/images/festival-states.jpg" alt="Festival first screen on phone in four states: 3 October 4 pm as planned, the same day cancelled by rain, before the festival, after the festival" width="100%"></td>
+<td width="30%" valign="top"><img src="docs/images/festival-desktop.jpg" alt="Festival first screen on desktop: lantern gate photo on black with a pink 'today at the festival' panel" width="100%"></td>
+</tr>
+</table>
+
+**Client** the city tourism office's festival officer · **Base** Amsterdam Light Festival (light installations on black) · **Colours** the base site's own combination
+
+The five questions callers ask most (parking, tonight's fireworks, rain, floating a lantern, toilets and pushchairs) become first-screen shortcuts, and the "today at the festival" panel follows the date and the 3 pm go/no-go the officer enters: as planned, cancelled by rain, before the festival and after it each read differently.
+
+<sub>Photos: festival by hyolee2 (CC BY-SA 3.0); bookshop by Ahmed, Sashimi-b (CC BY 4.0), Mobius6, Sathya Madhu (CC BY-SA 4.0), lumoplank, Tookapic (CC0) — all Wikimedia Commons.</sub>
+
+## Quick start
+
+Install it ([Installation](#installation)) and say:
 
 ```text
-Understand the product context
-→ Research design-format candidates
-→ Research 3–4 color palette candidates
-→ Let the user choose format and color independently
-→ Compare finalist combinations in coded UI previews
-→ Document the approved decisions in DESIGN.md
-→ Plan pages and flows in SITE-PLAN.md
-→ Choose a layout option per page type
-→ Approve full-fidelity mockups per page (three widths, every state)
-→ Build one representative page in code, then the rest
-→ Static check, render pass, and fresh reviewer
+/ui-design-director A home page for our neighbourhood Pilates studio, just the home page
 ```
 
-The skill does not finalize the design system or production UI before the user makes a choice. It favors one primary reference and only borrows narrowly defined traits—such as typography hierarchy or dashboard density—from secondary references.
+From there the skill asks one thing at a time.
+
+```text
+About the shop or service    who, what, which customers · what you dislike
+→ Pick a base                ~5 real sites in the field + templates, same size, side by side
+→ Pick colours and fonts     3–4 options starting from the base's colours, on the same page
+→ Home page mockup           next to the base, phone and desktop, a clickable HTML page
+```
+
+A single home page ends there. For the whole site it continues the same way: a page list (`SITE-PLAN.md`), page-by-page mockups, then code.
+
+## Rules are fixed by testing
+
+These rules weren't written at a desk. A fresh session plays the designer and another session or a person plays the client — a café, a snack bar, a vintage shop, a festival, a second-hand market, a campsite, a Pilates studio, a bookshop. Each result is put next to one made without the skill, the "AI tells" are pointed out, and the rule that caused them is changed.
+
+Some of what changed:
+
+| What was pointed out | Rule that caused it | Now |
+| --- | --- | --- |
+| A white info panel floating on the hero photo | "Put the product's character up front" | First screen stays like the base; character comes through photos and words |
+| One colour (white + a single accent) | "One accent besides black" | Carry over the base's 4–6 tones and how they relate |
+| Dashed 「… 자리」 empty boxes | "Leave missing content as labelled slots" | Short sample text, flagged in one line at the foot |
+| The same fonts every time | No font rule | Model-default fonts banned; pick from free font libraries to match the base |
+
+Each roleplay — what was checked and what changed — is logged in [docs/역할극-기록.md](docs/역할극-기록.md) (Korean). Tokens are measured too, aiming for one home page within an ordinary plan's limits.
 
 ## Installation
 
@@ -165,7 +222,7 @@ Do not modify files; report findings with severity and evidence.
 - `DESIGN.md` is approved only after format, palette, high-impact adaptations, and requested preview feedback are resolved.
 - Coded previews are comparison artifacts, not production implementation or an approved design system.
 - “Design the site” authorizes mockups only. Production code is written only on request and for pages whose mockups are approved.
-- Invented testimonials, customer logos, or figures are never presented as real; missing material stays a labelled empty slot.
+- Invented testimonials, customer logos, or figures are never presented as real; those parts are left out, and other missing copy becomes short sample text flagged in one line at the page foot.
 
 ## Companion skills
 
