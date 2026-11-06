@@ -101,6 +101,13 @@ def iter_markdown_files() -> list[Path]:
     return files
 
 
+def github_slug(heading: str) -> str:
+    """GitHub 이 제목에 붙이는 앵커: 소문자, 글자·숫자·공백·하이픈만 남기고 공백은 하이픈."""
+    text = re.sub(r"[`*_~]|<[^>]+>", "", heading).strip().lower()
+    text = re.sub(r"[^\w\- ]", "", text)
+    return text.replace(" ", "-")
+
+
 def check_markdown() -> None:
     link_pattern = re.compile(r"\[[^\]]+\]\(([^)]+)\)")
 
@@ -110,10 +117,16 @@ def check_markdown() -> None:
             if re.search(rf"\b{marker}\b", text, re.IGNORECASE):
                 fail(f"unfinished marker {marker!r} found in {path.relative_to(REPO_ROOT)}")
 
+        anchors = {github_slug(h) for h in re.findall(r"^#{1,6}\s+(.+?)\s*$", text, re.MULTILINE)}
         for target in link_pattern.findall(text):
             if re.match(r"https?://", target):
                 continue
-            local_target = (path.parent / target).resolve()
+            if target.startswith("#"):
+                # 같은 파일 안 제목으로 가는 링크는 GitHub 이 만드는 앵커와 맞춰 본다
+                if target[1:] not in anchors:
+                    fail(f"broken anchor in {path.relative_to(REPO_ROOT)}: {target}")
+                continue
+            local_target = (path.parent / target.split("#", 1)[0]).resolve()
             if not local_target.exists():
                 fail(
                     f"broken local link in {path.relative_to(REPO_ROOT)}: {target}"
