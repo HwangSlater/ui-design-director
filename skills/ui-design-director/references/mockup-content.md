@@ -24,7 +24,7 @@ Layout and gates: [page-design.md](page-design.md). Owner screens: [owner-screen
 ## Facts and wording
 
 1. Only facts the user gave. Anything filled in (directions, walking times, days, policies, prices, staff names, FAQ answers, durations like 「보통 2주쯤」) carries 「확인 필요」 and is listed at handover; plausible guesses read as facts. When the client supplies the fact, replace every tag the same day.
-2. Never write the client's rules or product descriptions (how a tea tastes), not even as 견본; leave a labelled slot for the client's words.
+2. Never write the client's rules or product descriptions (how a tea tastes). Where the client's words are still missing (an intro, a price, an address), write short neutral sample text of the right length and list it in one 「견본」 line at the page foot. Never show dashed 「… 자리」 boxes on the page.
 3. No role for a real name the user did not state; counts with units (「이준석 2골」).
 4. Each fact and each heading once per screen (not 「아이 52마리」 then 「아이들」).
 5. Tab titles from the page heading (「보리 · 들꽃쉼터」), never the option label.

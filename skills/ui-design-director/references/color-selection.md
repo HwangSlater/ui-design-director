@@ -14,7 +14,7 @@ Use Coolors, Color Hunt, Adobe Color, Huemint, another reputable library that fi
 
 Present 3–4 palettes covering a few mood territories from the concept brief (calm/trustworthy, warm/human, technical/precise, bold/creative); no near-duplicates.
 
-Candidates must differ in their large areas — background, surfaces, bands — not only in the button. When the brief says “warm”, offer more than one reading of warmth (cream and brown; pale sky and tangerine; off-white and deep green; butter and brick) (`design-selection.md` § 3).
+Candidates must differ in the colours that carry the page — the base's own colour fields and the accent — not only in the button; never add pale tinted bands or surfaces the base does not have. When the brief says “warm”, offer more than one reading of warmth (cream and brown; pale sky and tangerine; off-white and deep green; butter and brick) (`design-selection.md` § 3).
 
 Check selected and active states in every candidate: mark selection by fill plus a check mark or weight, never by an accent outline alone (a pale outline vanishes in some palettes), and keep the primary button high-contrast in every palette.
 
