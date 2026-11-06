@@ -4,27 +4,18 @@
 // 사용: node extract_styles.mjs <주소> <out.json> [--width 390]
 // 결과: <out.json>(원자료)과 같은 이름의 .md(요약표: 글자 단계, 단추·입력칸·카드 견본, 자주 쓴 여백·둥글기·그림자).
 
-import { spawn } from "node:child_process";
-import { existsSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
-import { tmpdir } from "node:os";
-import { join } from "node:path";
-import { createServer } from "node:net";
+import { writeFileSync } from "node:fs";
+import { launch } from "./browser.mjs";
 
 const SETTLE_MS = 3000;
 const PHONE_MAX = 600;
 const TOP_N = 8;
-const WIN_DIRS = [process.env["ProgramFiles(x86)"], process.env.ProgramFiles, process.env.LOCALAPPDATA].filter(Boolean);
-const BROWSERS = [process.env.CAPTURE_BROWSER,
-  ...WIN_DIRS.map((d) => join(d, "Microsoft", "Edge", "Application", "msedge.exe")),
-  ...WIN_DIRS.map((d) => join(d, "Google", "Chrome", "Application", "chrome.exe")),
-  "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome", "/usr/bin/google-chrome", "/usr/bin/chromium"].filter(Boolean);
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
 const [url, out, ...rest] = process.argv.slice(2);
 const width = Number(rest[rest.indexOf("--width") + 1]) || 390;
 if (!url || !out) { console.error("사용: node extract_styles.mjs <주소> <out.json> [--width 390]"); process.exit(2); }
 
-const freePort = () => new Promise((res, rej) => { const s = createServer(); s.once("error", rej); s.listen(0, "127.0.0.1", () => { const { port } = s.address(); s.close(() => res(port)); }); });
 
 // 페이지 안에서 돈다: 보이는 요소를 역할별로 모아 계산된 값을 돌려준다
 const PROBE = `(() => {
@@ -55,11 +46,7 @@ function tally(list, key) {
   return [...m.entries()].sort((a, b) => b[1] - a[1]).slice(0, TOP_N);
 }
 
-const exe = BROWSERS.find((p) => existsSync(p));
-if (!exe) { console.error("Edge 또는 Chrome을 찾지 못했습니다(CAPTURE_BROWSER 로 지정)."); process.exit(1); }
-const port = await freePort();
-const profile = mkdtempSync(join(tmpdir(), "styles-"));
-const proc = spawn(exe, ["--headless=new", "--disable-gpu", "--hide-scrollbars", "--no-first-run", `--remote-debugging-port=${port}`, `--user-data-dir=${profile}`, "about:blank"], { stdio: "ignore" });
+const { port, close } = await launch("styles-"); // 끄기·남은 브라우저 치우기는 browser.mjs 한 곳에서
 let list;
 for (let i = 0; i < 50 && !list; i++) { try { list = await (await fetch(`http://127.0.0.1:${port}/json/list`)).json(); } catch { await sleep(200); } }
 const ws = new WebSocket(list.find((t) => t.type === "page").webSocketDebuggerUrl);
@@ -94,6 +81,5 @@ try {
   writeFileSync(out.replace(/\.json$/i, "") + ".md", md);
   console.log(`wrote ${out} (+ .md)`);
 } finally {
-  ws.close(); proc.kill(); await sleep(300);
-  try { rmSync(profile, { recursive: true, force: true }); } catch { /* 브라우저가 늦게 놓음 */ }
+  ws.close(); await close();
 }

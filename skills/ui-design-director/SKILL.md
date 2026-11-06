@@ -26,7 +26,8 @@ Copy this checklist into your reply when you start and tick it as you go. Before
                 node ${CLAUDE_SKILL_DIR}/scripts/live_proxy.mjs formats/board-spec.json   → give the client the OPEN address
 - [ ] base      node ${CLAUDE_SKILL_DIR}/scripts/wait_choice.mjs formats/보기.html formats/decision.json   (client presses 확정)
 - [ ] material  snapshot.mjs, motion.mjs, capture.mjs, extract_styles.mjs on the base → formats/바탕-구성.md
-- [ ] palette   palette/index.html on the palette-switcher template (comparison-board.md § Palettes) + wait_choice.mjs
+- [ ] palette   palette/index.html on the palette-switcher template (comparison-board.md § Palettes); fonts only from
+                python ${CLAUDE_SKILL_DIR}/scripts/fonts.py pick --style <…> (references/fonts.md) + wait_choice.mjs
 - [ ] design    DESIGN.md (design-md-format.md template, § 바탕에서 바꾼 곳 and § 부품 출처)
 - [ ] main      mockups/ by references/build-rules.md → preflight.py → send
 ```
@@ -65,7 +66,7 @@ Lead: one consequential question at a time, numbered choices shown as pictures, 
 On entry, the stage table above shows the first open step; resume there and do not redo approved decisions. Advance only as far as the client authorised: "find a design" is not approval to implement, "design the site" is not approval to write production code.
 
 - **Main page only:** the workflow above, ending at **main**.
-- **Concept** (format or palette undecided): [design-selection.md](references/design-selection.md), [color-selection.md](references/color-selection.md).
+- **Concept** (format or palette undecided): [design-selection.md](references/design-selection.md), [color-selection.md](references/color-selection.md), [fonts.md](references/fonts.md).
 - **Preview** (finalists exist, client wants them applied): [concept-preview.md](references/concept-preview.md).
 - **Extract** (format and palette approved): [reference-extraction.md](references/reference-extraction.md), [design-md-format.md](references/design-md-format.md) → `DESIGN.md`.
 - **Site plan** (`DESIGN.md` exists, whole site wanted): [site-plan.md](references/site-plan.md) → `SITE-PLAN.md`.

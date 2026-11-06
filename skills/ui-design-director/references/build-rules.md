@@ -30,7 +30,7 @@ The answer key is the base's own page; reproduce its design, then make it ours.
 ## Colour, type and identity parts
 
 - Colours: the base's combination of 4–6 tones and their relationships (from `DESIGN.md`), never a white page with one accent. Colour fields only where the base has them — no pale tinted bands between sections.
-- Fonts: never the defaults a model reaches for — Pretendard, Noto Sans/Serif KR, Inter, Spoqa Han Sans, Nanum Gothic/Myeongjo, MaruBuri, Gowun, SUIT, Wanted Sans. Use the faces approved in `DESIGN.md` (from 눈누, 공유마당 or Google Fonts, matched to the base's type character, licence checked).
+- Fonts: only the faces approved in `DESIGN.md`, chosen by [fonts.md](fonts.md) (`fonts.py pick`, never from memory). The faces in `assets/fonts/ai-fonts.json` are refused — `fonts.py check` and the plugin hook block them.
 - Identity parts take the base's measured finish: the wordmark (typeface, size, weight, tracking, colour, placement — a designed name, never body text in a bar), the navigation, the buttons (fill or outline, border, height, padding, type). A default black pill or a plain text name is a finding.
 - No more boxes than the base: count bordered or filled rectangles (cards, panels, tags, labels, button blocks, tinted bands) on both pages; ours may not have more. Text and photos sit on the page; labels are plain text.
 

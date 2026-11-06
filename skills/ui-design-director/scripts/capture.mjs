@@ -13,7 +13,7 @@
 // 결과: <out-dir>/<id>-<width>.jpg. 이미 있는 파일은 건너뛰므로 중간에 끊겨도 다시 돌리면 이어서 찍는다.
 // 문서 응답이 400 이상이면 저장하지 않고 실패로 보고한다.
 
-import { existsSync, mkdirSync, readFileSync, writeFileSync, rmSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { judgeFillExpr } from "./judge_fill.mjs";
 import { Cdp, launch, sleep, HIDE_OVERLAYS } from "./browser.mjs";
@@ -166,7 +166,7 @@ async function main() {
   const [jobsPath, outDir] = rest;
   const jobs = JSON.parse(readFileSync(jobsPath, "utf8"));
   mkdirSync(outDir, { recursive: true });
-  const { proc, port, profile } = await launch();
+  const { port, close } = await launch("capture-");
   const failed = [];
   let done = 0;
   const total = jobs.length * widths.length;
@@ -195,9 +195,7 @@ async function main() {
       }
     }
   } finally {
-    proc.kill();
-    await sleep(500);
-    try { rmSync(profile, { recursive: true, force: true }); } catch { /* 브라우저가 늦게 닫히면 남을 수 있음 */ }
+    await close();
   }
   console.log(`끝: 성공 ${total - failed.length} / 실패 ${failed.length}`);
   if (failed.length) {

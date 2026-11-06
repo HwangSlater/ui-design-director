@@ -17,6 +17,9 @@ import sys
 from html.parser import HTMLParser
 from pathlib import Path
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import fonts  # noqa: E402  (AI 글꼴 판단은 fonts.py 하나로)
+
 # 의뢰인 글에 나오는 말 → 참고·시안에서 찾을 주소 조각
 CHANNELS = {
     "인스타": ("instagram", ["instagram.com", "ig-"]),
@@ -148,6 +151,17 @@ def check(root: Path) -> list[str]:
             bp.feed(read(p))
             for line, cls in bp.pairs[:1]:  # 한 파일에 하나만 — 같은 부품이 반복될 뿐
                 out.append(f"단추 한 쌍: {p.relative_to(root)}:{line} ({cls}) — 같은 크기 채운·선 단추 쌍은 키트 티. 연락 수단을 참고들이 어떻게 놓는지 보고 고를 것")
+
+    # 6. AI 글꼴 — 기억으로 고른 글꼴은 늘 같은 기본 글꼴이었다(10차·재연 둘 다). 판단은 fonts.py 하나로
+    allowed = fonts.client_fonts(root)
+    for folder in (root / "palette", root / "layouts", mock_dir(root)):
+        for pat in ("*.html", "*.css", "*.json"):
+            for p in files(folder, pat):
+                if p.name == "decision.json":
+                    continue
+                hits = fonts.ai_fonts_in(read(p), allowed)
+                if hits:
+                    out.append(f"AI 글꼴: {p.relative_to(root)} — {', '.join(hits)} · references/fonts.md 대로 fonts.py pick 에서 고를 것")
     return out
 
 

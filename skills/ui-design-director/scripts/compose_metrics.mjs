@@ -4,11 +4,8 @@
 // 사용: node compose_metrics.mjs <out.md> --width 1280 이름=주소 이름=주소 ... [--ours 이름]
 //   --ours 로 우리 화면을 지정하면 나머지(기준 사이트)의 가운데 값과 비교해 미달 항목을 표시한다.
 // 외부 패키지 없음. Edge/Chrome DevTools 프로토콜만 쓴다.
-import { spawn } from "node:child_process";
-import { existsSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
-import { tmpdir } from "node:os";
-import { join } from "node:path";
-import { createServer } from "node:net";
+import { writeFileSync } from "node:fs";
+import { launch } from "./browser.mjs";
 
 const SETTLE_MS = 3000;
 const SCROLL_STEP_MS = 150;
@@ -22,12 +19,7 @@ const SHORT_RATIO = 0.7;
 // 빵집 비교에서 Tatte·태극당이 한 번은 88%·60%, 다음 번엔 1% 로 재져 기준이 흔들렸다.
 const BLANK_REF = 0.9;
 const MIN_REFS = 2;
-const WIN_DIRS = [process.env["ProgramFiles(x86)"], process.env.ProgramFiles, process.env.LOCALAPPDATA].filter(Boolean);
-const BROWSERS = [process.env.CAPTURE_BROWSER,
-  ...WIN_DIRS.flatMap((d) => [join(d, "Microsoft/Edge/Application/msedge.exe"), join(d, "Google/Chrome/Application/chrome.exe")]),
-  "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome", "/usr/bin/google-chrome", "/usr/bin/chromium"].filter(Boolean);
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
-const freePort = () => new Promise((res, rej) => { const s = createServer(); s.once("error", rej); s.listen(0, "127.0.0.1", () => { const { port } = s.address(); s.close(() => res(port)); }); });
 
 const args = process.argv.slice(2);
 const out = args[0];
@@ -95,11 +87,7 @@ const PROBE = `(() => {
     blocks: blocks.slice(0, 6), textSpan: textR > textL ? (textR - textL) / W : 0 };
 })()`;
 
-const exe = BROWSERS.find((p) => existsSync(p));
-if (!exe) { console.error("Edge 또는 Chrome을 찾지 못했습니다(CAPTURE_BROWSER 로 지정)."); process.exit(1); }
-const port = await freePort();
-const profile = mkdtempSync(join(tmpdir(), "compose-"));
-const proc = spawn(exe, ["--headless=new", "--disable-gpu", "--hide-scrollbars", "--no-first-run", `--remote-debugging-port=${port}`, `--user-data-dir=${profile}`, "about:blank"], { stdio: "ignore" });
+const { port, close } = await launch("compose-"); // 끄기·남은 브라우저 치우기는 browser.mjs 한 곳에서
 let list;
 for (let i = 0; i < 50 && !list; i++) { try { list = await (await fetch(`http://127.0.0.1:${port}/json/list`)).json(); } catch { await sleep(200); } }
 const ws = new WebSocket(list.find((t) => t.type === "page").webSocketDebuggerUrl);
@@ -126,8 +114,7 @@ try {
     console.log(`잼  ${name}`);
   }
 } finally {
-  ws.close(); proc.kill(); await sleep(300);
-  try { rmSync(profile, { recursive: true, force: true }); } catch { /* 브라우저가 늦게 놓음 */ }
+  ws.close(); await close();
 }
 
 // 표와 판정

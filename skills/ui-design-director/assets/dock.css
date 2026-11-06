@@ -23,7 +23,7 @@
   --v-1: 4px; --v-2: 8px; --v-3: 12px; --v-4: 16px; --v-5: 20px; --v-6: 24px;
   --v-r-xs: 6px; --v-r-sm: 8px; --v-r: 12px; --v-r-bar: 16px; --v-r-phone: 40px;
   --v-2xs: 0.6875rem; --v-xs: 0.75rem; --v-sm: 0.8125rem; --v-md: 0.9375rem;
-  --v-font: "Pretendard", "Apple SD Gothic Neo", "Malgun Gothic", system-ui, sans-serif;
+  --v-font: "Apple SD Gothic Neo", "Malgun Gothic", system-ui, sans-serif; /* 보기 막대는 도구 화면 — 디자인 글꼴과 섞이지 않게 시스템 글꼴 */
   --v-dur: 160ms;
   --v-ease: cubic-bezier(0.2, 0, 0, 1);
 

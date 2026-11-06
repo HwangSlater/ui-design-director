@@ -1,0 +1,23 @@
+{
+ "about": "모델이 글꼴 지시 없이 고르는 글꼴 — 후보로 내지 않고 시안에 쓰지 않는다. fonts.py 가 고를 때 빼고, --check 와 플러그인 훅이 막는다. 의뢰인이 이미 쓰는 글꼴이면 concept-brief.md 에 「의뢰인 글꼴: 이름」 한 줄로 풀어 준다.",
+ "updated": "2026-11-06",
+ "fonts": [
+  {"name": "Pretendard", "aliases": ["Pretendard Variable", "Pretendard GOV", "Pretendard JP", "프리텐다드"], "why": "지난 시안 12곳·재연 팔레트 후보 1위"},
+  {"name": "Noto Sans KR", "aliases": ["Noto Sans CJK KR", "Source Han Sans", "Source Han Sans K", "Source Han Sans KR", "본고딕", "본고딕 (Noto Sans)"], "why": "지난 시안 3곳·「바탕 그대로」로 들어옴"},
+  {"name": "Noto Serif KR", "aliases": ["Noto Serif CJK KR", "Source Han Serif", "Source Han Serif K", "본명조", "본명조 (Source Han Serif)"], "why": "모델 기본 명조"},
+  {"name": "Inter", "aliases": ["Inter Variable", "Inter Tight"], "why": "모델 기본 영문"},
+  {"name": "Spoqa Han Sans", "aliases": ["Spoqa Han Sans Neo", "Spoqa Han Sans JP", "스포카 한 산스", "스포카 한 산스 네오"], "why": "모델 기본 목록"},
+  {"name": "Nanum Gothic", "aliases": ["NanumGothic", "나눔고딕"], "why": "모델 기본 목록"},
+  {"name": "Nanum Myeongjo", "aliases": ["NanumMyeongjo", "나눔명조"], "why": "모델 기본 명조"},
+  {"name": "Nanum Pen Script", "aliases": ["나눔손글씨 펜", "나눔손글씨펜"], "why": "지난 시안 1곳(손글씨 기본)"},
+  {"name": "MaruBuri", "aliases": ["마루 부리", "마루부리"], "why": "지난 시안 2곳"},
+  {"name": "Gowun Batang", "aliases": ["고운바탕"], "why": "지난 시안 1곳"},
+  {"name": "Gowun Dodum", "aliases": ["고운돋움"], "why": "모델 기본 목록"},
+  {"name": "SUIT", "aliases": ["SUIT Variable", "수트"], "why": "지난 시안·팔레트 후보"},
+  {"name": "Wanted Sans", "aliases": ["Wanted Sans Variable", "원티드 산스"], "why": "지난 시안·재연 팔레트 후보 2위"},
+  {"name": "IBM Plex Sans KR", "aliases": ["IBM Plex Sans", "IBM Plex Serif"], "why": "지난 시안 2곳(건축사무소 10차 제목)"},
+  {"name": "Gothic A1", "aliases": ["Gothic A"], "why": "지난 시안 1곳"},
+  {"name": "Gaegu", "aliases": ["개구"], "why": "지난 시안 1곳(손글씨 기본)"},
+  {"name": "RIDIBatang", "aliases": ["리디바탕"], "why": "재연 팔레트 후보"}
+ ]
+}

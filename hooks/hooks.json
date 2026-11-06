@@ -1,5 +1,5 @@
 {
-  "description": "ui-design-director: 공용 틀이 아닌 보기 화면과 순서를 건너뛴 파일 쓰기를 막는다",
+  "description": "ui-design-director: 공용 틀이 아닌 보기 화면과 순서를 건너뛴 파일 쓰기를 막고, 측정 도구가 남긴 headless 브라우저를 치운다",
   "hooks": {
     "PreToolUse": [
       {
@@ -9,6 +9,28 @@
             "type": "command",
             "command": "python \"${CLAUDE_PLUGIN_ROOT}/hooks/guard.py\"",
             "timeout": 10
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"${CLAUDE_PLUGIN_ROOT}/skills/ui-design-director/scripts/browser.mjs\" --sweep",
+            "timeout": 20
+          }
+        ]
+      }
+    ],
+    "SessionEnd": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"${CLAUDE_PLUGIN_ROOT}/skills/ui-design-director/scripts/browser.mjs\" --sweep",
+            "timeout": 20
           }
         ]
       }

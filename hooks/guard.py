@@ -5,6 +5,7 @@ PreToolUse(Write·Edit·MultiEdit) 입력을 표준 입력으로 받아, ui-desi
   - formats/ 의 보기 화면 HTML: 공용 틀 표시(board-data)가 없으면 막는다 — make_live_board.py 로만 만든다
   - palette/ 의 HTML: palette-switcher.js 틀이 아니면 막는다
   - 바탕-구성.md·바탕-움직임.md, palette/, DESIGN.md, layouts/·mockups/: 앞 단계가 확정되지 않았으면 막는다
+  - palette/·layouts/·mockups/·DESIGN.md·tokens.css 에 AI 글꼴(assets/fonts/ai-fonts.json)을 넣으면 막는다
 막을 때는 종료 코드 2와 이유(표준 오류)를 돌려준다. Claude Code 는 그 이유를 디자이너에게 보여 준다.
 SKILL.md 의 frontmatter 에 hooks 를 넣지 않은 까닭: claude.ai·API 에 올릴 때 모르는 항목이면 업로드가 실패한다.
 Bash 로 쓰는 파일(스크립트 출력)은 보지 않는다 — 스크립트는 공용 틀로만 쓴다.
@@ -16,10 +17,14 @@ import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "skills" / "ui-design-director" / "scripts"))
+import fonts  # noqa: E402  (AI 글꼴 판단은 fonts.py 하나로)
 import stage  # noqa: E402  (단계 판단은 stage.py 하나로)
 
 PROJECT_MARKS = ("concept-brief.md", "decisions.json", "formats/board-spec.json")
 MATERIAL = {"바탕-구성.md", "바탕-움직임.md"}
+FONT_DIRS = {"palette", "layouts", "mockups"}
+FONT_FILES = {"DESIGN.md", "tokens.css", "components.css"}
+FONT_SUFFIXES = {".html", ".css", ".js", ".json", ".md"}
 
 
 def project_root(path: Path) -> Path | None:
@@ -57,6 +62,14 @@ def check(tool: str, inp: dict) -> str | None:
     rel = path.relative_to(root).parts
     top = rel[0] if rel else ""
     need = None
+    # 디자인 파일에 AI 글꼴을 넣지 못하게 — 기억으로 고르면 늘 Pretendard·Noto·Wanted Sans·SUIT 였다
+    if (top in FONT_DIRS or rel[-1:] and rel[-1] in FONT_FILES) and path.suffix.lower() in FONT_SUFFIXES:
+        body = text_after(tool, inp, path)
+        hits = fonts.ai_fonts_in(body or "", fonts.client_fonts(path.parent)) if body is not None else []
+        if hits:
+            return (f"AI 글꼴은 쓸 수 없습니다: {', '.join(hits)}. references/fonts.md 대로 "
+                    f"python {stage.S}/fonts.py pick --style <고딕|명조|손글씨|제목용> 에서 고르세요. "
+                    "의뢰인이 이미 쓰는 글꼴이면 concept-brief.md 에 「의뢰인 글꼴: 이름」을 적으세요.")
     if top == "formats" and len(rel) == 2:
         if path.suffix == ".html":
             body = text_after(tool, inp, path)

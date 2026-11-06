@@ -11,7 +11,7 @@
  *      "css": ["https://fonts.googleapis.com/…"], "license": "OFL", "maker": "만든 곳", "source": "https://…", "note": "선택 사항" }]
  *   글꼴 메뉴의 견본 문장은 그 프로젝트 내용으로: <script … id="fonts" data-sample="19:30 영통 A코트 · 승점 19">.
  *   없으면 페이지 첫 제목(h1)을 쓴다. 다른 프로젝트 문장이 남아 있으면 의뢰인이 바로 알아챈다(풋살 리그에 「그릇 · 38,000원」).
- *   스타일시트가 없는 글꼴은 "faces": [{ "family": "RIDIBatang", "src": "https://…woff2", "weight": "400" }] 로 넣는다.
+ *   스타일시트가 없는 글꼴은 "faces": [{ "family": "ChosunMyeongjo", "src": "https://…woff2", "weight": "400" }] (후보는 scripts/fonts.py pick 에서) 로 넣는다.
  * ← → 팔레트 · F 글꼴 · M PC/휴대폰 · H 숨기기. 주소 #p=A&f=1&v=phone 으로 보던 자리를 기억한다.
  */
 (function () {

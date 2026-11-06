@@ -8,7 +8,7 @@
 //   보기 화면은 스크립트를 막은 틀(sandbox)로 연다. 남의 사진·글꼴 사본이므로 고르는 동안만 쓰고 지운다 — 저장소에 넣지 않는다.
 // 한계: 움직임(넘기는 사진·메뉴·마우스 올림)은 멈춘 채다 — 그건 실제 사이트로 본다. 로그인·확인 화면은 걸러 실패로 알린다.
 import { createHash } from "node:crypto";
-import { existsSync, mkdirSync, readFileSync, writeFileSync, rmSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { pathToFileURL } from "node:url";
 import { Cdp, launch, sleep, HIDE_OVERLAYS } from "./browser.mjs";
@@ -130,7 +130,7 @@ async function main() {
   const { widths, rest: [jobsPath, outDir] } = parseArgs(process.argv.slice(2));
   const jobs = JSON.parse(readFileSync(jobsPath, "utf8"));
   mkdirSync(outDir, { recursive: true });
-  const { proc, port, profile } = await launch();
+  const { port, close } = await launch("snap-");
   const failed = []; let done = 0; const total = jobs.length * widths.length;
   try {
     for (const job of jobs) for (const width of widths) {
@@ -139,7 +139,7 @@ async function main() {
       try { const r = await snap(port, job.url, width, dir); console.log(`[${done}/${total}] 저장  ${job.id}-${width}  부품 ${r.files}개`); }
       catch (e) { failed.push(`${job.id}-${width}: ${e.message}`); console.log(`[${done}/${total}] 실패  ${job.id}-${width}  ${e.message}`); }
     }
-  } finally { proc.kill(); await sleep(500); try { rmSync(profile, { recursive: true, force: true }); } catch { /* 늦게 닫히면 남음 */ } }
+  } finally { await close(); }
   console.log(`끝: 성공 ${total - failed.length} / 실패 ${failed.length}`);
   if (failed.length) { failed.forEach((f) => console.log(`  - ${f}`)); process.exit(1); }
 }

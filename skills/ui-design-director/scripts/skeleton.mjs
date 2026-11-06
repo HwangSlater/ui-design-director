@@ -7,11 +7,8 @@
 //   --prev: 이전 프로젝트 시안. 우리 시안과 뼈대가 거의 같으면 「이전 시안과 같은 틀」.
 //   바탕이 아닌 참고 한 곳과 거의 같으면 「참고 한 곳과 거의 같은 뼈대」.
 // 외부 패키지 없음. Edge/Chrome DevTools 프로토콜만 쓴다.
-import { spawn } from "node:child_process";
-import { existsSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
-import { tmpdir } from "node:os";
-import { join } from "node:path";
-import { createServer } from "node:net";
+import { writeFileSync } from "node:fs";
+import { launch } from "./browser.mjs";
 import { baseDiff } from "./skeleton_base.mjs";
 
 const SETTLE_MS = 3000;
@@ -31,12 +28,7 @@ const DIFF_STACK = 0.2;    // 참고들의 한 단 비율 범위에서 이만큼
 const CLONE = 0.05;        // 참고 한 곳과 비율 차이가 모두 이 안이고 단·띠·안내판이 같으면 「참고 한 곳과 거의 같음」(베낀 짜임)
 // capture.mjs 와 같은 값 — 머리 없는 브라우저 이름(HeadlessChrome)으로 가면 네이버 지도가 빈 화면을 줘서 사진이 「없음」으로 나왔다
 const PHONE_UA = "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1";
-const WIN_DIRS = [process.env["ProgramFiles(x86)"], process.env.ProgramFiles, process.env.LOCALAPPDATA].filter(Boolean);
-const BROWSERS = [process.env.CAPTURE_BROWSER,
-  ...WIN_DIRS.flatMap((d) => [join(d, "Microsoft/Edge/Application/msedge.exe"), join(d, "Google/Chrome/Application/chrome.exe")]),
-  "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome", "/usr/bin/google-chrome", "/usr/bin/chromium"].filter(Boolean);
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
-const freePort = () => new Promise((res, rej) => { const s = createServer(); s.once("error", rej); s.listen(0, "127.0.0.1", () => { const { port } = s.address(); s.close(() => res(port)); }); });
 
 const args = process.argv.slice(2);
 const out = args[0];
@@ -153,11 +145,7 @@ const PROBE = `(() => {
   return { photoRad: photoR.length ? photoR[Math.floor(photoR.length / 2)] : null, photoN: photoR.length, btnShape: btnTop[1] ? btnTop[0] : "—", btnN: btn.알약 + btn.둥근 + btn.각진, wideBtn, boxShare, nestShare, stack, maxCols: Math.max(1, ...bands), changes, side, hscroll, roundShare: radii.length ? radii.filter((v) => v >= ${ROUND_PX}).length / radii.length : 0, radMed: radii.length ? radii[Math.floor(radii.length / 2)] : 0, shapes, overText, bands: bands.length, order, heroPhoto: firstImg > 0.4, searchFirst, navTop, callEnd };
 })()`;
 
-const exe = BROWSERS.find((p) => existsSync(p));
-if (!exe) { console.error("Edge 또는 Chrome을 찾지 못했습니다(CAPTURE_BROWSER 로 지정)."); process.exit(1); }
-const port = await freePort();
-const profile = mkdtempSync(join(tmpdir(), "skeleton-"));
-const proc = spawn(exe, ["--headless=new", "--disable-gpu", "--hide-scrollbars", "--no-first-run", `--remote-debugging-port=${port}`, `--user-data-dir=${profile}`, "about:blank"], { stdio: "ignore" });
+const { port, close } = await launch("skeleton-"); // 끄기·남은 브라우저 치우기는 browser.mjs 한 곳에서
 let list;
 for (let i = 0; i < 50 && !list; i++) { try { list = await (await fetch(`http://127.0.0.1:${port}/json/list`)).json(); } catch { await sleep(200); } }
 const ws = new WebSocket(list.find((t) => t.type === "page").webSocketDebuggerUrl);
@@ -184,8 +172,7 @@ try {
     console.log(`잼  ${name}`);
   }
 } finally {
-  ws.close(); proc.kill(); await sleep(300);
-  try { rmSync(profile, { recursive: true, force: true }); } catch { /* 브라우저가 늦게 놓음 */ }
+  ws.close(); await close();
 }
 
 const pct = (x) => `${Math.round(x * 100)}%`;

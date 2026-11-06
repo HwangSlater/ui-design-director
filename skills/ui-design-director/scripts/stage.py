@@ -95,7 +95,7 @@ NEXT = {
     "board": f"후보 spec(formats/board-spec.json) → python {S}/make_live_board.py formats/board-spec.json formats/보기.html → node {S}/live_proxy.mjs formats/board-spec.json (OPEN 주소를 의뢰인에게) → node {S}/wait_choice.mjs formats/보기.html formats/decision.json",
     "base": f"의뢰인이 보기 화면에서 「확정」을 누르기를 기다린다(wait_choice.mjs). 채팅으로 답하면: python {S}/stage.py . --decide base \"<번호 이름>\"",
     "material": f"고른 바탕에 대해: node {S}/snapshot.mjs formats/jobs-base.json formats/snapshot · node {S}/motion.mjs <바탕 주소> formats/바탕-움직임.md · node {S}/capture.mjs formats/jobs-base.json formats/base-cap · node {S}/extract_styles.mjs <바탕 주소> formats/추출-1280.json --width 1280 → formats/바탕-구성.md 를 쓴다",
-    "palette": "palette/index.html 을 palette-switcher.js 틀로(comparison-board.md § Palettes, 바탕의 4~6색 조합에서 출발) → wait_choice.mjs palette/index.html palette/decision.json",
+    "palette": f"palette/index.html 을 palette-switcher.js 틀로(comparison-board.md § Palettes, 바탕의 4~6색 조합에서 출발), 글꼴은 python {S}/fonts.py pick --style <고딕|명조|손글씨|제목용> 에서만(references/fonts.md) → python {S}/fonts.py check palette → wait_choice.mjs palette/index.html palette/decision.json",
     "design": "DESIGN.md 를 design-md-format.md 틀로 — § 바탕에서 바꾼 곳, § 부품 출처 포함",
     "main": f"references/build-rules.md 를 따라 mockups/ 에 메인 페이지 — 완성 시안은 하위 에이전트 하나에 파일 경로와 build-rules.md 경로를 넘긴다 → python {S}/preflight.py .",
 }

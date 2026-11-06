@@ -26,7 +26,7 @@ const phone = width <= 600;
 
 const ev = async (cdp, expression, awaitPromise = false) => (await cdp.send("Runtime.evaluate", { expression, returnByValue: true, awaitPromise })).result.value;
 
-const { proc, port } = await launch();
+const { port, close } = await launch("motion-");
 const target = await (await fetch(`http://127.0.0.1:${port}/json/new?about:blank`, { method: "PUT" })).json();
 const cdp = await Cdp.open(target.webSocketDebuggerUrl);
 const md = [];
@@ -102,5 +102,5 @@ try {
   writeFileSync(outMd, md.join("\n") + "\n");
   console.log(`wrote ${outMd} · 올림 전후 그림 ${shots}쌍 · 나타남 ${revealed.length}개 · 넘김 ${changes ? "있음" : "없음"}`);
 } finally {
-  cdp.close(); proc.kill();
+  cdp.close(); await close();
 }

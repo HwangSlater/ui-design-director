@@ -102,7 +102,8 @@ Some of what changed:
 | A white info panel floating on the hero photo | "Put the product's character up front" | First screen stays like the base; character comes through photos and words |
 | One colour (white + a single accent) | "One accent besides black" | Carry over the base's 4–6 tones and how they relate |
 | Dashed 「… 자리」 empty boxes | "Leave missing content as labelled slots" | Short sample text, flagged in one line at the foot |
-| The same fonts every time | No font rule | Model-default fonts banned; pick from free font libraries to match the base |
+| The same fonts every time | Font candidates offered from memory; a font in the palette template's example | Pick only from a table of 835 fonts (free fonts measured on the 186 most-visited Korean sites, plus company and public-body fonts on 눈누 that allow web embedding); 17 AI-default faces blocked by the hook |
+| Browsers piling up, machine slowing | Edge's main process survived each tool | Tools close the whole process tree; the hook sweeps leftovers after every turn |
 
 Each roleplay — what was checked and what changed — is logged in [docs/역할극-기록.md](docs/역할극-기록.md) (Korean). Tokens are measured too, aiming for one home page within an ordinary plan's limits.
 
@@ -144,6 +145,9 @@ The plugin carries both skills (`ui-design-director`, `ui-wording`) and a hook. 
 - a viewer HTML in `formats/` that is not the shared template (it points to `make_live_board.py`)
 - a page in `palette/` not built on the palette-switcher template
 - base material, palette, `DESIGN.md`, `layouts/` or `mockups/` written before the earlier stages are decided
+- a palette page, mockup or `DESIGN.md` that uses a face models default to (`assets/fonts/ai-fonts.json`) — it points to `fonts.py pick`; a font the client already uses is allowed with 「의뢰인 글꼴: name」 in `concept-brief.md`
+
+At the end of every turn, and once more when the session closes, it also stops headless browsers and temp profiles left by a measuring tool that was killed mid-run, with a one-line notice when it found any (without it, one day of roleplays left 75 browsers and 51 GB of profiles).
 
 The hook is not in SKILL.md because claude.ai accepts only a fixed set of frontmatter keys and rejects an upload containing `hooks`. SKILL.md stays portable; enforcement lives in the Claude Code plugin. If you linked the skill folder as below, remove that link when you install the plugin, or the skill is listed twice.
 
@@ -269,7 +273,8 @@ The open-source skills and tools below assist specific stages only when installe
         ├── assets/
         │   ├── dock.css · dock.js
         │   ├── board.css · board.js
-        │   └── palette-switcher.css · palette-switcher.js
+        │   ├── palette-switcher.css · palette-switcher.js
+        │   └── fonts/  fonts.json (font table) · ai-fonts.json (AI-default faces)
         ├── scripts/
         │   ├── check_site.py
         │   ├── anchor_check.py
@@ -296,6 +301,8 @@ The open-source skills and tools below assist specific stages only when installe
             ├── site-build.md
             ├── companion-skills.md
             ├── comparison-board.md
+            ├── build-rules.md
+            ├── fonts.md
             └── ui-review.md
 ```
 
@@ -323,6 +330,11 @@ The open-source skills and tools below assist specific stages only when installe
 - `extract_styles.mjs`: pulls the type sizes, radii, shadows, spacing and photo/box counts a reference actually uses
 - `make_live_board.py`: a board that loads candidate sites live instead of capturing them, marking sites that refuse framing
 - `side_by_side.py`: our page beside the reference at the same width, with a visual-layer checklist
+- `fonts.py`: font candidates (`pick --style 명조`) and the AI-font check (`check`) over `assets/fonts/fonts.json`, with each font's conditions and licence source; rebuild the data with `scripts/font-research/`
+- `stage.py`: current stage, whether earlier stages are decided, and the exact next command (runs when the skill opens)
+- `browser.mjs`: shared browser launch and shutdown for the measuring tools; closes Edge's whole process tree, and `--sweep` clears browsers left by a killed tool
+- `build-rules.md`: rules for building a page, read by the main conversation and mockup subagents
+- `fonts.md`: font candidates from evidence only — measure the base's type, `fonts.py pick`, conditions, AI-default faces
 
 ## Context footprint
 

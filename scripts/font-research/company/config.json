@@ -1,0 +1,6 @@
+{
+  "base": "https://noonnu.cc",
+  "workers": 1,
+  "delay_sec": 1.2,
+  "backoff_sec": 30
+}

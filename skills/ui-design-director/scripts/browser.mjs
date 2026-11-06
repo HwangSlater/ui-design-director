@@ -1,8 +1,9 @@
 // 캡처·스냅샷이 함께 쓰는 브라우저 띄우기와 DevTools 프로토콜 연결(외부 패키지 없음)
-import { spawn } from "node:child_process";
-import { existsSync, mkdtempSync } from "node:fs";
+import { spawn, spawnSync } from "node:child_process";
+import { existsSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
-import { join } from "node:path";
+import { join, resolve } from "node:path";
+import { pathToFileURL } from "node:url";
 import { createServer } from "node:net";
 
 // 설치 위치는 운영체제가 알려 주는 폴더에서 찾는다
@@ -77,24 +78,102 @@ export class Cdp {
   }
 }
 
-export async function launch() {
+// 브라우저 끄기 — 윈도우에서 proc.kill() 은 처음 띄운 프로세스만 끄고 화면을 그리는 Edge 본체는 남았다
+// (하루 역할극에 headless Edge 75벌, 프로세스 700여 개가 쌓임). 본체 번호를 DevTools 로 받아 그 나무째 끈다.
+export const PROFILE_PREFIXES = ["capture-", "styles-", "compose-", "snap-", "motion-", "skeleton-"];
+const OWNER_FILE = "owner.json"; // 이 브라우저를 띄운 node 번호와 본체 번호 — 주인이 죽고 남은 브라우저를 다음 실행이 찾아 끈다
+const live = new Set();
+
+function killTree(pid) {
+  if (!pid) return;
+  try {
+    if (process.platform === "win32") spawnSync("taskkill", ["/PID", String(pid), "/T", "/F"], { stdio: "ignore" });
+    else process.kill(pid, "SIGKILL");
+  } catch { /* 이미 꺼짐 */ }
+}
+
+// 꺼진 Edge 가 잠깐 파일을 쥐고 있어 한 번에 안 지워졌다(남은 프로필 255벌, 51GB) — 3초까지 다시 시도, 그래도 안 되면 다음 정리 때
+const pause = (ms) => Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, ms);
+function removeDirSync(dir) {
+  for (let i = 0; i < 15 && existsSync(dir); i++) {
+    try { rmSync(dir, { recursive: true, force: true }); } catch { pause(200); }
+  }
+}
+
+const alive = (pid) => { try { process.kill(pid, 0); return true; } catch (e) { return e.code === "EPERM"; } };
+
+// 주인(node)이 시간 초과 등으로 강제로 끝나 끄는 코드가 돌지 못한 브라우저를 끈다
+export function sweepOrphans() {
+  let n = 0;
+  for (const name of readdirSync(tmpdir())) {
+    if (!PROFILE_PREFIXES.some((p) => name.startsWith(p))) continue;
+    const dir = join(tmpdir(), name);
+    let owner;
+    try { owner = JSON.parse(readFileSync(join(dir, OWNER_FILE), "utf8")); } catch { continue; } // 표시가 없으면 누구 것인지 몰라 둔다
+    if (alive(owner.owner)) continue;
+    killTree(owner.browser);
+    removeDirSync(dir);
+    n++;
+  }
+  return n;
+}
+
+function closeAllSync() {
+  for (const b of live) { killTree(b.browser); killTree(b.proc.pid); removeDirSync(b.profile); }
+  live.clear();
+}
+let hooked = false;
+function hookExit() {
+  if (hooked) return;
+  hooked = true;
+  process.on("exit", closeAllSync);
+  for (const sig of ["SIGINT", "SIGTERM", "SIGHUP"]) process.on(sig, () => { closeAllSync(); process.exit(130); });
+}
+
+export async function launch(prefix = "capture-") {
   const exe = BROWSERS.find((p) => existsSync(p));
   if (!exe) throw new Error("Edge 또는 Chrome을 찾지 못했습니다. CAPTURE_BROWSER 로 경로를 지정하세요.");
+  sweepOrphans();
   const port = await freePort();
-  const profile = mkdtempSync(join(tmpdir(), "capture-"));
+  const profile = mkdtempSync(join(tmpdir(), prefix));
   const proc = spawn(exe, [
     "--headless=new", "--disable-gpu", "--hide-scrollbars", "--no-first-run", "--mute-audio",
     "--disable-blink-features=AutomationControlled",
     `--remote-debugging-port=${port}`, `--user-data-dir=${profile}`, "about:blank",
   ], { stdio: "ignore" });
+  const entry = { proc, profile, browser: 0 };
+  live.add(entry);
+  hookExit();
   for (let i = 0; i < 50; i++) {
     try {
       const res = await fetch(`http://127.0.0.1:${port}/json/version`);
-      if (res.ok) return { proc, port, profile };
+      if (res.ok) {
+        const { webSocketDebuggerUrl } = await res.json();
+        try {
+          const b = await Cdp.open(webSocketDebuggerUrl);
+          const info = await b.send("SystemInfo.getProcessInfo");
+          entry.browser = info.processInfo.find((p) => p.type === "browser")?.id || 0;
+          b.close();
+        } catch { /* 본체 번호를 못 받으면 proc 나무로만 끈다 */ }
+        writeFileSync(join(profile, OWNER_FILE), JSON.stringify({ owner: process.pid, browser: entry.browser }));
+        const close = async () => {
+          try {
+            const b = await Cdp.open(webSocketDebuggerUrl);
+            await Promise.race([b.send("Browser.close"), sleep(1500)]);
+          } catch { /* 이미 닫힘 */ }
+          await sleep(300);
+          killTree(entry.browser);
+          killTree(proc.pid);
+          removeDirSync(profile);
+          live.delete(entry);
+        };
+        return { proc, port, profile, close };
+      }
     } catch { /* 아직 뜨는 중 */ }
     await sleep(200);
   }
-  proc.kill();
+  killTree(proc.pid);
+  live.delete(entry);
   throw new Error("브라우저 디버깅 포트가 열리지 않았습니다.");
 }
 
@@ -145,3 +224,10 @@ const hideOverlaysExpr = (sel, words) => `(() => {
 })()`;
 const OVERLAY_SELECTORS = '[id*="cookie" i],[class*="cookie" i],[id*="consent" i],[class*="consent" i],[id*="onetrust" i],[class*="onetrust" i],[id*="termly" i],[id*="klaviyo" i],[class*="klaviyo" i],[id*="onesignal" i],[class*="newsletter-popup" i],[aria-modal="true"]';
 export const HIDE_OVERLAYS = hideOverlaysExpr(OVERLAY_SELECTORS, OVERLAY_WORDS);
+
+// 플러그인 훅이 답이 끝날 때·세션을 닫을 때 부른다: node browser.mjs --sweep
+// 주인 도구가 끝났는데 남은 headless 브라우저와 임시 프로필을 치운다(남은 것이 있을 때만 한 줄 알림)
+if (process.argv[2] === "--sweep" && process.argv[1] && import.meta.url === pathToFileURL(resolve(process.argv[1])).href) {
+  const n = sweepOrphans();
+  if (n) console.log(JSON.stringify({ systemMessage: `남아 있던 측정용 브라우저 ${n}벌을 끄고 임시 폴더를 지웠습니다(ui-design-director).` }));
+}
