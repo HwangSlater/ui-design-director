@@ -25,7 +25,7 @@ if (!boardPath || !specPath || !existsSync(boardPath) || !existsSync(specPath)) 
   process.exit(2);
 }
 const spec = JSON.parse(readFileSync(specPath, "utf8"));
-const allowed = new Set((spec.candidates || []).flatMap((c) => Object.values(c.pages || {})).map((u) => new URL(u).hostname.replace(/^www\./, "")));
+const allowed = new Set((spec.candidates || []).flatMap((c) => Object.values(c.pages || c.urls || {})).map((u) => new URL(u).hostname.replace(/^www\./, "")));
 const okHost = (h) => [...allowed].some((a) => h === a || h.endsWith("." + a));
 const key = randomBytes(12).toString("hex");
 const boardDir = resolve(dirname(boardPath));

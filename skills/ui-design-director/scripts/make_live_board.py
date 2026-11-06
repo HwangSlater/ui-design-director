@@ -3,7 +3,8 @@
 
     python make_live_board.py <spec.json> <out.html>
 
-spec: { "title": "참고 사이트 고르기 · 솔담",
+spec: make_board.py 의 spec(id·title·urls) 을 그대로 줘도 된다. 또는
+      { "title": "참고 사이트 고르기 · 솔담",
         "candidates": [ {"n": "1", "name": "스테이폴리오", "meta": "실제 사이트 · …",
                          "pages": {"숙소": "<주소>", "객실": "<주소>"}, "shot": "<첫 화면 그림, 선택>"} ] }
 
@@ -63,11 +64,18 @@ def main(argv: list[str]) -> int:
         print(__doc__.strip(), file=sys.stderr)
         return 2
     spec = json.loads(Path(argv[0]).read_text(encoding="utf-8"))
+    title = spec.get("title") or spec.get("step") or "참고 사이트 고르기"
     cands = spec.get("candidates") or []
     if not cands:
         print("ERROR: candidates 가 비었어요", file=sys.stderr)
         return 2
+    labels = {p["key"]: p["label"] for p in spec.get("pages") or [] if isinstance(p, dict)}
     for c in cands:
+        # make_board.py(캡처 보기)의 spec 도 그대로 받는다: id·title·urls → n·name·pages
+        c.setdefault("n", str(c.get("id", "")))
+        c.setdefault("name", c.get("title", ""))
+        if "pages" not in c:
+            c["pages"] = {labels.get(k, k): u for k, u in (c.get("urls") or {}).items()}
         first = next(iter(c["pages"].values()))
         state = frame_policy(first)
         print(f'{c["n"]} {c["name"]}: {state}')
@@ -75,7 +83,7 @@ def main(argv: list[str]) -> int:
             c["blocked"] = True
             c["note"] = NOTE[state]  # live_proxy.mjs 로 띄우면 보이지 않는다
     data = json.dumps(cands, ensure_ascii=False, indent=1).replace("</", "<\\/")
-    page = TEMPLATE.read_text(encoding="utf-8").replace("__DATA__", data).replace("__TITLE__", html.escape(spec.get("title", "참고 사이트 고르기")))
+    page = TEMPLATE.read_text(encoding="utf-8").replace("__DATA__", data).replace("__TITLE__", html.escape(title))
     Path(argv[1]).write_text(page, encoding="utf-8")
     print(f"wrote {argv[1]}")
     if any(c.get("blocked") for c in cands):

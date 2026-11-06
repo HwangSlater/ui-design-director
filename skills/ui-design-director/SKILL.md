@@ -36,7 +36,7 @@ Run `python scripts/preflight.py <project folder>` and fix or answer every line 
 
 ## Conversation
 
-For a broad request ("I want to choose a design") read [references/guided-conversation.md](references/guided-conversation.md) and lead: one consequential question at a time, concrete numbered choices shown as pictures, plain words instead of design vocabulary, the next step always obvious. Show every choice visually ([references/comparison-board.md](references/comparison-board.md)); never ask the user to choose from links, a folder or a table. If the user delegates a choice, make it and record that it was delegated.
+For a broad request ("I want to choose a design") read [references/guided-conversation.md](references/guided-conversation.md) and lead: one consequential question at a time, concrete numbered choices shown as pictures, plain words instead of design vocabulary, the next step always obvious. Show every choice visually ([references/comparison-board.md](references/comparison-board.md)); never ask the user to choose from links, a folder or a table. **Candidates are the live sites, not captures:** build the live board (`scripts/make_live_board.py`, the real pages in phone and desktop frames) and run `scripts/live_proxy.mjs` for the ones that refuse to load in a frame. Captures only for login-walled pages or a client who can only look at images (a roleplay client in another session); a person at the screen gets the live board. If the user delegates a choice, make it and record that it was delegated.
 
 ## Route the request
 
@@ -67,7 +67,7 @@ The answer key is the base's own home page; reproduce its design, then make it o
 ## Gates
 
 1. **Context.** A short concept brief: product and main job, audience, archetype (marketing site, dashboard, editing tool, form workflow, content reader), essential screens, content density, brand traits, constraints, dislikes; ask only what would change the shortlist and label what you inferred. Ask in the same step for what only the user has — their own photos, logo or sign artwork, a notice or two in their own words — and say plainly that samples cap how real it can look. In the same step run [companion-skills.md](references/companion-skills.md) § Start-of-project check: ask the machine owner once, record the answer.
-2. **Format.** About five well-known running sites in the field (the national leaders people already use) and one or two template candidates, side by side, marked and linked. Say the shared traits (n/N) when you show them. The user picks **one base**.
+2. **Format.** About five well-known running sites in the field (the national leaders people already use) and one or two template candidates, side by side on the live board, marked and linked. Say the shared traits (n/N) when you show them. The user picks **one base**.
 3. **Palette.** 3–4 linked palettes, separate from the format, with UI roles and contrast risks. A template's default colours never decide the palette silently.
 4. **Preview.** A coded comparison of finalists with identical content, when it helps or the user asks; disposable.
 5. **Rules.** Adapt the approved format and palette into `DESIGN.md`: observed evidence, product decisions, unknowns; high-impact open choices get approved, small defaults stay marked provisional. Concept approval needs every axis resolved.
