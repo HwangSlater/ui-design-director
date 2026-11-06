@@ -2,9 +2,7 @@
 
 ## Start from the field's measured colours
 
-Before looking at palette libraries, measure the background, text and button colours of the reference sites (computed styles, weighted by area). Running sites in Korea and abroad are mostly white background, light-grey panels, near-black text (#000–#1A1C20) and one strong accent or none; show at least one candidate built that way. Treat a warm beige background with a brown or olive button as a known generated look, not a neutral default (a blind judge called it 「개성 없는 베이지 톤」).
-
-Start from one accent besides black: an open/closed green plus a red or blue button reads as 「강조색이 두 개, 근거 없음」, and one dark accent painted on the header, every button and every panel reads as AI-made. Offer a second block colour only when the client asks for more colour or the shortlisted sites share one, and spread the one accent over fewer places instead of painting every panel. When the client asks to mix two candidates, say before building it that this makes two accent colours. Colour alone is a small lever; it does not fix a page with no brand mark, uniform section rhythm or mismatched photos.
+Before looking at palette libraries, measure the base's colours by area (computed styles plus the capture): background, second surface, text, muted text, accent, any dark field — usually 4–6 tones. A palette is that combination and the relationships between the tones (warm or cool, value steps, which tone carries which part), not a white page with one accent: a Pilates studio built on white, ink and a touch of green read as 「단색」 next to its base's dark brown, oat, taupe and sand. Candidate A is the base's own combination adapted to the client; the others keep the same number of tones and the same relationships while shifting hue or temperature toward the client's identity. When the client asks to mix two candidates, say what the mix changes before building it.
 
 ## Find real palette candidates
 
