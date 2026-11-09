@@ -40,32 +40,85 @@
   const PROXY = new URLSearchParams(location.search).get("proxy") || "";
   const LIVE_W = { desktop: 1280, phone: 390 };
   const live = { x: false, js: {} }; // x: 바로 띄운 곳도 우회로 보기 · js: 후보별 스크립트 켬(자동 판단 뒤 사용자가 바꿈)
-  function liveFrame(box, kind, cand, url, alt) {
-    box.replaceChildren();
-    box.style.overflow = "hidden";
+  // 띄운 틀은 버리지 않고 숨겨 둔다 — 넘겼다 돌아오면 처음부터 다시 불러왔다. 메모리 때문에 POOL_MAX 개까지(오래된 것부터 버림)
+  const POOL_MAX = 4; // 지금 후보와 다음 후보(PC·휴대폰) — 6개는 숨긴 틀이 계속 그려 메모리가 1.5배(2.2GB)였다
+  const pool = new Map(); // 열쇠(후보·화면 종류·주소·우회·스크립트) → iframe
+  function poolFrame(key, box, make) {
+    let f = pool.get(key);
+    const created = !f;
+    if (!f) {
+      f = make();
+      pool.set(key, f);
+      while (pool.size > POOL_MAX) { const [oldKey, old] = pool.entries().next().value; pool.delete(oldKey); old.remove(); }
+    } else { pool.delete(key); pool.set(key, f); } // 최근에 쓴 것을 뒤로
+    if (f.parentNode !== box) box.append(f);
+    return [f, created];
+  }
+  // 숨긴 틀은 안 보이게만 한다(display:none 이면 사이트가 그리기를 멈춰 다 뜨지 못했다 — 만개의레시피)
+  const hideFrame = (f) => { Object.assign(f.style, { visibility: "hidden", position: "absolute", top: "0", left: "0" }); f.inert = true; };
+  const showFrame = (f) => { Object.assign(f.style, { visibility: "visible", position: "static" }); f.inert = false; };
+  function sizeFrame(box, kind, f) {
+    const k = Math.min(1, box.clientWidth / LIVE_W[kind]);
+    Object.assign(f.style, { width: `${LIVE_W[kind]}px`, height: `${box.clientHeight / k}px`, transform: `scale(${k})`, transformOrigin: "0 0", border: "0" });
+  }
+  // show=false 면 뒤에서 미리 띄우기만 한다(다음·이전 후보)
+  function liveFrame(box, kind, cand, url, alt, show = true) {
+    if (show) {
+      box.style.overflow = "hidden";
+      box.querySelectorAll(":scope > :not(iframe)").forEach((n) => n.remove());
+      box.querySelectorAll(":scope > iframe").forEach(hideFrame);
+      if (document.activeElement && document.activeElement.tagName === "IFRAME") document.activeElement.blur(); // 넘긴 뒤 초점은 보기 화면에
+    }
     const proxied = (cand.blocked || live.x) && PROXY;
-    const make = (src, sandbox) => {
-      const f = el("iframe");
-      f.title = alt;
-      f.src = src;
-      if (sandbox !== null) f.setAttribute("sandbox", sandbox);
-      const k = Math.min(1, box.clientWidth / LIVE_W[kind]);
-      Object.assign(f.style, { width: `${LIVE_W[kind]}px`, height: `${box.clientHeight / k}px`, transform: `scale(${k})`, transformOrigin: "0 0", border: "0", display: "block" });
-      box.replaceChildren(f);
+    const place = (src, sandbox) => {
+      const [f, created] = poolFrame(`${cand.id}|${kind}|${src}`, box, () => {
+        const nf = el("iframe");
+        nf.title = alt;
+        if (sandbox !== null) nf.setAttribute("sandbox", sandbox);
+        // 미리 띄우는 틀만 숨겨서 만든다 — 보여 줄 틀까지 숨긴 채 만들면 브라우저가 그리기를 늦춰 첫 화면이 두 배(6초→12초) 걸렸다
+        if (!show) hideFrame(nf); // inert: 숨겨 둔 사이트가 키보드 초점을 가져가면 ←→ 로 후보를 넘길 수 없었다
+        nf.addEventListener("load", () => { nf.dataset.loaded = "1"; if (show) preloadNeighbours(); }, { once: true });
+        nf.src = src;
+        return nf;
+      });
+      sizeFrame(box, kind, f);
+      if (show && !created) setTimeout(preloadNeighbours, 0); // 이미 뜬 틀을 다시 꺼냈으면 load 가 다시 오지 않는다
+      if (show && current(box, kind) === `${cand.id}|${url}`) { box.current = f; box.querySelectorAll(":scope > iframe").forEach((o) => (o === f ? showFrame(o) : hideFrame(o))); box.querySelector(":scope > .v-empty")?.remove(); }
     };
-    if (!proxied) { make(url, null); return; }
+    if (show) box.dataset.want = `${kind}|${cand.id}|${url}`;
+    if (!proxied) { place(url, null); return; }
     const src = `${PROXY}${encodeURIComponent(url)}?ua=${kind === "phone" ? "phone" : "pc"}`;
     // 맨 위 창을 바꾸지 못하게 샌드박스. 스크립트는 스크립트로 그리는 사이트에만
-    const place = (js) => make(src + (js ? "&js=1" : ""), (js ? "allow-scripts " : "") + "allow-same-origin allow-popups allow-popups-to-escape-sandbox");
+    const placeProxied = (js) => place(src + (js ? "&js=1" : ""), (js ? "allow-scripts " : "") + "allow-same-origin allow-popups allow-popups-to-escape-sandbox");
     const known = live.js[cand.id];
-    if (typeof known === "boolean") { place(known); return; }
-    box.append(el("p", "v-empty", `${cand.title} 불러오는 중…`));
-    fetch(`${src}&probe=1`).then((r) => r.json()).then((j) => { live.js[cand.id] = !!j.js; refreshLiveButtons(); place(live.js[cand.id]); }).catch(() => place(false));
+    if (typeof known === "boolean") { placeProxied(known); return; }
+    if (show) box.append(el("p", "v-empty", `${cand.title} 불러오는 중…`));
+    fetch(`${src}&probe=1`).then((r) => r.json()).then((j) => { live.js[cand.id] = !!j.js; refreshLiveButtons(); placeProxied(live.js[cand.id]); }).catch(() => placeProxied(false));
+  }
+  // 묻는 동안 다른 후보로 넘어갔으면 늦게 온 틀을 보이지 않게
+  const current = (box, kind) => (box.dataset.want || "").replace(`${kind}|`, "");
+  // 지금 후보가 PC·휴대폰 모두 다 뜬 뒤에 다음 후보 하나를 뒤에서 미리 띄운다
+  // (한 화면만 떠도 시작하면 아직 받는 다른 화면과 대역폭을 나눠 첫 화면이 6초→12초로 느려졌다)
+  function preloadNeighbours() {
+    if (!data.live) return;
+    // 판단은 칸마다 지금 보여 주는 틀(box.current)로 — 숨은 휴대폰 칸이 먼저 떠서 PC 화면이 받는 중에 미리 띄우기가 시작됐다(첫 화면 6초→12초)
+    if (frames().some(([sel]) => !$(sel).current || $(sel).current.dataset.loaded !== "1")) return;
+    const n = data.candidates.length;
+    [1].forEach((d) => {
+      const cand = data.candidates[(state.c + d + n) % n];
+      const page = cand.pages[state.p];
+      if (!page || !page.url || (cand.blocked && !PROXY)) return;
+      frames().forEach(([sel, kind, name]) => liveFrame($(sel), kind, cand, page.url, `${cand.title} ${labelOf(state.p)} ${name} 화면`, false));
+    });
   }
   let refreshLiveButtons = () => {};
 
   function fill(box, src, alt, emptyText) {
-    box.replaceChildren();
+    // 숨겨 둔 실제 사이트 틀은 남긴다(지우면 다시 붙일 때 처음부터 불러온다)
+    box.querySelectorAll(":scope > :not(iframe)").forEach((n) => n.remove());
+    box.querySelectorAll(":scope > iframe").forEach(hideFrame);
+    delete box.dataset.want;
+    box.current = null;
     box.scrollTop = 0;
     box.style.overflow = "";
     if (src) {

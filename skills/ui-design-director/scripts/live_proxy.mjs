@@ -135,6 +135,33 @@ const fetchAllowed = async (start, method, ua) => {
   return null;
 };
 
+// 받은 것을 잠시 기억한다 — 보드가 「스크립트가 필요한가」를 묻는 요청(?probe=1)과 화면 요청이 같은 페이지를 두 번 받았고,
+// 후보를 넘겼다 돌아오면 처음부터 다시 받았다. 같은 주소·같은 브라우저 이름(pc/phone)은 CACHE_TTL_MS 동안 한 번만 받는다.
+const CACHE_TTL_MS = 10 * 60 * 1000;
+const CACHE_MAX_BYTES = 150 * 1024 * 1024; // 넘으면 오래된 것부터 버린다
+const CACHE_ITEM_MAX = 8 * 1024 * 1024;    // 이보다 큰 파일(영상 등)은 기억하지 않는다
+const cache = new Map(); // 열쇠 → { status, headers, finalUrl, body: Buffer, at }
+const inflight = new Map(); // 같은 것을 동시에 두 번 받지 않게
+let cacheBytes = 0;
+const cacheKey = (target, ua) => `${ua}|${target.href}`;
+const remember = (k, item) => {
+  if (item.body.length > CACHE_ITEM_MAX || item.status !== 200) return;
+  cache.set(k, item);
+  cacheBytes += item.body.length;
+  for (const [old, v] of cache) { if (cacheBytes <= CACHE_MAX_BYTES) break; cache.delete(old); cacheBytes -= v.body.length; }
+};
+const getUpstream = async (target, method, ua) => {
+  if (method !== "GET") return fetchAllowed(target, method, ua).then((up) => up && toItem(up));
+  const k = cacheKey(target, ua);
+  const hit = cache.get(k);
+  if (hit && Date.now() - hit.at < CACHE_TTL_MS) return hit;
+  if (inflight.has(k)) return inflight.get(k);
+  const job = fetchAllowed(target, method, ua).then((up) => up && toItem(up)).then((item) => { if (item) remember(k, item); return item; }).finally(() => inflight.delete(k));
+  inflight.set(k, job);
+  return job;
+};
+const toItem = async (up) => ({ status: up.status, headers: up.headers, finalUrl: up.finalUrl, body: Buffer.from(await up.arrayBuffer()), at: Date.now() });
+
 // 보드 쪽: 보드 폴더 안의 파일만 읽기 전용으로 + 「확정」 받는 곳(POST /choice, wait_choice.mjs 와 같은 처리)
 const onChoice = choiceHandler({
   token: choiceToken, out: decisionPath, once: false,
@@ -164,24 +191,24 @@ const proxyServer = createServer(async (req, res) => {
   const ua = u.searchParams.get("ua") === "phone" ? "phone" : "pc";
   const js = u.searchParams.get("js") === "1";
   try {
-    const up = await fetchAllowed(target, req.method, ua);
+    const up = await getUpstream(target, req.method, ua);
     if (!up) { res.writeHead(403, { "content-type": "text/plain; charset=utf-8" }); res.end("후보 사이트가 아닌 곳으로 넘기거나 넘기기가 너무 많음"); return; }
     const headers = {};
     up.headers.forEach((v, h) => { if (!DROP_HEADERS.includes(h)) headers[h] = v; });
     headers["access-control-allow-origin"] = "*";
     const type = up.headers.get("content-type") || "";
     if (type.includes("text/css")) {
-      const css = fixCssUrls(await up.text(), up.finalUrl, ua);
+      const css = fixCssUrls(up.body.toString("utf8"), up.finalUrl, ua);
       res.writeHead(up.status, { ...headers, "content-type": "text/css; charset=utf-8" });
       res.end(css);
       return;
     }
     if (!type.includes("text/html")) {
       res.writeHead(up.status, headers);
-      res.end(Buffer.from(await up.arrayBuffer()));
+      res.end(up.body);
       return;
     }
-    let body = await up.text();
+    let body = up.body.toString("utf8");
     body = body.replace(/<meta[^>]+http-equiv=["']?(content-security-policy|x-frame-options)[^>]*>/gi, "");
     body = body.replace(/<style\b([^>]*)>([\s\S]*?)<\/style>/gi, (m, a, css) => `<style${a}>${fixCssUrls(css, up.finalUrl, ua)}</style>`);
     // 보드가 띄우기 전에 묻는다(?probe=1): 스크립트를 빼면 거의 빈 화면인 사이트(스크립트로 그리는 곳)인가.
@@ -234,3 +261,13 @@ console.log(`허용 사이트: ${[...allowed].join(", ")}`);
 console.log(`OPEN http://${HOST}:${bPort}/${encodeURIComponent(basename(boardPath))}?proxy=${encodeURIComponent(proxyBase)}#${waitHash(bPort, choiceToken)}`); // lint:allow url 내 컴퓨터 안에서 연 보기 화면 주소
 console.log(`확정이 오면 ${decisionPath} 에 쓰고 DECISION 줄을 찍는다`);
 console.log("끄려면 Ctrl+C");
+
+// 켜자마자 모든 후보의 첫 페이지를 미리 받아 둔다(PC·휴대폰, 동시에 PREWARM_PARALLEL 곳) — 의뢰인이 주소를 열 즈음엔 받아져 있게
+const PREWARM_PARALLEL = 3;
+// 우회로 띄우는(막힌) 후보만 — 바로 띄우는 후보는 브라우저가 직접 받으니 미리 받으면 첫 화면과 대역폭만 나눠 썼다
+const boardData = (() => { try { return JSON.parse(readFileSync(boardPath, "utf8").match(/id="board-data">([\s\S]*?)<\/script>/)[1]); } catch { return null; } })();
+const blockedUrls = boardData && Array.isArray(boardData.candidates) ? boardData.candidates.filter((c) => c.blocked).map((c) => Object.values(c.pages || {}).map((p) => p && p.url).find(Boolean)) : null; // 틀 자료를 못 읽으면 모든 후보
+const firstPages = (blockedUrls || (spec.candidates || []).map((c) => Object.values(c.pages || c.urls || {})[0])).filter(Boolean);
+const jobs = firstPages.flatMap((u) => ["pc", "phone"].map((ua) => () => getUpstream(new URL(u), "GET", ua).catch(() => null)));
+const runPrewarm = async () => { while (jobs.length) await jobs.shift()(); };
+Promise.all(Array.from({ length: PREWARM_PARALLEL }, runPrewarm)).then(() => console.log(`미리 받아 둠: 후보 ${firstPages.length}곳`));

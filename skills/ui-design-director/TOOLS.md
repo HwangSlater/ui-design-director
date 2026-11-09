@@ -44,5 +44,6 @@
 
 - `../../scripts/validate_skill.py` — 두 스킬의 구조·frontmatter·필수 파일·플러그인 설정·문서 링크 검사
 - `../../scripts/check_all.py` — `validate_skill.py`, pytest, `node --test` 를 한 번에
+- `../../scripts/board_bench.mjs` — 보기 화면 속도·메모리 재기(후보를 넘기며 다 뜨는 시간, 끝난 뒤 브라우저 메모리). 실제 사이트를 불러온다
 - `../../scripts/roleplay_tokens.py` — 역할극 구간별 토큰 세기
 - `../../scripts/font-research/` — 글꼴 표를 다시 재는 도구

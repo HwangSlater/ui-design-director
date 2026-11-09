@@ -17,11 +17,12 @@ const LAZY_PAGE = `<!doctype html><html><head><style>@font-face{font-family:x;sr
 <img data-src="/a.jpg" src="data:image/gif;base64,R0lGODlhAQABAAAAACw=" loading="lazy"><img data-srcset="/b.jpg 1x"><div data-bg="/c.jpg">배경</div>
 <noscript><img src="/n.jpg"></noscript><script>1</script></body></html>`;
 const APP_PAGE = `<!doctype html><html><head></head><body><div id="root"></div><script src="/app.js"></script></body></html>`;
-let site, proc, base, origin, open, dir, out = "", lastHeaders = {};
+let site, proc, base, origin, open, dir, out = "", lastHeaders = {}, hits = {};
 
 before(async () => {
   site = createServer((req, res) => {
     lastHeaders = req.headers;
+    hits[req.url] = (hits[req.url] || 0) + 1;
     if (req.url === "/hop") { res.writeHead(302, { location: "/lazy" }); res.end(); return; }
     if (req.url === "/away") { res.writeHead(302, { location: `http://localhost:${site.address().port}/` }); res.end(); return; }
     if (req.url === "/loop") { res.writeHead(301, { location: "/loop" }); res.end(); return; }
@@ -161,4 +162,13 @@ test("--decision 으로 확정 파일 자리를 바꾼다", async () => {
     assert.equal(r.status, 200);
     assert.ok(existsSync(target) && !existsSync(join(d2, "decision.json")));
   } finally { p.kill(); }
+});
+
+test("같은 페이지는 한 번만 받는다: 묻기(probe) 뒤 화면 요청은 기억해 둔 것을 쓴다", async () => {
+  const url = `${origin}/app?once=1`;
+  const before = hits["/app?once=1"] || 0;
+  await (await via(url, "?ua=pc&probe=1")).json();
+  const page = await via(url, "?ua=pc&js=1");
+  assert.equal(page.status, 200);
+  assert.equal((hits["/app?once=1"] || 0) - before, 1);
 });
