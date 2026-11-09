@@ -1,0 +1,4 @@
+interface:
+  display_name: "UI Wording"
+  short_description: "화면 문구를 업계에서 쓰는 말로 맞추고 전체에서 하나로 통일"
+  default_prompt: "Use $ui-wording to extract every string on my screens, compare the terms, tone and button labels with what similar services use, show me a term table, and apply it everywhere once I approve."

@@ -43,10 +43,11 @@ test("도구가 강제로 죽어 남은 브라우저를 --sweep 이 끈다(훅�
   // 시간 초과로 죽는 것처럼 끄는 코드가 돌 틈 없이 죽인다
   if (process.platform === "win32") spawn("taskkill", ["/PID", String(child.pid), "/F"]); else child.kill("SIGKILL");
   await new Promise((r) => child.on("exit", r));
-  assert.equal(alive(browser), true, "주인이 죽어도 브라우저는 남는다(고치기 전 증상)");
+  // 주인이 죽어도 브라우저가 남는 것이 고치기 전 증상 — 윈도우가 같이 끌 때도 있어서 확인만 하고 넘어간다
+  const left = alive(browser) || existsSync(profile);
   const out = await new Promise((r) => { const s = spawn(process.execPath, [MOD, "--sweep"]); let t = ""; s.stdout.on("data", (d) => (t += d)); s.on("exit", () => r(t)); });
   await sleep(500);
-  assert.match(out, /systemMessage/);
+  if (left) assert.match(out, /systemMessage/);
   assert.equal(alive(browser), false, "--sweep 뒤에도 브라우저가 살아 있음");
   assert.equal(existsSync(profile), false);
 });

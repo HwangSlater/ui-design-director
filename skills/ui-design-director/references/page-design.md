@@ -18,29 +18,29 @@ Options differ in **structure**, not styling: what leads, content order, how the
 
 The base the client picked (`design-selection.md` § 4) gives the look — type contrast, colour fields, photo placement, part shapes — and the starting layout. Where several field sites share a trait the base does not (or lack one it has), take theirs; everywhere else keep the base's section order and column split.
 
-1. Run `scripts/skeleton.mjs out.md --base <name> name=url …` on the base and the field sites, separately at `--width 390` and `--width 1280`. Its 「바탕과 다르게 할 곳」 lists only what two or more sites, more than half, do differently from the base (「옆으로 넘기는 띠: 바탕은 없음, 3/5곳은 있음」).
+1. Run `node ${CLAUDE_SKILL_DIR}/scripts/skeleton.mjs formats/뼈대-390.md --width 390 --base <name> <name>=<url> …` on the base and the field sites, and again with `--width 1280`. Its 「바탕과 다르게 할 곳」 (the 「바꿀 곳」) lists only what two or more sites, more than half, do differently from the base (「옆으로 넘기는 띠: 바탕은 없음, 3/5곳은 있음」).
 2. Take each listed change or leave it, and record both in `DESIGN.md` § 바탕에서 바꾼 곳 with the count. Everything else follows the base.
 3. Replace the base's text, photos, logo and illustrations with the client's own.
 4. Add content patterns the tool cannot see (hours, last drop-off and phone number in one block), and check the base answers each of the client's top customer questions (「출퇴근용으로 뭐 사요?」); a missing answer is a change, taken from the field sites.
 5. Options are variations within the base: what leads, which listed change is taken, how the main action is reached.
 6. Before showing, rerun with `--ours <option>`. 「바탕과 다름」, 「바탕의 짜임을 버림」, 「상자 위에 상자」 or 「칸 속 칸」 means redraw, or say in one line why.
-7. Compose each width from the base's own phone and desktop pages.
+7. Compose each width from the base's own phone and desktop pages (build-rules.md § Follow the base 5).
 
 One platform's pages (Naver Place, Instagram) count as one reference.
 
 ### Measure the reference pages
 
-1. Run `node scripts/extract_styles.mjs <url> <out.json> --width 390`, then at 1280, on the base's page doing the same job (one shortlisted site's if the base lacks it). `DESIGN.md` tokens (type scale, radius, shadow, button and input size, section spacing, photos against boxes) take the base's values; move one only where the skeleton tables show the field sites agree against it, citing them.
+1. Run `node ${CLAUDE_SKILL_DIR}/scripts/extract_styles.mjs <url> <out.json> --width 390`, then at 1280, on the base's page doing the same job (one shortlisted site's if the base lacks it). `DESIGN.md` tokens (type scale, radius, shadow, button and input size, section spacing, photos against boxes) take the base's values; move one only where the skeleton tables show the field sites agree against it, citing them.
 2. Take components (calendar, sheet, gallery, form, tabs) from a known design system or the reference's pattern, and name the source.
 3. Borrow a pattern whole: list its parts and check them off (a donation form lost its 「다른 금액」 field).
-4. Carry the `DESIGN.md` visual layers into every option.
+4. Carry the `DESIGN.md` visual layers into every option (build-rules.md § Follow the base 6).
 5. Note what the shortlisted sites do well in common (image size, white space, type hierarchy, density); every option keeps it. Follow the base's composition and rhythm closely; only a component that identifies one site (its mascot, a trademark widget) stays theirs.
 
 ### Checks for each option
 
-1. Approved tokens and a licence-checked sample photo in every slot (`comparison-board.md` § Sample photos); colour, type and photos identical across options.
+1. Approved tokens and a sample photo in every photo place (build-rules.md § Content and samples); colour, type and photos identical across options.
 2. Real or planned `SITE-PLAN.md` content at real length.
-3. Capture wide and phone with `scripts/capture.mjs`; show options in the `comparison-board.md` viewer.
+3. Capture wide and phone with `${CLAUDE_SKILL_DIR}/scripts/capture.mjs`; show options in the `comparison-board.md` viewer.
 4. One line per option: what it prioritises and what it gives up.
 5. At least one option changes the **first screen** itself (full-width photo, type only, price list first, one strong object); two options that both open text-left, photo-right are one option.
 6. Options differ on the first phone screen, or the name says where they start to differ (「2 — 사진 바로 밑에 객실」).
@@ -48,7 +48,7 @@ One platform's pages (Naver Place, Instagram) count as one reference.
 8. Work screens (date pickers, checkout, account) keep a photo band of what is booked or bought, the heading face and one signature element, or they read as a generic booking app.
 9. When the home leads with the same list as a section page, give the home its own first line (name and one sentence).
 10. When the page has sticky parts, check them with one one-screen capture at a scrolled position (`capture.mjs` job with `"scrollY"`), not a full-length capture.
-11. Times and prices in the body face with tabular figures; a monospace `14:00 ~ 19:00` read as generated.
+11. Times and prices in the body face with tabular figures.
 
 ### Parts from the base
 
@@ -59,14 +59,11 @@ Before the first layout, list the parts the page needs (name, today's status and
 A gate before the first layout is shown.
 
 1. **A face.** The name, colour and one motif come from the client (its sign, its trade's objects), set in the base's type and colour fields (a second accent only when the client picks it), icons in one style.
-2. **No repeated section formula.** Three sections in a row with the same make-up (「heading → list → small grey note」, 「label – value rows」) read as generated; change two, using the base's forms (§ Parts from the base).
-3. **No kit parts.** No left-border callouts, equal filled-and-outlined button pair as the main action, status dot before every state, same 6–8px radius on every box, tilted name tag, oversized corner on every photo, pills everywhere, or headline line in a second colour.
-4. **"Too boxy" means stacked boxes.** Remove tinted panels and boxes inside boxes. Do not round everything or copy another site's shapes (a café that copied Naver Place heard 「네이버랑 똑같다」).
-5. **The client's voice, shorter.** Keep computed, kind lines (「지금 맡기시면 내일(목) 저녁」) once each; drop the grey footnote under every block, which reads as 「모범답안」.
-6. **One photo grade.** Same crop logic, white balance and contrast; fewer, larger photos.
-7. **Not the generated formula.** No stock photo with a floating box, headline and two buttons; no half-and-half colour panel; no row of identical icon tiles or four icon cards over the photo edge; no symmetrical two-card split; no display face on every title (one or two levels); no thin generic line icons.
-8. **What reads as running.** The main job as a real input on the first screen (a search box, not a 「책 찾기」 button); the client's own rooms and goods in the photos; no borrowed chain-store hero.
-9. **Filled like a running organisation.** Keep what the base has and add what the field sites share — utility bar (hours, phone, messenger), quick links as plain text (not a row of identical icon tiles), dated news, an Instagram strip, a multi-column footer — labelled 「견본」 for the client. No features a small organisation would not have (a filter bar for 50 items).
+2. **Not the generated look.** Check every option against build-rules.md § What reads as generated. Three sections in a row with the same make-up (「heading → list → small grey note」) get two changed, using the base's forms (§ Parts from the base). "Too boxy" means stacked boxes: remove tinted panels and boxes inside boxes; do not round everything or copy another site's shapes.
+3. **The client's voice, shorter.** Keep computed, kind lines (「지금 맡기시면 내일(목) 저녁」) once each.
+4. **One photo grade.** Same crop logic, white balance and contrast; fewer, larger photos.
+5. **What reads as running.** The main job as a real input on the first screen (a search box, not a 「책 찾기」 button); the client's own rooms and goods in the photos; no borrowed chain-store hero.
+6. **Filled like a running organisation.** Keep what the base has and add what the field sites share — utility bar (hours, phone, messenger), quick links as plain text, dated news, an Instagram strip, a multi-column footer — listed in the 「견본」 line. No features a small organisation would not have (a filter bar for 50 items).
 
 ### Questions per surface
 
@@ -90,7 +87,7 @@ Outside production routes in one folder (default `mockups/`) with an `index.html
 ### Self-check before showing
 
 1. Sort every name, number and date as **given**, **derived** or **invented**; invented items a reader could take as real get 「견본」.
-2. Mark once per block at most, never on a photo or the first screen; write one line under it instead (「사진은 모두 견본이에요」).
+2. List sample items in the one 「견본」 line at the page foot (build-rules.md § Content and samples).
 3. Diff the mockup text against the chosen option and report every lost line.
 4. Run `ui-review.md` § Site check passes 1, 2, 2b and 5 on this page (fix every `FLOOR`; side-by-side for the first screen and densest page). Name and fix three places flatter, denser, more generic or less finished than the reference.
 5. Capture once, after the fixes, and send only those paths; on a later fix re-capture only the changed page and widths.

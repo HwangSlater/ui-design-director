@@ -201,8 +201,9 @@ def main(argv: list[str]) -> int:
     for name in ("dock.css", "dock.js", "board.css", "board.js"):
         shutil.copyfile(ASSETS / name, target.parent / name)
     print(f"wrote {target} ({len(candidates)} candidates)")
-    if spec.get("live") and any(c.get("blocked") for c in candidates):
-        print(f"막힌 후보가 있어요 → node scripts/live_proxy.mjs {target} {spec_path} 로 띄우고 찍힌 OPEN 주소를 주세요")
+    if spec.get("live") and not os.environ.get("UIDD_FROM_PROXY"):
+        # 보기 화면은 늘 live_proxy 로 연다 — 막힌 후보 우회와 「확정」 기록을 한 주소에서 한다
+        print(f"다음 → node {Path(__file__).resolve().parent.as_posix()}/live_proxy.mjs <spec.json> 이 찍는 OPEN 주소 하나를 의뢰인에게 주세요")
     return 0
 
 

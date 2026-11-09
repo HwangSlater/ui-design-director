@@ -5,12 +5,10 @@
 // 결과: <out.json>(원자료)과 같은 이름의 .md(요약표: 글자 단계, 단추·입력칸·카드 견본, 자주 쓴 여백·둥글기·그림자).
 
 import { writeFileSync } from "node:fs";
-import { launch } from "./browser.mjs";
+import { evaluate, goto, launch, openPage, sleep } from "./browser.mjs";
 
 const SETTLE_MS = 3000;
-const PHONE_MAX = 600;
 const TOP_N = 8;
-const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
 const [url, out, ...rest] = process.argv.slice(2);
 const width = Number(rest[rest.indexOf("--width") + 1]) || 390;
@@ -46,22 +44,20 @@ function tally(list, key) {
   return [...m.entries()].sort((a, b) => b[1] - a[1]).slice(0, TOP_N);
 }
 
-const { port, close } = await launch("styles-"); // 끄기·남은 브라우저 치우기는 browser.mjs 한 곳에서
-let list;
-for (let i = 0; i < 50 && !list; i++) { try { list = await (await fetch(`http://127.0.0.1:${port}/json/list`)).json(); } catch { await sleep(200); } }
-const ws = new WebSocket(list.find((t) => t.type === "page").webSocketDebuggerUrl);
-await new Promise((r) => ws.addEventListener("open", r, { once: true }));
-let id = 0; const wait = new Map();
-ws.addEventListener("message", (m) => { const d = JSON.parse(m.data); if (wait.has(d.id)) { wait.get(d.id)(d); wait.delete(d.id); } });
-const cdp = (method, params = {}) => new Promise((r) => { const n = ++id; wait.set(n, r); ws.send(JSON.stringify({ id: n, method, params })); });
-try {
-  await cdp("Page.enable");
-  await cdp("Emulation.setDeviceMetricsOverride", { width, height: width <= PHONE_MAX ? 844 : 900, deviceScaleFactor: 1, mobile: width <= PHONE_MAX });
-  await cdp("Page.navigate", { url });
-  await sleep(SETTLE_MS);
-  const r = await cdp("Runtime.evaluate", { expression: PROBE, returnByValue: true });
-  const data = r.result?.result?.value;
-  if (!data) throw new Error("페이지에서 값을 읽지 못했습니다(로그인·봇 막힘일 수 있음).");
+async function measure(port) {
+  const page = await openPage(port, { width });
+  try {
+    await goto(page.cdp, url);
+    await sleep(SETTLE_MS);
+    const data = await evaluate(page.cdp, PROBE);
+    if (!data) throw new Error("페이지에서 값을 읽지 못했습니다(로그인·봇 막힘일 수 있음).");
+    return data;
+  } finally {
+    await page.close();
+  }
+}
+
+function report(data) {
   writeFileSync(out, JSON.stringify({ url, width, ...data }, null, 1));
   const R = data.roles;
   const all = Object.values(R).flat();
@@ -80,6 +76,18 @@ try {
     `- 사진·영상 수: ${R.image.length} · 카드·상자 수: ${R.card.length} · 단추 수: ${R.button.length}`, ""].join("\n");
   writeFileSync(out.replace(/\.json$/i, "") + ".md", md);
   console.log(`wrote ${out} (+ .md)`);
-} finally {
-  ws.close(); await close();
 }
+
+async function main() {
+  const { port, close } = await launch("styles-"); // 끄기·남은 브라우저 치우기는 browser.mjs 한 곳에서
+  try {
+    report(await measure(port));
+  } finally {
+    await close();
+  }
+}
+
+main().catch((err) => {
+  console.error(`오류: ${err.message}`);
+  process.exit(1);
+});

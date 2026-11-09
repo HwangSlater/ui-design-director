@@ -17,6 +17,7 @@ import argparse
 import json
 import re
 import sys
+from functools import lru_cache
 from pathlib import Path
 
 ASSETS = Path(__file__).resolve().parent.parent / "assets" / "fonts"
@@ -35,8 +36,10 @@ def norm(s: str) -> str:
     return re.sub(r"[\s_\-'\"]+", "", s).lower()
 
 
-def load_ai() -> list[dict]:
-    return json.loads((ASSETS / "ai-fonts.json").read_text(encoding="utf-8"))["fonts"]
+@lru_cache(maxsize=1)
+def load_ai() -> tuple[dict, ...]:
+    """AI 글꼴 목록 — 훅·점검이 파일마다 부르므로 한 번만 읽는다(knowledge.rules() 와 같은 방식)."""
+    return tuple(json.loads((ASSETS / "ai-fonts.json").read_text(encoding="utf-8"))["fonts"])
 
 
 def ai_keys(allowed: set[str] = frozenset()) -> dict[str, str]:
@@ -51,13 +54,29 @@ def ai_keys(allowed: set[str] = frozenset()) -> dict[str, str]:
     return keys
 
 
+FONT_SHORTHAND_SIZE = re.compile(r"^(?:[\d.]+\S*\s+)+")  # font 단축 속성 앞의 굵기·크기·행간
+
+
+def family_names(value: str, shorthand: bool = False) -> list[str]:
+    """글꼴 목록 값 하나(「'Inter', sans-serif」)를 이름들로. check_site.py 도 이 함수를 쓴다.
+    shorthand 면 「600 16px/1.4 Inter」 같은 font 단축 속성의 앞 숫자를 걷어 낸다."""
+    out = []
+    for part in re.split(r"[,|]", value):
+        name = part.split(":")[0].strip()
+        if shorthand:
+            name = FONT_SHORTHAND_SIZE.sub("", name)
+        name = name.strip("'\"")
+        if name and not name.startswith("var("):
+            out.append(name)
+    return out
+
+
 def families(text: str) -> list[str]:
     out = []
     for rx in DECLS:
         for m in rx.finditer(text):
-            val = m.group(1).replace("+", " ").replace("%20", " ")
-            out += [v.split(":")[0].strip().strip("'\"") for v in re.split(r"[,|]", val)]
-    return [f for f in out if f and not f.startswith("var(")]
+            out += family_names(m.group(1).replace("+", " ").replace("%20", " "))
+    return out
 
 
 def ai_fonts_in(text: str, allowed: set[str] = frozenset()) -> list[str]:

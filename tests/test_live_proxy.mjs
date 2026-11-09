@@ -4,7 +4,7 @@ import { test, before, after } from "node:test";
 import assert from "node:assert/strict";
 import { createServer } from "node:http";
 import { spawn } from "node:child_process";
-import { mkdtempSync, writeFileSync } from "node:fs";
+import { mkdtempSync, writeFileSync, readFileSync, existsSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -17,11 +17,14 @@ const LAZY_PAGE = `<!doctype html><html><head><style>@font-face{font-family:x;sr
 <img data-src="/a.jpg" src="data:image/gif;base64,R0lGODlhAQABAAAAACw=" loading="lazy"><img data-srcset="/b.jpg 1x"><div data-bg="/c.jpg">배경</div>
 <noscript><img src="/n.jpg"></noscript><script>1</script></body></html>`;
 const APP_PAGE = `<!doctype html><html><head></head><body><div id="root"></div><script src="/app.js"></script></body></html>`;
-let site, proc, base, origin, lastHeaders = {};
+let site, proc, base, origin, open, dir, out = "", lastHeaders = {};
 
 before(async () => {
   site = createServer((req, res) => {
     lastHeaders = req.headers;
+    if (req.url === "/hop") { res.writeHead(302, { location: "/lazy" }); res.end(); return; }
+    if (req.url === "/away") { res.writeHead(302, { location: `http://localhost:${site.address().port}/` }); res.end(); return; }
+    if (req.url === "/loop") { res.writeHead(301, { location: "/loop" }); res.end(); return; }
     if (req.url === "/lazy") { res.writeHead(200, { "content-type": "text/html" }); res.end(LAZY_PAGE); return; }
     if (req.url === "/check") { res.writeHead(200, { "content-type": "text/html" }); res.end(`<html><body><h1>Checking your browser...</h1><p>${LONG}</p><script>1</script></body></html>`); return; }
     if (req.url === "/app") { res.writeHead(200, { "content-type": "text/html" }); res.end(APP_PAGE); return; }
@@ -32,12 +35,13 @@ before(async () => {
   });
   await new Promise((r) => site.listen(0, "127.0.0.1", r));
   origin = `http://127.0.0.1:${site.address().port}`;
-  const dir = mkdtempSync(join(tmpdir(), "live-proxy-"));
+  dir = mkdtempSync(join(tmpdir(), "live-proxy-"));
   writeFileSync(join(dir, "board.html"), '<script type="application/json" id="board-data">{}</script><script src="board.js"></script>'); // 공용 틀 표시가 있어야 연다
   writeFileSync(join(dir, "spec.json"), JSON.stringify({ candidates: [{ n: "1", name: "가짜", pages: { 홈: `${origin}/` } }] }));
   proc = spawn(process.execPath, [PROXY, join(dir, "board.html"), join(dir, "spec.json")]);
-  const line = await new Promise((r) => proc.stdout.on("data", (d) => { const m = String(d).match(/OPEN (\S+)/); if (m) r(m[1]); }));
-  base = decodeURIComponent(line.split("proxy=")[1]);
+  const line = await new Promise((r) => proc.stdout.on("data", (d) => { out += d; const m = String(d).match(/OPEN (\S+)/); if (m) r(m[1]); }));
+  open = new URL(line);
+  base = open.searchParams.get("proxy");
 });
 after(() => { proc.kill(); site.close(); });
 
@@ -111,4 +115,50 @@ test("공용 틀이 아닌 보기 화면은 열지 않는다", async () => {
   const p = spawn(process.execPath, [PROXY, join(dir, "own.html"), join(dir, "spec.json")]);
   const code = await new Promise((r) => p.on("exit", r));
   assert.equal(code, 3);
+});
+
+test("주소 하나로 확정까지: 같은 주소의 /choice 가 decision.json 을 쓰고 DECISION 을 찍는다", async () => {
+  const m = new URLSearchParams(open.hash.slice(1)).get("wait").match(/^(\d+)-([0-9a-f]{32})$/);
+  assert.ok(m, "OPEN 주소에 wait=<포트>-<열쇠> 가 없음");
+  assert.equal(m[1], open.port, "확정 받는 곳이 보기 화면과 다른 포트");
+  const post = (body) => fetch(`${open.origin}/choice`, { method: "POST", headers: { "content-type": "text/plain" }, body: JSON.stringify(body) });
+  assert.equal((await post({ token: "0".repeat(32), label: "1 가짜" })).status, 403);
+  assert.equal((await post({ token: m[2], label: "x".repeat(9000) })).status, 413);
+  assert.equal((await post({ token: m[2], step: "바탕", label: "1 가짜", choice: { candidate: "1" } })).status, 200);
+  const d = JSON.parse(readFileSync(join(dir, "decision.json"), "utf8"));
+  assert.equal(d.label, "1 가짜");
+  assert.equal(d.token, undefined, "열쇠가 기록에 남음");
+  await new Promise((r) => setTimeout(r, 100));
+  assert.match(out, /DECISION 1 가짜/);
+  assert.equal((await fetch(open.href)).status, 200, "확정 뒤에도 계속 띄워야 함");
+});
+
+test("넘겨주기: 같은 사이트는 따라가고, 후보가 아닌 곳·끝없는 넘기기는 막는다", async () => {
+  const hop = await via(`${origin}/hop`);
+  assert.equal(hop.status, 200);
+  assert.ok((await hop.text()).includes(`<base href="${origin}/lazy">`), "넘겨받은 마지막 주소가 base 가 아님");
+  assert.equal((await via(`${origin}/away`)).status, 403);
+  assert.equal((await via(`${origin}/loop`)).status, 403);
+});
+
+test("잘못된 퍼센트 인코딩은 400, 서버는 계속 돈다", async () => {
+  assert.equal((await fetch(`${open.origin}/%E0%A4%A`)).status, 400);
+  assert.equal((await fetch(`${base}%E0%A4%A`)).status, 400);
+  assert.equal(proc.exitCode, null, "프록시가 꺼짐");
+  assert.equal((await via(`${origin}/`)).status, 200);
+});
+
+test("--decision 으로 확정 파일 자리를 바꾼다", async () => {
+  const d2 = mkdtempSync(join(tmpdir(), "live-proxy-dec-"));
+  writeFileSync(join(d2, "board.html"), '<script type="application/json" id="board-data">{}</script><script src="board.js"></script>');
+  writeFileSync(join(d2, "spec.json"), JSON.stringify({ candidates: [{ n: "1", name: "가짜", pages: { 홈: `${origin}/` } }] }));
+  const target = join(d2, "고름.json");
+  const p = spawn(process.execPath, [PROXY, join(d2, "board.html"), join(d2, "spec.json"), "--decision", target]);
+  try {
+    const u = new URL(await new Promise((r) => p.stdout.on("data", (d) => { const m = String(d).match(/OPEN (\S+)/); if (m) r(m[1]); })));
+    const token = new URLSearchParams(u.hash.slice(1)).get("wait").split("-")[1];
+    const r = await fetch(`${u.origin}/choice`, { method: "POST", body: JSON.stringify({ token, label: "1 가짜" }) });
+    assert.equal(r.status, 200);
+    assert.ok(existsSync(target) && !existsSync(join(d2, "decision.json")));
+  } finally { p.kill(); }
 });

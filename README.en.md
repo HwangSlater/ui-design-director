@@ -103,35 +103,14 @@ Some of what changed:
 | One colour (white + a single accent) | "One accent besides black" | Carry over the base's 4–6 tones and how they relate |
 | Dashed 「… 자리」 empty boxes | "Leave missing content as labelled slots" | Short sample text, flagged in one line at the foot |
 | The same fonts every time | Font candidates offered from memory; a font in the palette template's example | Pick only from a table of 835 fonts (free fonts measured on the 186 most-visited Korean sites, plus company and public-body fonts on 눈누 that allow web embedding); 17 AI-default faces blocked by the hook |
+| Emoji icons, wide tracking, glows | Not in the list | Signs from unslop (CC BY 4.0) added to the rules; `check_site.py` flags them |
 | Browsers piling up, machine slowing | Edge's main process survived each tool | Tools close the whole process tree; the hook sweeps leftovers after every turn |
 
 Each roleplay — what was checked and what changed — is logged in [docs/역할극-기록.md](docs/역할극-기록.md) (Korean). Tokens are measured too, aiming for one home page within an ordinary plan's limits.
 
 ## Installation
 
-### Codex: install from a GitHub URL
-
-After publishing this repository to GitHub, ask Codex:
-
-```text
-Use $skill-installer to install this skill:
-https://github.com/HwangSlater/ui-design-director/tree/main/skills/ui-design-director
-```
-
-The user does not need to clone the repository or run a separate shell command. Public repositories are downloaded from the URL; private repositories can use the user's existing Git credentials or token. `$ui-design-director` becomes available on the next turn after installation.
-
-For a copied installation, the complete repository should appear as:
-
-```text
-repository/skills/ui-design-director/
-├── SKILL.md
-├── agents/
-└── references/
-```
-
-Do not overwrite an existing directory with the same name without inspecting it first. If the skill does not appear after installation, restart Codex or open a new session.
-
-In Codex, the stage-table line at the top of SKILL.md (`!`python …stage.py``) shows as plain text; run that command in the project folder to get the same table. `${CLAUDE_SKILL_DIR}` is the skill folder (`~/.codex/skills/ui-design-director`).
+Requirements: Python 3.10+ (`python` or `python3`, with Pillow for the capture check), Node 18+, Edge or Chrome.
 
 ### Claude Code: install as a plugin (recommended)
 
@@ -142,112 +121,75 @@ In Codex, the stage-table line at the top of SKILL.md (`!`python …stage.py``) 
 
 The plugin carries both skills (`ui-design-director`, `ui-wording`) and a hook. The hook acts only inside a skill project (a folder with `concept-brief.md`, `decisions.json` or `formats/board-spec.json`) and refuses:
 
-- a viewer HTML in `formats/` that is not the shared template (it points to `make_live_board.py`)
+- a viewer in `formats/` that is not the shared template (it points to `make_live_board.py`)
 - a page in `palette/` not built on the palette-switcher template
 - base material, palette, `DESIGN.md`, `layouts/` or `mockups/` written before the earlier stages are decided
 - a palette page, mockup or `DESIGN.md` that uses a face models default to (`assets/fonts/ai-fonts.json`) — it points to `fonts.py pick`; a font the client already uses is allowed with 「의뢰인 글꼴: name」 in `concept-brief.md`
 
-At the end of every turn, and once more when the session closes, it also stops headless browsers and temp profiles left by a measuring tool that was killed mid-run, with a one-line notice when it found any (without it, one day of roleplays left 75 browsers and 51 GB of profiles).
+At the end of every turn, and once more when the session closes, it also clears headless browsers and temp profiles left by the measuring tools (without it, one day of roleplays left 75 browsers and 51 GB of profiles).
 
-The hook is not in SKILL.md because claude.ai accepts only a fixed set of frontmatter keys and rejects an upload containing `hooks`. SKILL.md stays portable; enforcement lives in the Claude Code plugin. If you linked the skill folder as below, remove that link when you install the plugin, or the skill is listed twice.
+Why the hook is not in SKILL.md: claude.ai accepts only a fixed set of frontmatter keys and rejects an upload containing `hooks`. If you linked the skill folders as below, remove those links when you install the plugin, or each skill is listed twice.
 
-### Claude Code: link it into the personal skills directory (no hook)
-
-Place the `skills/ui-design-director` directory under `~/.claude/skills/`. The `SKILL.md` frontmatter is already compatible, so no file needs editing, and the accompanying `agents/openai.yaml` is harmless.
-
-If you intend to keep editing the skill in this repository, link rather than copy so repository edits apply to the installation immediately.
+### Claude Code: link into the personal skills folder (no hook)
 
 ```bash
 # macOS and Linux
 ln -s "$PWD/skills/ui-design-director" ~/.claude/skills/ui-design-director
+ln -s "$PWD/skills/ui-wording" ~/.claude/skills/ui-wording
 ```
 
 ```powershell
 # Windows (a junction works without administrator rights)
-New-Item -ItemType Junction `
-  -Path  "$env:USERPROFILE\.claude\skills\ui-design-director" `
-  -Target "$PWD\skills\ui-design-director"
+New-Item -ItemType Junction -Path "$env:USERPROFILE\.claude\skills\ui-design-director" -Target "$PWD\skills\ui-design-director"
+New-Item -ItemType Junction -Path "$env:USERPROFILE\.claude\skills\ui-wording" -Target "$PWD\skills\ui-wording"
 ```
 
-The link is picked up within the same session; `$ui-design-director` or `/ui-design-director` works from the next turn. Copying also works, but then every repository edit has to be copied again.
+Link rather than copy, so repository edits reach the installation at once.
 
-The installation paths for the two environments are:
+### Codex
+
+Ask in a Codex chat:
 
 ```text
-~/.codex/skills/ui-design-director
-~/.claude/skills/ui-design-director
+Use $skill-installer to install this skill:
+https://github.com/HwangSlater/ui-design-director/tree/main/skills/ui-design-director
 ```
+
+For a copied installation, place the whole folder at `~/.codex/skills/ui-design-director`:
+
+```text
+ui-design-director/
+├── SKILL.md
+├── agents/
+├── assets/
+├── references/
+└── scripts/
+```
+
+Do not overwrite an existing folder of the same name without checking it first. In Codex the stage-table line at the top of SKILL.md (`!`python …stage.py``) shows as plain text; run that command in the project folder to get the same table. `${CLAUDE_SKILL_DIR}` is the skill folder.
 
 ## Usage
 
-For the simplest guided start:
+One line is enough, as in [Quick start](#quick-start). You can also call a single stage:
 
 ```text
-Use $ui-design-director. I want to choose a design.
-Guide me one step at a time even if I do not know design terminology.
-```
-
-The skill begins with the product and its users, then leads the conversation through format references, color palettes, coded previews, and final approval. It asks one major question at a time and responds to “I don't know” with contrasting examples or a provisional recommendation.
-
-To establish a concept from scratch:
-
-```text
-Use $ui-design-director to understand this product and its users.
-Research suitable live templates and 3–4 color palettes,
-then let me choose the visual format and palette independently.
-```
-
-To compare coded previews:
-
-```text
-Use $ui-design-director to create 2–3 small UI previews from my finalist
-format and palette combinations. Use identical content for each candidate,
-and do not apply anything to production before I approve it.
-```
-
-To create the design contract:
-
-```text
-Use $ui-design-director to turn my approved format and palette into
-project-root DESIGN.md. Separate observed, inferred, and adapted rules.
-```
-
-To design the whole site:
-
-```text
-Use $ui-design-director to list the pages and main flows this site needs,
-based on DESIGN.md. Once I approve, show me layout options per page type.
-```
-
-To move approved mockups into code:
-
-```text
-Use $ui-design-director to build the approved mockups. Show me one
-representative page first, then extend to the rest once I confirm.
-```
-
-To review an existing implementation:
-
-```text
-Use $ui-design-director to review the rendered UI against DESIGN.md.
-Do not modify files; report findings with severity and evidence.
+Use $ui-design-director to turn my approved base and palette into project-root DESIGN.md.
+Use $ui-design-director to list the pages and flows from DESIGN.md, then show mockups per page once I approve.
+Use $ui-design-director to build the approved mockups. Show one representative page first.
+Use $ui-design-director to review the rendered UI against DESIGN.md. Report only; do not modify files.
 ```
 
 ## Selection and approval rules
 
-- Format, palette, and typography remain identifiable decisions.
-- Selecting a format does not silently approve its default colors.
-- Original 3–4 color swatches remain distinct from accessible semantic UI tokens.
-- For commercially operated products, licence precedes taste. A candidate that forbids or charges for commercial use is a disqualification, not a footnote.
-- Delegated choices are recorded as delegated, with the selection rationale.
-- `DESIGN.md` is approved only after format, palette, high-impact adaptations, and requested preview feedback are resolved.
-- Coded previews are comparison artifacts, not production implementation or an approved design system.
-- “Design the site” authorizes mockups only. Production code is written only on request and for pages whose mockups are approved.
-- Invented testimonials, customer logos, or figures are never presented as real; those parts are left out, and other missing copy becomes short sample text flagged in one line at the page foot.
+- Base, palette and fonts are chosen and confirmed separately. Picking a base does not decide its colours.
+- For commercial products, licence comes before taste. A candidate that forbids or charges for commercial use is out.
+- Delegated choices are recorded as delegated, with the reason.
+- Mockups are for comparison. "Design the site" covers mockups only; production code is written only on request and for pages whose mockups are approved.
+- No invented testimonials, customer logos or figures. Missing copy becomes short sample text, flagged in one line at the page foot.
 
 ## Companion skills
 
-The open-source skills and tools below assist specific stages only when installed or when the user approves the download. This skill keeps every decision and the `DESIGN.md`/`SITE-PLAN.md` files, and does not copy their text. Rules live in `references/companion-skills.md`.
+The open-source skills and tools below assist a stage only when installed or when the user approves the download. This skill keeps every decision and the `DESIGN.md`/`SITE-PLAN.md` files, and does not copy their text (`references/companion-skills.md`).
 
 | Stage | Skill or tool | Licence | Part used |
 |---|---|---|---|
@@ -261,115 +203,39 @@ The open-source skills and tools below assist specific stages only when installe
 
 ```text
 .
-├── README.md
-├── README.en.md
-├── scripts/
-│   └── validate_skill.py
-└── skills/
-    └── ui-design-director/
-        ├── SKILL.md
-        ├── agents/
-        │   └── openai.yaml
-        ├── assets/
-        │   ├── dock.css · dock.js
-        │   ├── board.css · board.js
-        │   ├── palette-switcher.css · palette-switcher.js
-        │   └── fonts/  fonts.json (font table) · ai-fonts.json (AI-default faces)
-        ├── scripts/
-        │   ├── check_site.py
-        │   ├── anchor_check.py
-        │   ├── page_rules.py
-        │   ├── block_colours.py
-        │   ├── side_by_side.py
-        │   ├── make_live_board.py
-        │   ├── check_shots.py
-        │   ├── blind_sheet.py
-        │   ├── compose_metrics.mjs
-        │   ├── extract_styles.mjs
-        │   ├── capture.mjs
-        │   ├── make_board.py
-        │   └── wait_choice.mjs
-        └── references/
-            ├── design-selection.md
-            ├── guided-conversation.md
-            ├── color-selection.md
-            ├── concept-preview.md
-            ├── reference-extraction.md
-            ├── design-md-format.md
-            ├── site-plan.md
-            ├── page-design.md
-            ├── site-build.md
-            ├── companion-skills.md
-            ├── comparison-board.md
-            ├── build-rules.md
-            ├── fonts.md
-            └── ui-review.md
+├── skills/           ui-design-director (main skill), ui-wording (screen copy review)
+├── .claude-plugin/   Claude Code plugin and marketplace metadata
+├── hooks/            plugin hook (guard.py, hooks.json)
+├── scripts/          repository checks (validate_skill.py, check_all.py), roleplay token count, font research
+├── tests/            tool tests (pytest, node --test)
+├── evals/            roleplay test briefs
+└── docs/             roleplay log, README images
 ```
 
-- `SKILL.md`: mode routing, approval gates, and shared constraints
-- `validate_skill.py`: dependency-free structure and documentation checks
-- `guided-conversation.md`: step-by-step conversational guidance
-- `design-selection.md`: real-site motifs, template research and overall format selection
-- `color-selection.md`: palette research and accessibility review
-- `concept-preview.md`: comparable coded UI previews
-- `reference-extraction.md`: extracting and adapting reference rules
-- `design-md-format.md`: the `DESIGN.md` contract and feedback protocol
-- `site-plan.md`: page inventory, flows, and `SITE-PLAN.md`
-- `page-design.md`: layout options and full-fidelity mockups per page type
-- `site-build.md`: order and standards for moving approved mockups into code
-- `companion-skills.md`: rules for using other open-source design skills as stage helpers
-- `comparison-board.md`: how candidates are shown (capture, full-screen viewer, palette switcher)
-- `capture.mjs`: dependency-free real-device-width full-page capture via Edge/Chrome, with pre-capture steps and resume
-- `make_board.py`: builds the candidate viewer from captures and writes capture job lists
-- `wait_choice.mjs`: waits for the viewers' confirm button and hands the decision over as a file (loopback only, one-time key); without it the button copies the decision text to paste into chat
-- `ui-review.md`: rendered consistency and accessibility review, plus the whole-site check
-- `check_site.py`: static HTML/CSS check with no dependencies (`python scripts/check_site.py <dir>`)
-- `check_shots.py`: checks captures before they are sent (blank or one-colour first screens: spinners, entrance pages, black intros)
-- `blind_sheet.py`: shuffles our screen with running sites, logos greyed, and writes the prompt asking a fresh agent which one an AI made
-- `compose_metrics.mjs`: measures the desktop first screen's composition (photo, colour-panel and empty shares, largest type, strong block colours, text span) against several running sites and marks what falls short
-- `extract_styles.mjs`: pulls the type sizes, radii, shadows, spacing and photo/box counts a reference actually uses
-- `make_live_board.py`: a board that loads candidate sites live instead of capturing them, marking sites that refuse framing
-- `side_by_side.py`: our page beside the reference at the same width, with a visual-layer checklist
-- `fonts.py`: font candidates (`pick --style 명조`) and the AI-font check (`check`) over `assets/fonts/fonts.json`, with each font's conditions and licence source; rebuild the data with `scripts/font-research/`
-- `stage.py`: current stage, whether earlier stages are decided, and the exact next command (runs when the skill opens)
-- `browser.mjs`: shared browser launch and shutdown for the measuring tools; closes Edge's whole process tree, and `--sweep` clears browsers left by a killed tool
-- `build-rules.md`: rules for building a page, read by the main conversation and mockup subagents
-- `fonts.md`: font candidates from evidence only — measure the base's type, `fonts.py pick`, conditions, AI-default faces
+Every tool inside the skill is listed in one line in [skills/ui-design-director/TOOLS.md](skills/ui-design-director/TOOLS.md) (Korean). The model reads `SKILL.md` first and then only the `references/` files the current stage needs. 700+ design rules gathered from free lessons by practising designers, research groups and design-system teams are pulled per part with `knowledge.py` (sources in `references/design-knowledge.md`). What tends to be missed is caught by a tool rather than by more text.
 
-## Context footprint
+## Testing
 
-The complete skill instructions are approximately 53KB, but they are not loaded all at once. The agent reads the base `SKILL.md` and only the references needed for the active mode.
-
-| Mode | Approximate load | Assessment |
-|---|---:|---|
-| Base entry point | 9.6KB | Light to moderate |
-| Full guided selection | 24.0KB | Moderate |
-| Concept and color selection | 19.0KB | Moderate |
-| Coded preview | 12.8KB | Light to moderate |
-| DESIGN.md extraction | 18.5KB | Moderate |
-| Site plan | 14.2KB | Light to moderate |
-| Page mockups | 18.4KB | Moderate |
-| Build | 17.1KB | Moderate |
-| UI review | 13.5KB | Light to moderate |
-
-Progressive disclosure keeps the skill from consuming unnecessary project context.
-
-## Development and validation
-
-Check the skill name, frontmatter, required files, Codex metadata, unfinished markers, and Markdown links with:
+Everything at once (structure and link checks, pytest, node tests):
 
 ```bash
-python3 scripts/validate_skill.py
+python scripts/check_all.py
 ```
 
-In development environments that include the official `skill-creator` validator, validate the skill directory directly with:
+One at a time:
 
 ```bash
-python3 /path/to/skill-creator/scripts/quick_validate.py skills/ui-design-director
+python scripts/validate_skill.py   # skill names, frontmatter, required files, plugin config, doc links
+python -m pytest -q tests          # Python tool tests
+node --test "tests/*.mjs"          # browser and proxy tool tests
 ```
 
-These commands catch structural issues; behavioral testing should still cover the complete conversational flow: template research, palette selection, coded preview, and `DESIGN.md` generation.
+The tests replay cases where a tool misfired or missed something in a real roleplay. Why the skill changed (roleplay results, tokens) is in [docs/역할극-기록.md](docs/역할극-기록.md); per-stage tokens: `python -X utf8 scripts/roleplay_tokens.py <session ID> <phase file>`.
 
 ## Wording review — `/ui-wording`
 
-The second skill in this repository. It aligns screen copy with the words similar services already use and unifies it across every page (cart vs basket, mixed politeness levels, "Book" vs "Book now"). It extracts all visible text (`extract_ui_text.py`), finds the inconsistencies (`term_check.py`), and applies an approved term table in one pass. Install by linking `skills/ui-wording` to `~/.claude/skills/ui-wording`.
+The second skill in this repository. It aligns screen copy with the words similar services already use and unifies it across every page (cart vs basket, mixed politeness levels, "Book" vs "Book now"). It extracts all visible text (`extract_ui_text.py`), finds the inconsistencies (`term_check.py`), and applies an approved term table in one pass. It ships in the plugin; to use it alone, link `skills/ui-wording` as above.
+
+## Licence
+
+This repository is [MIT](LICENSE). The generated-look items adapted from unslop (Damir Sokolovsky) are CC BY 4.0, credited in `references/build-rules.md` and `scripts/check_site.py`.

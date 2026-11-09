@@ -1,13 +1,16 @@
 """다른 페이지 안(iframe)에 띄울 수 있는 사이트인지 응답 머리로 본다 — 보기 화면이 바로 띄울지, 우회로 띄울지 정한다."""
 from __future__ import annotations
 
+import json
 import ssl
 import urllib.error
 import urllib.parse
 import urllib.request
+from pathlib import Path
 
 TIMEOUT_S = 15
-UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36"  # 봇 이름으로 가면 네이버 지도가 막아 「열리지 않아요」로 잘못 나왔다
+# 봇 이름으로 가면 네이버 지도가 막아 「열리지 않아요」로 잘못 나왔다 — 측정 도구(browser.mjs)와 같은 파일의 컴퓨터 브라우저 이름
+UA = json.loads((Path(__file__).resolve().parent.parent / "assets" / "browser.json").read_text(encoding="utf-8"))["desktopUA"]
 
 
 def frame_policy(url: str) -> str:

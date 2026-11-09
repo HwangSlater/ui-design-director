@@ -1,6 +1,6 @@
 # What a mockup must show
 
-Layout and gates: [page-design.md](page-design.md). Owner screens: [owner-screens.md](owner-screens.md).
+Layout and gates: [page-design.md](page-design.md). Owner screens: [owner-screens.md](owner-screens.md). Finding sample photos: [sample-photos.md](sample-photos.md). Sample text, the 「견본」 line and empty boxes: [build-rules.md](build-rules.md) § Content and samples.
 
 ## Data and computed values
 
@@ -24,32 +24,32 @@ Layout and gates: [page-design.md](page-design.md). Owner screens: [owner-screen
 ## Facts and wording
 
 1. Only facts the user gave. Anything filled in (directions, walking times, days, policies, prices, staff names, FAQ answers, durations like 「보통 2주쯤」) carries 「확인 필요」 and is listed at handover; plausible guesses read as facts. When the client supplies the fact, replace every tag the same day.
-2. Never write the client's rules or product descriptions (how a tea tastes). Where the client's words are still missing (an intro, a price, an address), write short neutral sample text of the right length and list it in one 「견본」 line at the page foot. Never show dashed 「… 자리」 boxes on the page.
+2. Never write the client's rules or product descriptions (how a tea tastes). Missing words get sample text by build-rules.md § Content and samples.
 3. No role for a real name the user did not state; counts with units (「이준석 2골」).
 4. Each fact and each heading once per screen (not 「아이 52마리」 then 「아이들」).
 5. Tab titles from the page heading (「보리 · 들꽃쉼터」), never the option label.
 6. Before the second page type, run `/ui-wording` and record the term table in `DESIGN.md`.
 7. An empty optional block disappears; 「후기가 아직 없어요」 reads as 「후기 없는 집」.
-8. Reviews carry their month and a link to all reviews on their platform; drop efficacy claims (「태열 다 나았어요」).
+8. Reviews (only real ones the client supplied) carry their month and a link to all reviews on their platform; drop efficacy claims (「태열 다 나았어요」).
 9. Food: major allergens on every item, present or absent (「호두 들어가요 · 우유·계란 없어요」), butter counted as milk (「우유(버터 포함)」); one shared by every item goes on one top line.
 10. Korean labels never break mid-word (「장바구 니」): `white-space: nowrap` on nav and short buttons; drop the least-used phone header item instead.
 11. A case or portfolio page is built only from the client's real records (invented records are fake reviews): a bold one-line change each (「누런 타일 → 밝은 회색 큰 타일」), a customer line only where one exists, only tables the client filled completely.
 
 ## Photos
 
-1. Supplied imagery, else licence-checked samples of the right subject and ratio, credited and labelled, hatched offline. No generated imagery; never present samples as the product.
+1. Supplied imagery, else licence-checked samples of the right subject and ratio ([sample-photos.md](sample-photos.md)), credited and listed in the 「견본」 line; never present samples as the product.
 2. Samples show only what the business offers; when none fits, use one true to the offer and ask the client for that photo.
 3. Crop people and animals on the face with a per-photo focus point (`object-position`, one tap in the upload form), checked at every ratio.
-4. One subject once per screen; one sample photo in one place across the main flow; an item's gallery shows only that item (labelled slots for the rest).
-5. Try every slot with a dim phone photo too.
-6. Small organisations: labelled slots for a staff photo and 「이번 달」 news when the references show them.
+4. One subject once per screen; one sample photo in one place across the main flow; an item's gallery shows only that item (fewer photos, never empty slots).
+5. Try every photo place with a dim phone photo too.
+6. Small organisations: a staff photo and 「이번 달」 news when the references show them — a sample, or drop the part until the client sends one.
 7. Stand-ins count only if they could be the client's own (building type, region, same spot and angle for before/after, no near-duplicates); otherwise park the page as 「사장님 사진 기다림」.
 8. With product photos, lists use the card grid the reference sites share, at their thumbnail size (two columns on phone, three or four at 1280); a 64px thumbnail row read as an order form. Pick columns so each last row fills; keep the grid even when one item is featured. Until photos arrive, say the lists will become cards.
 9. Before/after: 「고치기 전/고친 뒤」 as a corner tag; don't repeat the featured case as the first card; once photos arrive, list only items that have them.
 
 ## States and forms
 
-1. Phone (≈390) and desktop (≈1280+) for every page; ≈768 only for work surfaces or when the layout changes there. Desktop takes the reference's desktop composition for that page; a phone column centred in empty space is a finding — use the width the reference uses (a side column, a live preview, help next to the fields).
+1. Phone (≈390) and desktop (≈1280+) for every page; ≈768 only for work surfaces or when the layout changes there. Desktop composition: build-rules.md § Follow the base 5.
 2. Work surfaces: each `SITE-PLAN.md` state as a frame (empty, loading, error, no permission, dense); controls in default, hover, focus, active, disabled, invalid.
 3. Submit with gaps: a banner naming what is missing with links, a jump to the first, a message per field. Over-length text stays with 「2자 넘었어요」. A slot taken meanwhile says so and keeps the rest. A failed payment says no money left, in words fitting every method.
 4. When the customer must know the seller saw the order, show paid → sent → confirmed; the last line changes only on staff confirm.
@@ -58,10 +58,10 @@ Layout and gates: [page-design.md](page-design.md). Owner screens: [owner-screen
 7. Forms taking name, phone or address carry a consent line with purpose and retention (「개인정보 수집·이용에 동의해요 — 견적 상담에만 쓰고 3개월 뒤 지워요」, period marked 견본 until the client sets it).
 8. Before a quote, booking or order form, ask the client which answers change price or date (rooms, size people know with 「모르면 비워 두세요」, move-in date, living there during work) and ask those.
 9. Personal data only after the identity check the page mentions.
-10. For audiences that phone first, large phone and messenger buttons at every page foot, or a labelled slot.
+10. For audiences that phone first, large phone and messenger buttons at every page foot.
 11. For older audiences, no controls hidden in a sideways scroll; wrap chips or show part of the next.
 12. Timed interactions (the undo toast) also as their own page, so captures show them.
-13. Only motion approved in `DESIGN.md`, checked against emilkowalski/skills when installed (`companion-skills.md`).
+13. Motion: build-rules.md § Follow the base 3; check it against emilkowalski/skills when installed (`companion-skills.md`).
 
 ## Selection and status (every screen, customer or owner)
 

@@ -15,10 +15,10 @@ Read this file before building or changing any layout option or mockup page. The
 The answer key is the base's own page; reproduce its design, then make it ours.
 1. Work from the base material in `formats/`: the snapshot (`snapshot/…/index.html`, read it for exact structure, fonts and colours), the 2× section captures (open only the section you are building), `바탕-구성.md` (sections top to bottom with height share, photo share, type sizes, columns, job) and `바탕-움직임.md` (motion values).
 2. Build section by section from `바탕-구성.md`: same order, proportions, density, photo share, type scale, spacing, radius and shadow. Do not invent a structure or rebuild from generic rules. A page built from written rules had 3 photos and 11 shadowed boxes where its reference had 56 photos, 6 boxes and no shadows.
-3. Reproduce the motion in `바탕-움직임.md` with those durations and curves — hover changes, sticky header, reveal on scroll, auto-advancing slides. Add no motion the base does not have.
+3. **Motion only from the base.** Reproduce the motion in `바탕-움직임.md` with those durations and curves — hover changes, sticky header, reveal on scroll, auto-advancing slides. Add no motion the base does not have.
 4. Change only what several field sites do differently (「바꿀 곳」 n/N in `DESIGN.md`). A part the base lacks comes from the field sites (n/N) or the client's own objects (menu board, sign, ticket), recorded in `DESIGN.md` § 부품 출처.
-5. Desktop takes the base's desktop composition; a phone column centred in empty space is a finding.
-6. Keep the base's finish, not only its structure: its visual layers (identity, item faces, icons, colour blocks, data marks, imagery, depth, wide-screen columns) are kept, replaced or knowingly dropped one by one; a dislike replaces a layer's form, it does not delete the layer.
+5. **Desktop is not a centred phone column.** Each width takes the base's own composition for that width (a side column, a live preview, help next to the fields); a phone column centred in empty space is a finding.
+6. **Visual layers.** Keep the base's finish, not only its structure. Its layers — identity (logo, wordmark, header band), item faces (crests, product photos, avatars), icons, colour blocks beyond buttons, data marks (chips, bars, badges), imagery, depth (shadows, one dark panel), wide-screen columns, type contrast, trust (real reviews, ratings, certificates) — are each kept, replaced or knowingly dropped and recorded in `DESIGN.md` § Visual layers. A dislike replaces a layer's form, it does not delete the layer; two or more layers dropped without a replacement goes back to the client before building.
 
 ## Make it ours, not a copy
 
@@ -30,20 +30,25 @@ The answer key is the base's own page; reproduce its design, then make it ours.
 ## Colour, type and identity parts
 
 - Colours: the base's combination of 4–6 tones and their relationships (from `DESIGN.md`), never a white page with one accent. Colour fields only where the base has them — no pale tinted bands between sections.
-- Fonts: only the faces approved in `DESIGN.md`, chosen by [fonts.md](fonts.md) (`fonts.py pick`, never from memory). The faces in `assets/fonts/ai-fonts.json` are refused — `fonts.py check` and the plugin hook block them.
+- Knowledge: before building each part (first screen, nav, button, card, form, footer, numbers, Korean body text), run `python ${CLAUDE_SKILL_DIR}/scripts/knowledge.py ask --part <part> --stage main` and follow those rules where the base does not decide; cite the rule id when the client asks why. The base still wins ([design-knowledge.md](design-knowledge.md)).
+- Fonts: only the faces approved in `DESIGN.md`, chosen by [fonts.md](fonts.md) (`fonts.py pick`, never from memory).
 - Identity parts take the base's measured finish: the wordmark (typeface, size, weight, tracking, colour, placement — a designed name, never body text in a bar), the navigation, the buttons (fill or outline, border, height, padding, type). A default black pill or a plain text name is a finding.
 - No more boxes than the base: count bordered or filled rectangles (cards, panels, tags, labels, button blocks, tinted bands) on both pages; ours may not have more. Text and photos sit on the page; labels are plain text.
 
 ## What reads as generated
 
-Each of these was called out by the client: a white panel floating on the hero photo with label–value facts; letters or emoji in circles as icons; a small overline above the name; a row of identical icon tiles; dashed 「… 자리」 boxes; pale bands everywhere; one accent on white; the default fonts above; gratuitous gradients, glass, pills everywhere, oversized hero text unless the base has them.
+The single list of generated-look tells; other files point here. Never: a white panel floating on the hero photo with label–value facts; a stock photo with a floating box, headline and two buttons; letters or emoji in circles as icons; thin generic line icons; a small overline above the name; a row of identical icon tiles or icon cards over the photo edge; empty photo boxes or 「… 자리」 slots; pale bands everywhere; one accent on white; a half-and-half colour panel; a symmetrical two-card split; left-border callouts; a status dot before every state; the same 6–8px radius on every box; boxes inside boxes; three sections in a row with the same make-up; a grey footnote under every block; a display face on every title; a monospace for times and prices. Gradients, glass, pills everywhere and oversized hero text only when the base has them.
+
+Also generated unless the base has them (from unslop's signs list, Damir Sokolovsky, CC BY 4.0, github.com/heydamir/unslop): uppercase or headings with wide letter spacing; emoji as icons, labels or status; glowing shadows and coloured glows; cards and buttons that grow on hover, `transition: all`; everything flying in on load; numbers in mixed formats on one screen (`48,210` beside `124,860.40`) — one format, tabular figures; a small chart or sparkline on every stat; several near-identical tints of one hue for text; a headline that would fit any business if the name were swapped; exclamation marks and hype words (최고, 완벽한, 특별한 경험) on labels and buttons. `check_site.py` flags wide tracking, emoji, glow, hover growth and `transition: all` as DRIFT.
 
 ## Content and samples
 
-- Only facts the client gave; anything filled in is listed at handover. Where the client's words are missing (an intro, a price, an address) write short neutral sample text of the right length and list it in one 「견본」 line at the page foot — never a dashed slot on the page.
-- Never invented testimonials, logos, statistics or awards; leave those parts out.
+- Only facts the client gave; anything filled in is listed at handover. Where the client's words are missing (an intro, a price, an address) write short neutral sample text of the right length.
+- **One 「견본」 line.** Everything that is sample — text and photos — is listed in one 「견본」 line at the page foot (「사진과 소개 글은 견본이에요」), never marked on the page itself.
+- **No empty boxes.** Never a hatched box, dashed slot or 「… 자리」 label: every photo slot gets a licence-checked sample photo of the right subject ([sample-photos.md](sample-photos.md)). When no fitting sample exists (before/after of the same room, a staff photo), drop the part and ask the client for the photo.
+- Never invented testimonials, reviews, logos, statistics or awards; leave those parts out until the client supplies real ones.
 - Times, open/closed, counts and totals come from one function and one data file; check the edge cases.
-- Photos: credited, licence checked; crop people, signs and number plates the client has not cleared.
+- Photos: credited, licence checked; crop people, signs and number plates the client has not cleared. No generated imagery.
 
 ## Check before handing back
 

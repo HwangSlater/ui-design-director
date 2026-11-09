@@ -16,23 +16,14 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { judgeFillExpr } from "./judge_fill.mjs";
-import { Cdp, launch, sleep, HIDE_OVERLAYS } from "./browser.mjs";
+import { goto, launch, openPage, scrollWakeExpr, sleep, HIDE_OVERLAYS } from "./browser.mjs";
 
 const SCREEN_SLICES = 16; // 맨 위부터 한 화면씩 잘라 따로 저장할 최대 수(screens/ 폴더). 4장만 자르면 페이지 아래쪽(시간표·질문·오시는 길)을 못 봤다
-const PHONE_MAX = 600;
-const PHONE_HEIGHT = 844;
-const DESKTOP_HEIGHT = 900;
 const MAX_PAGE_HEIGHT = 16000; // 8000 에서 잘려 긴 페이지(나이키 12,857px)의 아래쪽을 못 봤다
 const SETTLE_MS = 2500;
 const SCROLL_STEP_MS = 300; // 120ms 로 휙 내리면 늦게 불러오는 사진이 빈칸으로 남았다
 const CURRENT_PAGE = "@current"; // url 에 이 값을 주면 steps 를 마친 그 화면을 찍는다
-const NAV_TIMEOUT_MS = 45000;
-const PHONE_UA =
-  "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1";
-// 컴퓨터 폭도 실제 브라우저 이름으로 — 기본 이름의 「HeadlessChrome」을 보고 거절(403)하는 사이트가 있다(우회 시험 50곳)
-const DESKTOP_UA =
-  "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36 Edg/142.0.0.0";
-const HIDE_WEBDRIVER = "Object.defineProperty(navigator, 'webdriver', { get: () => undefined })";
+// 화면 크기·실제 브라우저 이름(「HeadlessChrome」을 보고 거절하는 사이트가 있다)·webdriver 숨김은 browser.mjs 의 openPage 가 건다
 // 2배로 찍는다: 1배 JPEG 82는 작은 글자·가는 선·단추 테두리가 뭉개져 바탕의 마감을 사람도 AI도 못 읽었다
 const DEFAULT_SCALE = 2;
 const JPEG_QUALITY = 92;
@@ -69,30 +60,14 @@ const OVERFLOW_PROBE = `(() => {
   return out;
 })()`;
 
-async function shoot(port, url, width, steps = [], scrollY = null, keepOverlays = false, judge = false, scale = DEFAULT_SCALE) {
-  const target = await (await fetch(`http://127.0.0.1:${port}/json/new?about:blank`, { method: "PUT" })).json();
-  const cdp = await Cdp.open(target.webSocketDebuggerUrl);
+// 한 주소를 한 폭으로 찍는다. 옵션: url · width · steps · scrollY(한 화면만) · keepOverlays · judge · scale
+async function shoot(port, { url, width, steps = [], scrollY = null, keepOverlays = false, judge = false, scale = DEFAULT_SCALE }) {
+  const page = await openPage(port, { width, scale });
+  const { cdp } = page;
   try {
-    const phone = width <= PHONE_MAX;
-    await cdp.send("Page.enable");
-    await cdp.send("Network.enable");
-    await cdp.send("Emulation.setDeviceMetricsOverride", {
-      width, height: phone ? PHONE_HEIGHT : DESKTOP_HEIGHT, deviceScaleFactor: scale, mobile: phone,
-    });
-    await cdp.send("Emulation.setUserAgentOverride", { userAgent: phone ? PHONE_UA : DESKTOP_UA, acceptLanguage: "ko-KR,ko;q=0.9,en;q=0.8" });
-    await cdp.send("Page.addScriptToEvaluateOnNewDocument", { source: HIDE_WEBDRIVER });
-
     let status = 0;
-    cdp.listeners.push((msg) => {
-      if (msg.method === "Network.responseReceived" && msg.params.type === "Document" && !status) {
-        status = msg.params.response.status;
-      }
-    });
     const go = async (to) => {
-      status = 0;
-      const loaded = cdp.waitFor("Page.loadEventFired", NAV_TIMEOUT_MS);
-      await cdp.send("Page.navigate", { url: to });
-      await loaded;
+      status = await goto(cdp, to);
       if (status >= 400) throw new Error(`응답 ${status} (${to})`);
     };
     for (const step of steps) {
@@ -121,10 +96,7 @@ async function shoot(port, url, width, steps = [], scrollY = null, keepOverlays 
     }
 
     // 늦게 불러오는 사진을 깨우려고 끝까지 내렸다가 올린다
-    await cdp.send("Runtime.evaluate", {
-      expression: `(async () => { for (let y = 0; y < document.body.scrollHeight; y += innerHeight) { scrollTo(0, y); await new Promise(r => setTimeout(r, ${SCROLL_STEP_MS})); } scrollTo(0, 0); })()`,
-      awaitPromise: true,
-    });
+    await cdp.send("Runtime.evaluate", { expression: scrollWakeExpr(Infinity, SCROLL_STEP_MS), awaitPromise: true });
     await sleep(SETTLE_MS);
     if (!keepOverlays) await cdp.send("Runtime.evaluate", { expression: HIDE_OVERLAYS }); // 내리는 동안 늦게 뜬 띠
     if (scrollY !== null) {
@@ -132,7 +104,7 @@ async function shoot(port, url, width, steps = [], scrollY = null, keepOverlays 
       await cdp.send("Runtime.evaluate", { expression: `scrollTo(0, ${Number(scrollY)})` });
       await sleep(SETTLE_MS);
       const view = await cdp.send("Page.captureScreenshot", { format: "jpeg", quality: JPEG_QUALITY });
-      return { data: Buffer.from(view.data, "base64"), height: phone ? PHONE_HEIGHT : DESKTOP_HEIGHT, status, screens: [], marks };
+      return { data: Buffer.from(view.data, "base64"), height: page.height, status, screens: [], marks };
     }
     // 화면 오른쪽 밖으로 삐져나간 칸 — 폰에서 두 칸 입력이 잘린 것을 의뢰인이 먼저 잡았다(집수리 사장님 화면)
     const spill = (await cdp.send("Runtime.evaluate", { returnByValue: true, expression: OVERFLOW_PROBE })).result.value || [];
@@ -145,7 +117,7 @@ async function shoot(port, url, width, steps = [], scrollY = null, keepOverlays 
       clip: { x: 0, y: 0, width, height, scale: fullScale },
     });
     // 한 화면 크기 조각 — 긴 전체 캡처는 파일로 열면 글씨가 너무 작아 안 읽힌다
-    const viewH = phone ? PHONE_HEIGHT : DESKTOP_HEIGHT;
+    const viewH = page.height;
     const screens = [];
     for (let i = 0; i < SCREEN_SLICES && i * viewH < height; i++) {
       const part = await cdp.send("Page.captureScreenshot", {
@@ -156,8 +128,7 @@ async function shoot(port, url, width, steps = [], scrollY = null, keepOverlays 
     }
     return { data: Buffer.from(shot.data, "base64"), height, status, screens, spill, marks };
   } finally {
-    cdp.close();
-    await fetch(`http://127.0.0.1:${port}/json/close/${target.id}`).catch(() => {});
+    await page.close();
   }
 }
 
@@ -180,7 +151,10 @@ async function main() {
           continue;
         }
         try {
-          const { data, height, screens, spill = [], marks = [] } = await shoot(port, job.url, width, job.steps || [], job.scrollY ?? null, Boolean(job.keepOverlays), Boolean(job.judge), job.scale ?? scale);
+          const { data, height, screens, spill = [], marks = [] } = await shoot(port, {
+            url: job.url, width, steps: job.steps || [], scrollY: job.scrollY ?? null,
+            keepOverlays: Boolean(job.keepOverlays), judge: Boolean(job.judge), scale: job.scale ?? scale,
+          });
           writeFileSync(file, data);
           const sliceDir = join(outDir, "screens");
           mkdirSync(sliceDir, { recursive: true });

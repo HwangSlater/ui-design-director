@@ -2,13 +2,13 @@
 import { spawn, spawnSync } from "node:child_process";
 import { existsSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
-import { join, resolve } from "node:path";
-import { pathToFileURL } from "node:url";
+import { dirname, join, resolve } from "node:path";
+import { fileURLToPath, pathToFileURL } from "node:url";
 import { createServer } from "node:net";
 
 // 설치 위치는 운영체제가 알려 주는 폴더에서 찾는다
-export const WIN_DIRS = [process.env["ProgramFiles(x86)"], process.env.ProgramFiles, process.env.LOCALAPPDATA].filter(Boolean);
-export const BROWSERS = [
+const WIN_DIRS = [process.env["ProgramFiles(x86)"], process.env.ProgramFiles, process.env.LOCALAPPDATA].filter(Boolean);
+const BROWSERS = [
   process.env.CAPTURE_BROWSER,
   ...WIN_DIRS.map((d) => join(d, "Microsoft", "Edge", "Application", "msedge.exe")),
   ...WIN_DIRS.map((d) => join(d, "Google", "Chrome", "Application", "chrome.exe")),
@@ -17,9 +17,20 @@ export const BROWSERS = [
   "/usr/bin/chromium",
 ].filter(Boolean);
 
+// 브라우저 이름은 assets/browser.json 한 곳에 둔다(frame_check.py 도 같은 파일을 읽는다)
+const NAMES = JSON.parse(readFileSync(join(dirname(fileURLToPath(import.meta.url)), "..", "assets", "browser.json"), "utf8"));
+const PHONE_UA = NAMES.phoneUA;
+const DESKTOP_UA = NAMES.desktopUA;
+const ACCEPT_LANGUAGE = NAMES.acceptLanguage;
+export const PHONE_MAX_WIDTH = 600; // 이 폭 이하는 폰으로 연다(폰 이름·터치 화면)
+// 한 화면 높이. measure: 구성·뼈대 측정(compose_metrics·skeleton)은 처음부터 800 으로 재 와서 기준값이 이 높이에서 나왔다
+export const VIEWPORT = { phone: 844, desktop: 900, measure: 800 };
+const NAV_TIMEOUT_MS = 45000;
+const HIDE_WEBDRIVER = "Object.defineProperty(navigator, 'webdriver', { get: () => undefined })";
+
 export const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
-export function freePort() {
+function freePort() {
   return new Promise((resolve, reject) => {
     const srv = createServer();
     srv.once("error", reject);
@@ -46,16 +57,22 @@ export class Cdp {
         this.listeners.forEach((fn) => fn(msg));
       }
     });
+    // 탭이 닫히거나 브라우저가 죽으면 기다리던 요청이 영영 안 끝났다 — 오류로 끝낸다
+    ws.addEventListener("close", () => {
+      for (const { reject } of this.pending.values()) reject(new Error("브라우저 연결이 끊겼습니다."));
+      this.pending.clear();
+    });
   }
   static async open(url) {
     const ws = new WebSocket(url);
     await new Promise((res, rej) => {
       ws.addEventListener("open", res, { once: true });
-      ws.addEventListener("error", rej, { once: true });
+      ws.addEventListener("error", () => rej(new Error(`브라우저에 연결하지 못했습니다: ${url}`)), { once: true });
     });
     return new Cdp(ws);
   }
   send(method, params = {}) {
+    if (this.ws.readyState !== WebSocket.OPEN) return Promise.reject(new Error("브라우저 연결이 끊겼습니다."));
     const id = ++this.id;
     this.ws.send(JSON.stringify({ id, method, params }));
     return new Promise((resolve, reject) => this.pending.set(id, { resolve, reject }));
@@ -80,7 +97,7 @@ export class Cdp {
 
 // 브라우저 끄기 — 윈도우에서 proc.kill() 은 처음 띄운 프로세스만 끄고 화면을 그리는 Edge 본체는 남았다
 // (하루 역할극에 headless Edge 75벌, 프로세스 700여 개가 쌓임). 본체 번호를 DevTools 로 받아 그 나무째 끈다.
-export const PROFILE_PREFIXES = ["capture-", "styles-", "compose-", "snap-", "motion-", "skeleton-"];
+const PROFILE_PREFIXES = ["capture-", "styles-", "compose-", "snap-", "motion-", "skeleton-"];
 const OWNER_FILE = "owner.json"; // 이 브라우저를 띄운 node 번호와 본체 번호 — 주인이 죽고 남은 브라우저를 다음 실행이 찾아 끈다
 const live = new Set();
 
@@ -176,6 +193,75 @@ export async function launch(prefix = "capture-") {
   live.delete(entry);
   throw new Error("브라우저 디버깅 포트가 열리지 않았습니다.");
 }
+
+// 새 탭을 열어 폭·폰 여부에 맞춘 화면 크기, 실제 브라우저 이름, webdriver 숨김을 걸어 돌려준다.
+// height 를 주면 컴퓨터 폭의 화면 높이를 그것으로(폰은 늘 VIEWPORT.phone). close() 는 몇 번 불러도 된다.
+export async function openPage(port, { width, phone = width <= PHONE_MAX_WIDTH, height, scale = 1 } = {}) {
+  const res = await fetch(`http://127.0.0.1:${port}/json/new?about:blank`, { method: "PUT" });
+  if (!res.ok) throw new Error(`새 탭을 열지 못했습니다(응답 ${res.status}).`);
+  const target = await res.json();
+  let cdp = null, closed = false;
+  const close = async () => {
+    if (closed) return;
+    closed = true;
+    cdp?.close();
+    await fetch(`http://127.0.0.1:${port}/json/close/${target.id}`).catch(() => {});
+  };
+  const viewH = phone ? VIEWPORT.phone : height ?? VIEWPORT.desktop;
+  try {
+    cdp = await Cdp.open(target.webSocketDebuggerUrl);
+    await cdp.send("Page.enable");
+    await cdp.send("Network.enable");
+    await cdp.send("Emulation.setDeviceMetricsOverride", { width, height: viewH, deviceScaleFactor: scale, mobile: phone });
+    await cdp.send("Emulation.setUserAgentOverride", { userAgent: phone ? PHONE_UA : DESKTOP_UA, acceptLanguage: ACCEPT_LANGUAGE });
+    await cdp.send("Page.addScriptToEvaluateOnNewDocument", { source: HIDE_WEBDRIVER });
+  } catch (err) {
+    await close();
+    throw err;
+  }
+  return { cdp, close, phone, height: viewH };
+}
+
+// 주소로 가서 load 까지 기다린다. 문서 응답 번호를 돌려준다(0 = 못 받음). 못 열면 한 줄 오류.
+export async function goto(cdp, url, { timeout = NAV_TIMEOUT_MS } = {}) {
+  let status = 0, timer, onEvent;
+  const loaded = new Promise((resolve, reject) => {
+    timer = setTimeout(() => reject(new Error(`${Math.round(timeout / 1000)}초 안에 다 열리지 않았습니다: ${url}`)), timeout);
+    onEvent = (msg) => {
+      if (msg.method === "Network.responseReceived" && msg.params.type === "Document" && !status) status = msg.params.response.status;
+      else if (msg.method === "Page.loadEventFired") resolve();
+    };
+    cdp.listeners.push(onEvent);
+  });
+  try {
+    const { errorText } = await cdp.send("Page.navigate", { url });
+    if (errorText) throw new Error(`페이지를 열지 못했습니다(${errorText}): ${url}`);
+    await loaded;
+    return status;
+  } finally {
+    clearTimeout(timer);
+    cdp.listeners = cdp.listeners.filter((f) => f !== onEvent);
+  }
+}
+
+// 페이지 안에서 식을 돌려 값을 받는다. 페이지 쪽에서 오류가 나면 undefined 대신 그 오류 첫 줄로 끝낸다
+export async function evaluate(cdp, expression, { awaitPromise = false } = {}) {
+  const r = await cdp.send("Runtime.evaluate", { expression, returnByValue: true, awaitPromise });
+  if (r.exceptionDetails) {
+    const d = r.exceptionDetails;
+    throw new Error(`페이지 안 코드 오류: ${String(d.exception?.description || d.text || "").split(/\r?\n/)[0]}`);
+  }
+  return r.result?.value;
+}
+
+// 늦게 불러오는 사진을 깨우려고 maxHeight 까지 한 화면(stride 배)씩 내린다. toTop 이면 끝나고 맨 위로
+export const scrollWakeExpr = (maxHeight, stepMs, { stride = 1, toTop = true } = {}) => `(async () => {
+  for (let y = 0; y < Math.min(document.body.scrollHeight, ${maxHeight}); y += innerHeight * ${stride}) {
+    scrollTo(0, y);
+    await new Promise((r) => setTimeout(r, ${stepMs}));
+  }
+  ${toTop ? "scrollTo(0, 0);" : ""}
+})()`;
 
 // 쿠키·동의·알림·앱 설치 창 걷어 내기 — 캡처와 스냅샷이 같이 쓴다
 // 이름으로 못 찾는 덮개: 화면에 붙어 있고(fixed/sticky) 「쿠키」 문구가 있으며 화면 절반보다 작은 것. Flour 메뉴의 아래 쿠키 띠가 이름으로는 안 잡혔다

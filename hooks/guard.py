@@ -90,8 +90,7 @@ def check(tool: str, inp: dict) -> str | None:
         need = "main"
     if need is None:
         return None
-    done, _ = stage.status(root)
-    missing = [s for s in stage.STAGES[:stage.STAGES.index(need)] if not done[s]]
+    missing = stage.missing_before(root, need)
     if missing:
         return (f"아직 {stage.LABEL[need]} 단계를 만들 수 없습니다 — 먼저: {', '.join(stage.LABEL[s] for s in missing)}. "
                 f"python {stage.S}/stage.py {root.as_posix()} 로 다음 명령을 보세요.")

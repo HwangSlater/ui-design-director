@@ -5,12 +5,10 @@
 //   --ours 로 우리 화면을 지정하면 나머지(기준 사이트)의 가운데 값과 비교해 미달 항목을 표시한다.
 // 외부 패키지 없음. Edge/Chrome DevTools 프로토콜만 쓴다.
 import { writeFileSync } from "node:fs";
-import { launch } from "./browser.mjs";
+import { evaluate, goto, launch, openPage, scrollWakeExpr, sleep, HIDE_OVERLAYS, VIEWPORT } from "./browser.mjs";
 
 const SETTLE_MS = 3000;
 const SCROLL_STEP_MS = 150;
-const PHONE_MAX = 600;
-const PHONE_H = 844, DESKTOP_H = 800;
 const CELL = 8; // 넓이를 셀 때 칸 크기(px)
 const MAX_PAGE = 12000; // 너무 긴 페이지는 앞부분만
 // 미달 판정: 기준 사이트 가운데 값 대비 이 비율 아래면 「미달」
@@ -19,7 +17,6 @@ const SHORT_RATIO = 0.7;
 // 빵집 비교에서 Tatte·태극당이 한 번은 88%·60%, 다음 번엔 1% 로 재져 기준이 흔들렸다.
 const BLANK_REF = 0.9;
 const MIN_REFS = 2;
-const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
 const args = process.argv.slice(2);
 const out = args[0];
@@ -31,8 +28,6 @@ if (!out || !targets.length) { console.error("사용: node compose_metrics.mjs <
 // 페이지 안에서 도는 측정. 문서 순서대로 칠해서(나중 요소가 위) 칸마다 사진/색 판/바탕을 정한다
 const PROBE = `(() => {
   const CELL = ${CELL}, W = innerWidth, H = innerHeight;
-  // 쿠키·동의 창은 실제 구성이 아니므로 뺀다
-  document.querySelectorAll('[id*="cookie" i],[class*="cookie" i],[id*="consent" i],[class*="consent" i],[id*="onetrust" i],[class*="onetrust" i]').forEach((n) => n.style.setProperty("display", "none", "important"));
   const PH = Math.min(document.documentElement.scrollHeight, ${MAX_PAGE});
   const cols = Math.ceil(W / CELL), rows = Math.ceil(PH / CELL);
   const kind = new Uint8Array(cols * rows); // 0 바탕, 1 색 판, 2 사진
@@ -87,34 +82,41 @@ const PROBE = `(() => {
     blocks: blocks.slice(0, 6), textSpan: textR > textL ? (textR - textL) / W : 0 };
 })()`;
 
-const { port, close } = await launch("compose-"); // 끄기·남은 브라우저 치우기는 browser.mjs 한 곳에서
-let list;
-for (let i = 0; i < 50 && !list; i++) { try { list = await (await fetch(`http://127.0.0.1:${port}/json/list`)).json(); } catch { await sleep(200); } }
-const ws = new WebSocket(list.find((t) => t.type === "page").webSocketDebuggerUrl);
-await new Promise((r) => ws.addEventListener("open", r, { once: true }));
-let id = 0; const wait = new Map();
-ws.addEventListener("message", (m) => { const d = JSON.parse(m.data); if (wait.has(d.id)) { wait.get(d.id)(d); wait.delete(d.id); } });
-const cdp = (method, params = {}) => new Promise((r) => { const n = ++id; wait.set(n, r); ws.send(JSON.stringify({ id: n, method, params })); });
+// 한 곳을 잰다. 쿠키·동의 창은 실제 구성이 아니므로 재기 전에 걷어 낸다(캡처와 같은 HIDE_OVERLAYS)
+async function measureOne(cdp, url) {
+  await goto(cdp, url);
+  await sleep(SETTLE_MS);
+  await evaluate(cdp, scrollWakeExpr(MAX_PAGE, SCROLL_STEP_MS), { awaitPromise: true }); // 늦게 불러오는 사진을 깨운 뒤 맨 위로
+  await sleep(SETTLE_MS / 2);
+  await evaluate(cdp, HIDE_OVERLAYS);
+  return evaluate(cdp, PROBE);
+}
 
-const rows = [];
-try {
-  await cdp("Page.enable");
-  const phone = width <= PHONE_MAX;
-  await cdp("Emulation.setDeviceMetricsOverride", { width, height: phone ? PHONE_H : DESKTOP_H, deviceScaleFactor: 1, mobile: phone });
-  for (const [name, url] of targets) {
-    await cdp("Page.navigate", { url });
-    await sleep(SETTLE_MS);
-    // 늦게 불러오는 사진을 깨운 뒤 맨 위로
-    await cdp("Runtime.evaluate", { expression: `(async () => { for (let y = 0; y < Math.min(document.body.scrollHeight, ${MAX_PAGE}); y += innerHeight) { scrollTo(0, y); await new Promise(r => setTimeout(r, ${SCROLL_STEP_MS})); } scrollTo(0, 0); })()`, awaitPromise: true });
-    await sleep(SETTLE_MS / 2);
-    const r = await cdp("Runtime.evaluate", { expression: PROBE, returnByValue: true });
-    const v = r.result?.result?.value;
-    if (!v) { console.log(`실패  ${name}  (값을 읽지 못함 — 봇 막힘일 수 있음)`); continue; }
-    rows.push({ name, url, ...v });
-    console.log(`잼  ${name}`);
+async function measureAll(port) {
+  const rows = [];
+  // 컴퓨터 폭은 처음부터 800 높이로 재 왔다(기준값이 이 높이에서 나옴)
+  const page = await openPage(port, { width, height: VIEWPORT.measure });
+  try {
+    for (const [name, url] of targets) {
+      let v;
+      try { v = await measureOne(page.cdp, url); } catch (err) { console.log(`실패  ${name}  (${err.message})`); continue; }
+      if (!v) { console.log(`실패  ${name}  (값을 읽지 못함 — 봇 막힘일 수 있음)`); continue; }
+      rows.push({ name, url, ...v });
+      console.log(`잼  ${name}`);
+    }
+  } finally {
+    await page.close();
   }
-} finally {
-  ws.close(); await close();
+  return rows;
+}
+
+async function main() {
+  const { port, close } = await launch("compose-"); // 끄기·남은 브라우저 치우기는 browser.mjs 한 곳에서
+  try {
+    report(await measureAll(port));
+  } finally {
+    await close();
+  }
 }
 
 // 표와 판정
@@ -130,25 +132,32 @@ const METRICS = [
 ];
 const LOWER_IS_BETTER = new Set(["firstEmpty"]);
 const median = (a) => { const s = [...a].sort((x, y) => x - y); const m = Math.floor(s.length / 2); return s.length % 2 ? s[m] : (s[m - 1] + s[m]) / 2; };
-const blankRefs = rows.filter((r) => r.name !== ours && r.firstEmpty > BLANK_REF);
-const refs = rows.filter((r) => r.name !== ours && !blankRefs.includes(r));
-const tooFew = Boolean(ours) && refs.length < MIN_REFS;
-const me = rows.find((r) => r.name === ours);
-const lines = [`# 구성 비교 — ${width}px`, "", `| 항목 | ${rows.map((r) => r.name).join(" | ")} |${me ? " 판정 |" : ""}`, `|---|${rows.map(() => "---").join("|")}|${me ? "---|" : ""}`];
-let short = 0;
-for (const [k, label, fmt] of METRICS) {
-  let verdict = "";
-  if (me && !tooFew) {
-    const m = median(refs.map((r) => r[k]));
-    const bad = LOWER_IS_BETTER.has(k) ? me[k] > m / SHORT_RATIO && me[k] - m > 0.1 : me[k] < m * SHORT_RATIO;
-    if (bad) short++;
-    verdict = ` ${bad ? "미달" : "통과"} (기준 가운데 ${fmt(m)}) |`;
+function report(rows) {
+  const blankRefs = rows.filter((r) => r.name !== ours && r.firstEmpty > BLANK_REF);
+  const refs = rows.filter((r) => r.name !== ours && !blankRefs.includes(r));
+  const tooFew = Boolean(ours) && refs.length < MIN_REFS;
+  const me = rows.find((r) => r.name === ours);
+  const lines = [`# 구성 비교 — ${width}px`, "", `| 항목 | ${rows.map((r) => r.name).join(" | ")} |${me ? " 판정 |" : ""}`, `|---|${rows.map(() => "---").join("|")}|${me ? "---|" : ""}`];
+  let short = 0;
+  for (const [k, label, fmt] of METRICS) {
+    let verdict = "";
+    if (me && !tooFew) {
+      const m = median(refs.map((r) => r[k]));
+      const bad = LOWER_IS_BETTER.has(k) ? me[k] > m / SHORT_RATIO && me[k] - m > 0.1 : me[k] < m * SHORT_RATIO;
+      if (bad) short++;
+      verdict = ` ${bad ? "미달" : "통과"} (기준 가운데 ${fmt(m)}) |`;
+    }
+    lines.push(`| ${label} | ${rows.map((r) => fmt(r[k])).join(" | ")} |${verdict}`);
   }
-  lines.push(`| ${label} | ${rows.map((r) => fmt(r[k])).join(" | ")} |${verdict}`);
+  lines.push("", "## 색 판(넓은 순)", ...rows.map((r) => `- ${r.name}: ${r.blocks.map((b) => `${b.hex}${b.strong ? "(진함)" : ""} ${Math.round(b.pct * 100)}%`).join(", ") || "없음"}`));
+  if (blankRefs.length) lines.push("", `덜 불러온 기준(첫 화면 ${Math.round(BLANK_REF * 100)}% 넘게 빔, 가운데 값에서 뺌): ${blankRefs.map((r) => r.name).join(", ")} — 다시 돌리거나 캡처를 열어 본다.`);
+  if (tooFew) lines.push("", `판정 못 함 — 제대로 잰 기준 사이트가 ${refs.length}곳뿐이다(${MIN_REFS}곳 이상 필요). 다시 돌린다.`);
+  else if (me) lines.push("", `미달 ${short}개 — 미달이 있으면 보여 주지 않고 구성을 다시 짠다(references/blind-judge.md § Composition numbers).`);
+  writeFileSync(out, lines.join("\n") + "\n");
+  console.log(lines.join("\n"));
 }
-lines.push("", "## 색 판(넓은 순)", ...rows.map((r) => `- ${r.name}: ${r.blocks.map((b) => `${b.hex}${b.strong ? "(진함)" : ""} ${Math.round(b.pct * 100)}%`).join(", ") || "없음"}`));
-if (blankRefs.length) lines.push("", `덜 불러온 기준(첫 화면 ${Math.round(BLANK_REF * 100)}% 넘게 빔, 가운데 값에서 뺌): ${blankRefs.map((r) => r.name).join(", ")} — 다시 돌리거나 캡처를 열어 본다.`);
-if (tooFew) lines.push("", `판정 못 함 — 제대로 잰 기준 사이트가 ${refs.length}곳뿐이다(${MIN_REFS}곳 이상 필요). 다시 돌린다.`);
-else if (me) lines.push("", `미달 ${short}개 — 미달이 있으면 보여 주지 않고 구성을 다시 짠다(references/blind-judge.md § Composition numbers).`);
-writeFileSync(out, lines.join("\n") + "\n");
-console.log(lines.join("\n"));
+
+main().catch((err) => {
+  console.error(`오류: ${err.message}`);
+  process.exit(1);
+});

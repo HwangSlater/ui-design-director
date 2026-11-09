@@ -15,13 +15,16 @@ from dataclasses import dataclass
 from html.parser import HTMLParser
 from pathlib import Path
 
-from anchor_check import AnchorTracker
-from block_colours import check_blocks
-from page_rules import PageTracker, report_photo_reuse
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import fonts  # noqa: E402  (글꼴 이름 나누기는 fonts.py 하나로)
+from anchor_check import AnchorTracker  # noqa: E402
+from block_colours import check_blocks  # noqa: E402
+from common import TOOL_DIRS  # noqa: E402
+from page_rules import PageTracker, report_photo_reuse  # noqa: E402
 
 HTML_SUFFIXES = {".html", ".htm"}
 CSS_SUFFIXES = {".css"}
-SKIP_DIRS = {"node_modules", ".git", "dist-cache", "__pycache__"}
+SKIP_DIRS = TOOL_DIRS | {"dist-cache"}
 NON_LABELLED_INPUTS = {"hidden", "submit", "button", "reset", "image"}
 VISUAL_TAGS = {"img", "svg", "picture", "video", "canvas"}  # 글자와 상자뿐인 화면을 찾는다
 GENERIC_FAMILIES = {
@@ -36,6 +39,17 @@ DECLARATION = re.compile(r"([-\w]+)\s*:\s*([^;{}]+)(?=[;}])")
 COLOR_LITERAL = re.compile(r"#[0-9a-fA-F]{3,8}\b|\b(?:rgba?|hsla?|oklch|oklab|lab|lch)\(")
 SIZE_LITERAL = re.compile(r"\d(?:px|rem|em|pt)\b")
 CSS_COMMENT = re.compile(r"/\*.*?\*/", re.DOTALL)
+# 생성 티(unslop signs.md 참고, Damir Sokolovsky, CC BY 4.0 — github.com/heydamir/unslop): 바탕에 없으면 뺀다
+HOVER_SCALE = re.compile(r":hover[^{]*\{[^}]*\bscale\(\s*1\.\d", re.IGNORECASE)
+GLOW = re.compile(r"(?<![\d.])0(?:px)?\s+0(?:px)?\s+(\d+)px")  # 가운데서 번지는 그림자(빛남)
+EMOJI = re.compile("[\U0001F300-\U0001FAFF\u2600-\u27BF\u2B50\u2728]")
+WIDE_TRACKING_EM = 0.1
+# 디자인 지식의 숫자 규칙(knowledge-typography·colour-motion): 본문 행간 1.5 안팎(1.4 아래는 빽빽), 본문 14px 미만은 작음, UI 움직임 500ms 넘으면 느림
+RULE_BLOCK = re.compile(r"([^{}]+)\{([^{}]*)\}")
+BODY_SELECTOR = re.compile(r"(^|[\s,>])(body|p|li|dd|td|article|\.body|\.text|\.desc)\b", re.IGNORECASE)
+MIN_BODY_LINE_HEIGHT = 1.4
+MIN_BODY_PX = 16  # USWDS·KRDS·Butterick 가 모두 16px
+MAX_UI_MOTION_MS = 500
 
 
 @dataclass(frozen=True)
@@ -77,6 +91,7 @@ class PageParser(HTMLParser):
         super().__init__(convert_charrefs=True)
         self.path = path
         self.report = report
+        self.emoji_seen = False
         self.css: list[CssSource] = []
         self.has_lang = False
         self.has_viewport = False
@@ -161,6 +176,10 @@ class PageParser(HTMLParser):
             return
         self.anchors.data(data)
         self.page.data(data)
+        if not self.emoji_seen and EMOJI.search(data):
+            self.emoji_seen = True  # 한 파일에 한 번
+            self.report.add("DRIFT", self.path, self.getpos()[0], "emoji-icon",
+                            f"이모지 「{EMOJI.search(data).group(0)}」 — 아이콘·꾸밈으로 쓴 이모지는 생성 티, 선 아이콘 한 벌이나 글로")
         if data.strip():
             for entry in self.name_stack:
                 entry["named"] = True
@@ -182,6 +201,33 @@ class PageParser(HTMLParser):
             if not control_id or control_id not in self.label_targets:
                 self.report.add("FLOOR", self.path, line, "form-label",
                                 f"<{tag}> has no associated label")
+
+
+def check_reading_rules(src: CssSource, text: str, report: Report) -> None:
+    """디자인 지식(knowledge.py)의 숫자 규칙 중 CSS 로 바로 잴 수 있는 것 — 본문 행간·글자 크기, 움직임 길이."""
+    for m in RULE_BLOCK.finditer(text):
+        selector, body = m.group(1), m.group(2)
+        line = src.first_line + text.count("\n", 0, m.start())
+        body_text = bool(BODY_SELECTOR.search(selector))
+        for prop, value in DECLARATION.findall(body + ";"):
+            prop, low = prop.lower(), value.strip().lower()
+            if body_text and prop == "line-height":
+                n = re.match(r"([\d.]+)(%|px)?$", low)
+                if n and not n.group(2) and float(n.group(1)) < MIN_BODY_LINE_HEIGHT:
+                    report.add("DRIFT", src.path, line, "line-height",
+                               f"{selector.strip()[:40]} line-height {low} — 본문은 {MIN_BODY_LINE_HEIGHT} 이상(knowledge.py ask --part body-text)")
+            if body_text and prop == "font-size":
+                n = re.match(r"([\d.]+)px$", low)
+                if n and float(n.group(1)) < MIN_BODY_PX:
+                    report.add("DRIFT", src.path, line, "body-size",
+                               f"{selector.strip()[:40]} font-size {low} — 본문은 {MIN_BODY_PX}px 이상(knowledge.py ask --part body-text)")
+            if prop in ("transition", "transition-duration") and not low.startswith("opacity"):  # 사진 겹쳐 바꾸기는 느려도 된다
+                for num, unit in re.findall(r"(\d*\.?\d+)(ms|s)\b", low):
+                    ms = float(num) * (1000 if unit == "s" else 1)
+                    if ms > MAX_UI_MOTION_MS:
+                        report.add("DRIFT", src.path, line, "motion-duration",
+                                   f"{prop}: {value.strip()} — 화면 전환·마우스 반응은 {MAX_UI_MOTION_MS}ms 안쪽(knowledge.py ask --part motion)")
+                        break
 
 
 def check_css(sources: list[CssSource], report: Report) -> None:
@@ -211,6 +257,12 @@ def check_css(sources: list[CssSource], report: Report) -> None:
                 report.add("DRIFT", src.path, line, "transition-all", f"{prop}: {value}")
             if (prop.startswith("animation") or prop.startswith("transition")) and low not in ("none", "0s"):
                 motion.append((src.path, line))
+            if prop == "letter-spacing":
+                em = re.match(r"(-?[\d.]+)(em|px)", low)
+                if em and (float(em.group(1)) >= WIDE_TRACKING_EM if em.group(2) == "em" else float(em.group(1)) >= 2):
+                    report.add("DRIFT", src.path, line, "wide-tracking", f"{prop}: {value} — 넓게 벌린 대문자·제목은 생성 티, 바탕에 없으면 보통 자간")
+            if prop in ("box-shadow", "filter") and any(int(g) >= 12 for g in GLOW.findall(low)):
+                report.add("DRIFT", src.path, line, "glow", f"{prop}: {value} — 가운데서 번지는 빛, 깊이는 면의 단계와 가는 선으로")
             if prop in ("background-clip", "-webkit-background-clip") and low == "text":
                 report.add("NOTE", src.path, line, "gradient-text", "text filled with a background")
             if prop in ("font-family", "font"):
@@ -225,6 +277,13 @@ def check_css(sources: list[CssSource], report: Report) -> None:
             if prop == "font-size" and SIZE_LITERAL.search(value):
                 report.add("DRIFT", src.path, line, "raw-font-size", f"{prop}: {value} (use a token)")
 
+    for src in sources:
+        text = blank_comments(src.text)
+        m = HOVER_SCALE.search(text)
+        if m:
+            line = src.first_line + text.count("\n", 0, m.start())
+            report.add("DRIFT", src.path, line, "hover-scale", "마우스를 올리면 커지는 카드·단추 — 바탕에 없으면 색·면 단계로")
+        check_reading_rules(src, text, report)
     if outline_removals and not has_focus_visible:
         for path, line in outline_removals:
             report.add("FLOOR", path, line, "focus-removed",
@@ -240,12 +299,9 @@ def check_css(sources: list[CssSource], report: Report) -> None:
 
 
 def primary_family(value: str) -> str:
-    for part in value.split(","):
-        name = re.sub(r"^(?:[\d.]+\S*\s+)+", "", part.strip())  # font 단축 속성의 크기·행간
-        name = name.strip("'\"").lower()
-        if name and name not in GENERIC_FAMILIES and "var(" not in name:
-            return name
-    return ""
+    """글꼴 목록에서 첫 실제 글꼴(소문자). 이름 나누기는 fonts.family_names 하나로."""
+    names = (n.lower() for n in fonts.family_names(value, shorthand=True))
+    return next((n for n in names if n not in GENERIC_FAMILIES and "var(" not in n), "")
 
 
 def collect(root: Path) -> tuple[list[Path], list[Path]]:

@@ -6,13 +6,13 @@ Composition numbers run on every first screen and page type before the client se
 
 1. List each shortlisted home's sections top to bottom with their fill (photo, card grid, text, band, footer) at 390 and 1280.
 2. Build from the order and fill they share (`skeleton.mjs` 「위에서부터 배치」), customers' width first.
-3. Run `node scripts/compose_metrics.mjs <out.md> --width 1280 --ours ours ours=<file url> ref1=<url> ref2=<url> …` and rework until no line reads 「미달」. Record the table next to the mockup.
+3. Run `node ${CLAUDE_SKILL_DIR}/scripts/compose_metrics.mjs <out.md> --width 1280 --ours ours ours=<file url> ref1=<url> ref2=<url> …` and rework until no line reads 「미달」. Record the table next to the mockup.
 4. Check list and menu pages against the references' page of the same type; text-first menu options measured 2–36% photo against 55–78%.
 5. Re-measure after adding any band or strip.
 
 ## Blind sheet (only when the user asks)
 
-1. Build it with `python scripts/blind_sheet.py <dir> 우리=<ours.jpg> ref=<ref.jpg> …` (same crop, logos greyed, shuffled, answer key kept apart) and give its `prompt.txt` to one fresh agent, once.
+1. Build it with `python ${CLAUDE_SKILL_DIR}/scripts/blind_sheet.py <dir> 우리=<ours.jpg> ref=<ref.jpg> …` (same crop, logos greyed, shuffled, answer key kept apart) and give its `prompt.txt` to one fresh agent, once (SKILL.md § Budget exception).
 2. Give every image its own logo box (`이름=<path>@x,y,w,h`), sized to the logo only; an oversized box that hides a menu is a tell.
 3. Put exactly one of our screens in a sheet; two variants of one client give each other away.
 4. Controls: same country and language, lesser-known running sites mixed with famous ones, none whose device you borrowed.
@@ -20,11 +20,11 @@ Composition numbers run on every first screen and page type before the client se
 
 ## Fair sheet (judge's copy only)
 
-Capture the judge's copy with `"judge": true` on the `capture.mjs` job: it hides `.sample`, `.proto` and slot or hatch elements, turns 「0000」 phone numbers into plausible ones (text and `tel:`), and prints 「판정 흔적」 for anything still showing (○○, 견본, 「…자리」). Fix what it prints by hand:
+Only when the blind judge runs. Capture the judge's copy with `"judge": true` on the `capture.mjs` job; it prints 「판정 흔적」 for anything that still gives the page away (○○, 견본). Clear every one by hand before the sheet is built:
 
 1. Replace leftover 「○○○」 and invented street names with plausible sample values.
-2. Fill or remove hatched photo and map slots (「가게 앞 사진 자리」, 「네이버 지도 자리」); a photo grid gets a sample in each slot. Left in, they are the judge's decisive tell.
-3. Never hand this copy to the client.
+2. Any empty box or 「… 자리」 slot left on the page breaks build-rules.md § Content and samples: fix it in the mockup itself (sample photo, or drop the part), not only in the judge's copy.
+3. Never send this copy to the client.
 
 ## Reading the verdict
 

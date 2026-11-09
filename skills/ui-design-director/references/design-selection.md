@@ -34,7 +34,7 @@ Real sites, best first:
 
 Templates: search each marketplace's category and keyword for the field and the main job, open the live preview, and judge it like a real site — its visual layers, phone layout, and coverage of the product's core screens. Prefer previews with several real pages over single landing pages.
 
-Aim for about five well-known running sites and one or two templates, and say which is which. Record for each what it is known for (real site) or covers (template), and which visual layers it carries (`reference-extraction.md` § Visual layers). Use a template's code or assets only within its licence, and tell the user a real site is a motif, not something to copy or buy.
+Aim for about five well-known running sites and one or two templates, and say which is which. Record for each what it is known for (real site) or covers (template), and which visual layers it carries (`build-rules.md` § Follow the base 6). Use a template's code or assets only within its licence, and tell the user a real site is a motif, not something to copy or buy.
 
 ## 3. Curate candidates
 
@@ -52,9 +52,9 @@ A beautiful hero with no evidence for the product's core screens is a trait-only
 
 ## 4. Make comparison easy
 
-Include running sites from the user's own country and language, shown at phone width first. Show the candidates as `comparison-board.md` describes (live board first).
+Include running sites from the user's own country and language, shown at phone width first. Show the candidates on the board (`comparison-board.md` § The board).
 
-Before asking, run `node scripts/skeleton.mjs formats/뼈대-390.md --width 390 name=url …` and again at 1280 on the shortlist, templates included (pages from one platform such as Naver Place count as one site), and put the shared traits with counts in the message (「사진이 첫 화면을 채움 4/6곳」), phone and desktop separately.
+Before asking, run `node ${CLAUDE_SKILL_DIR}/scripts/skeleton.mjs formats/뼈대-390.md --width 390 name=url …` and again at 1280 on the shortlist, templates included (pages from one platform such as Naver Place count as one site), and put the shared traits with counts in the message (「사진이 첫 화면을 채움 4/6곳」), phone and desktop separately.
 
 In chat: licence and reuse status, what could not be verified, and one or two recommended finalists tied to the brief's content and task.
 

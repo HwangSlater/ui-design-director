@@ -1,4 +1,4 @@
 interface:
-  display_name: "UI Concept Director"
-  short_description: "대화로 디자인 방향을 정하고 사이트 전체를 시안부터 코드까지"
-  default_prompt: "Use $ui-design-director to guide me step by step through choosing templates, colors, and coded UI previews, turn my approved choices into DESIGN.md, then plan and design every page of the site before building it."
+  display_name: "UI Design Director"
+  short_description: "실제 사이트에서 바탕을 고르고 색·글꼴을 정해 메인 페이지 시안까지"
+  default_prompt: "Use $ui-design-director to guide me one step at a time: show well-known real sites of my field side by side so I pick one as the base, then choose a palette and fonts, then build my main page from that base."

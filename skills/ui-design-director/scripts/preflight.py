@@ -19,6 +19,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import fonts  # noqa: E402  (AI 글꼴 판단은 fonts.py 하나로)
+from common import TOOL_DIRS, read  # noqa: E402  (read 는 권한 오류에도 빈 글 — stage.read 와 같게)
 
 # 의뢰인 글에 나오는 말 → 참고·시안에서 찾을 주소 조각
 CHANNELS = {
@@ -36,16 +37,12 @@ COUNT_MARK = re.compile(r"\d+\s*/\s*\d+\s*곳|\(\d+/\d+\)")
 SKELETON_HEAD = re.compile(r"# 뼈대 비교 — (\d+)px")
 BTN_CLASS = re.compile(r"\b(btn|button|cta)\b", re.I)
 WORK_PAGE = re.compile(r"owner|admin|login|code|lost|confirm|check|404|not-found", re.I)  # 확인 창·오류 화면의 두 단추는 정상
-SKIP = {"node_modules", ".git", "__pycache__", "cap", "captures", "blind"}
+SKIP = TOOL_DIRS | {"cap", "captures", "blind"}
 
 
 def mock_dir(root: Path) -> Path:
     """시안 폴더 — mockups/ 가 기본, 없으면 mockup/(깡통구제 시안이 이 이름이라 채널·사장님 화면 검사를 통째로 건너뜀)."""
     return root / "mockups" if (root / "mockups").is_dir() else root / "mockup"
-
-
-def read(p: Path) -> str:
-    return p.read_text(encoding="utf-8", errors="replace") if p.is_file() else ""
 
 
 def files(root: Path, pattern: str) -> list[Path]:

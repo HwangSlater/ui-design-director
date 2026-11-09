@@ -1,0 +1,6 @@
+{
+  "_": "측정 도구(browser.mjs)와 frame_check.py 가 함께 쓰는 브라우저 이름. 머리 없는 브라우저 이름(HeadlessChrome)·봇 이름으로 가면 거절(403)하거나 빈 화면을 주는 사이트가 있다(네이버 지도, 우회 시험 50곳).",
+  "phoneUA": "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1",
+  "desktopUA": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36 Edg/142.0.0.0",
+  "acceptLanguage": "ko-KR,ko;q=0.9,en;q=0.8"
+}

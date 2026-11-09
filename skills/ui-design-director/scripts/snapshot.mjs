@@ -8,15 +8,12 @@
 //   보기 화면은 스크립트를 막은 틀(sandbox)로 연다. 남의 사진·글꼴 사본이므로 고르는 동안만 쓰고 지운다 — 저장소에 넣지 않는다.
 // 한계: 움직임(넘기는 사진·메뉴·마우스 올림)은 멈춘 채다 — 그건 실제 사이트로 본다. 로그인·확인 화면은 걸러 실패로 알린다.
 import { createHash } from "node:crypto";
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { pathToFileURL } from "node:url";
-import { Cdp, launch, sleep, HIDE_OVERLAYS } from "./browser.mjs";
+import { goto, launch, openPage, scrollWakeExpr, sleep, HIDE_OVERLAYS } from "./browser.mjs";
 
-const PHONE_MAX = 600, PHONE_H = 844, DESKTOP_H = 900;
-const PHONE_UA = "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1";
-const DESKTOP_UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36 Edg/142.0.0.0";
-const NAV_TIMEOUT_MS = 45000, SETTLE_MS = 2500, SCROLL_STEP_MS = 300, MAX_SCROLL = 16000;
+const SETTLE_MS = 2500, SCROLL_STEP_MS = 300, MAX_SCROLL = 16000;
 // 사이트 대신 확인·차단 화면이 왔는지 — 그대로 저장하면 그 화면이 후보처럼 보인다
 const CHALLENGE = /access denied|just a moment|verify you are human|are you a robot|captcha|request (was )?blocked|보안 확인|접근이 (거부|차단)|자동 ?입력 ?방지/i;
 // 저장 직전에 애니메이션을 끝 상태로 보내고 그 값을 요소에 적는다 — 저장본에서는 애니메이션 정의가 비어
@@ -97,21 +94,14 @@ function unpack(parts, dir, pageUrl) {
 }
 
 async function snap(port, url, width, dir) {
-  const target = await (await fetch(`http://127.0.0.1:${port}/json/new?about:blank`, { method: "PUT" })).json();
-  const cdp = await Cdp.open(target.webSocketDebuggerUrl);
+  const page = await openPage(port, { width });
+  const { cdp } = page;
   try {
-    const phone = width <= PHONE_MAX;
-    await cdp.send("Page.enable"); await cdp.send("Network.enable");
-    await cdp.send("Emulation.setDeviceMetricsOverride", { width, height: phone ? PHONE_H : DESKTOP_H, deviceScaleFactor: 1, mobile: phone });
-    await cdp.send("Emulation.setUserAgentOverride", { userAgent: phone ? PHONE_UA : DESKTOP_UA, acceptLanguage: "ko-KR,ko;q=0.9,en;q=0.8" });
-    await cdp.send("Page.addScriptToEvaluateOnNewDocument", { source: "Object.defineProperty(navigator, 'webdriver', { get: () => undefined })" });
-    let status = 0;
-    cdp.listeners.push((m) => { if (m.method === "Network.responseReceived" && m.params.type === "Document" && !status) status = m.params.response.status; });
-    const loaded = cdp.waitFor("Page.loadEventFired", NAV_TIMEOUT_MS);
-    await cdp.send("Page.navigate", { url }); await loaded; await sleep(SETTLE_MS);
+    const status = await goto(cdp, url);
+    await sleep(SETTLE_MS);
     if (status >= 400) throw new Error(`응답 ${status}`);
     await cdp.send("Runtime.evaluate", { expression: HIDE_OVERLAYS });
-    await cdp.send("Runtime.evaluate", { awaitPromise: true, expression: `(async () => { for (let y = 0; y < Math.min(document.body.scrollHeight, ${MAX_SCROLL}); y += innerHeight) { scrollTo(0, y); await new Promise((r) => setTimeout(r, ${SCROLL_STEP_MS})); } scrollTo(0, 0); })()` });
+    await cdp.send("Runtime.evaluate", { awaitPromise: true, expression: scrollWakeExpr(MAX_SCROLL, SCROLL_STEP_MS) });
     await sleep(SETTLE_MS);
     await cdp.send("Runtime.evaluate", { expression: HIDE_OVERLAYS }); // 내리는 동안 늦게 뜬 띠
     const text = (await cdp.send("Runtime.evaluate", { returnByValue: true, expression: "document.body.innerText.slice(0, 3000)" })).result.value || "";
@@ -121,8 +111,7 @@ async function snap(port, url, width, dir) {
     rmSync(dir, { recursive: true, force: true }); mkdirSync(dir, { recursive: true });
     return { files: unpack(parseMhtml(data), dir, url), status };
   } finally {
-    cdp.close();
-    await fetch(`http://127.0.0.1:${port}/json/close/${target.id}`).catch(() => {});
+    await page.close();
   }
 }
 

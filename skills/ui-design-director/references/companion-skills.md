@@ -4,7 +4,7 @@ Use other open-source design skills as they were designed — their own flows, r
 
 ## Start-of-project check
 
-Run this in the context gate, before any candidates are researched.
+Run this once in the brief step (SKILL.md workflow), before any candidates are researched.
 
 1. Look for each companion: a `SKILL.md` for `ui-ux-pro-max`, `hallmark`, `animate`/`review-animations` (emilkowalski) and `web-design-guidelines` in the user's skill folders (`~/.claude/skills`, `~/.agents/skills`, the project's `.claude/skills`) or in the available skills list; for impeccable run `npx --no-install impeccable --version` (prints a version only when it is already on the machine).
 2. Ask the machine owner once, in one short table: companion · installed or not · what it adds at which step (widen candidates / name layout shapes / motion / automatic quality checks) · what installing downloads — with one plain sentence per companion on what changes in the result ("more template and colour ideas to choose from") and your recommendation. Installing changes the machine, so consent comes only from its owner: when you are designing with someone else (a client, a colleague, another session acting as the user), do not show them this table, never treat their "sure" as permission, proceed with what is installed and ask the owner separately.
@@ -37,7 +37,7 @@ Database entries are ideas: a format candidate still needs a live template or si
 
 - Once per project, before drawing options, read its `SKILL.md` Floor and its layout and macrostructures references; name read-surface options with its macrostructures.
 - With an approved `DESIGN.md` at the root, hallmark treats it as a locked system, so its build flow can run without overriding the user's choices. Only when the user cannot pick a direction from the shortlisted sites, its theme deal is a candidate source: each theme in `references/themes/` has a preview image, which makes a quick "which feeling?" page (3–4 themes whose keywords match the product). Check each of a theme's signature devices against the brief's dislikes before borrowing it.
-- Run its linter on every layout option and mockup before showing them, and fix every `FAIL`; fix or record a reason for every `REFLEX`. The stamp rule applies only to hallmark-built pages.
+- When installed, run its linter on every layout option and mockup before showing them, and fix every `FAIL`; fix or record a reason for every `REFLEX`. The stamp rule applies only to hallmark-built pages.
 
   ```bash
   node <skill-dir>/scripts/sloplint.mjs <page.html> [--render]

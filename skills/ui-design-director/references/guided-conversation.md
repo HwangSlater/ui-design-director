@@ -16,11 +16,11 @@ Use this when the user wants help choosing a design but has not given a complete
 
 Do not dump the entire workflow, a large questionnaire, or all unresolved choices into one message.
 
-**Read the dislikes back.** After writing `concept-brief.md`, repeat the client's likes and dislikes in one line each and ask them to correct it ("싫은 것: 큰 서점 느낌, 꾸민 감성 카페 — 맞나요?"). A test run recorded a dislike as a wish.
+**Read the dislikes back.** After writing `concept-brief.md`, repeat the client's likes and dislikes in one line each and ask them to correct it ("싫은 것: 큰 서점 느낌, 꾸민 감성 카페 — 맞나요?").
 
 ## At each gate
 
-Follow SKILL § Gates and skip resolved ones. What to ask the user:
+Follow the SKILL.md workflow and `site-plan.md` § Gates (whole site); skip resolved ones. What to ask the user:
 
 - **Format:** name sites the way the user knows them ("the K League site", "PLAB"); ask for favourites and definite rejections, not an immediate final answer if the user is uncertain.
 - **Palette:** let the user lock, reject or combine colours by role.

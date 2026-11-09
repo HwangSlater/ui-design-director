@@ -2,6 +2,30 @@
 
 The output is project-root `SITE-PLAN.md`: the page inventory, flows, and per-page status that every later step reads and updates.
 
+## Contents
+- Gates (whole site)
+- 1. Decide the scope of each surface
+- 2. Build the page inventory
+- 3. Map the flows
+- 4. Check content reality
+- 5. Write SITE-PLAN.md
+- 6. Approval
+
+## Gates (whole site)
+
+Gates 1–5 are the SKILL.md workflow (brief to design); a whole site continues with 6–10.
+
+1. **Context.** Concept brief: product and main job, audience, archetype, essential screens, density, brand traits, constraints, dislikes; label what you inferred. Ask in the same step for what only the client has — photos, logo or sign artwork, a notice in their own words — and say samples cap how real it can look.
+2. **Format.** About five well-known running sites of the field and one or two templates, in the shared live viewer; say the shared traits (n/N). The client picks **one base**.
+3. **Palette.** 3–4 palettes on the palette-switcher template, each built from the base's 4–6 tones; fonts on the same page.
+4. **Preview.** Only when it helps or the client asks; disposable.
+5. **Rules.** `DESIGN.md`: observed evidence, product decisions, unknowns; small defaults stay marked provisional.
+6. **Site plan.** Page inventory and flows in `SITE-PLAN.md` (this file's §§ 1–6), approved before pages.
+7. **Layout.** Two numbered home options differing in structure, in the approved colours and fonts, at both widths; settle the shared frame once.
+8. **Mockups.** Full fidelity from `DESIGN.md` tokens, both widths, every required state, home and main-job page first; a clickable prototype; approval per page.
+9. **Proof.** For production, one representative page before the rest.
+10. **System.** Move every approved reusable change into `DESIGN.md` and the shared tokens and components.
+
 ## 1. Decide the scope of each surface
 
 Classify every page before planning it:
@@ -34,7 +58,7 @@ Group pages by **page type** (ten blog posts are one type). Design every page ty
 
 Always include the pages users meet when something goes wrong or is missing: 404, error, empty first-run, signed-out, and no-permission where the product has accounts.
 
-**When the owner or staff update anything, plan their screens now, not at the mockup step.** List in `SITE-PLAN.md` how they sign in, what to do when the phone is lost, the few jobs they actually do (often two, e.g. today closed, change a price), and who to contact for what is not on their screen; rules in `owner-screens.md`. `scripts/preflight.py` reports a plan with owner screens but no sign-in or lost-phone line.
+**When the owner or staff update anything, plan their screens now, not at the mockup step.** List in `SITE-PLAN.md` how they sign in, what to do when the phone is lost, the few jobs they actually do (often two, e.g. today closed, change a price), and who to contact for what is not on their screen; rules in `owner-screens.md`. `${CLAUDE_SKILL_DIR}/scripts/preflight.py` reports a plan with owner screens but no sign-in or lost-phone line.
 
 **Every field a page shows needs an input someone fills.** Trace each label on a public page back to the form that feeds it and design both together; show nothing the upload form does not collect. Prefer taps over typing (yes / no / don't know, hidden when unknown: 「개와 지내요: 예」). Never pre-fill a free-amount or free-text field with a sample value — a grey "5,000" reads as already entered. Every field a customer fills shows on the staff screen that handles it. When a status change hands work to someone else (「방문 약속」 sends the owner to measure), draw the fields that change needs (date, time) and an alert to that person that is always on, not a tick box.
 

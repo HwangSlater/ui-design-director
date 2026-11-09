@@ -7,13 +7,17 @@
 
 단계(메인 페이지만): brief → board → base → material → palette → design → main
 단계는 파일로 판단한다 — 규칙 글만으로는 디자이너가 틀을 건너뛰거나(직접 짠 보기 화면) 앞 단계 확정 없이 다음 화면을 만들었다.
-확정은 보기 화면의 「확정」(wait_choice.mjs 가 쓰는 decision.json)이나 --decide 로 남긴 decisions.json 에서 읽는다.
+확정은 보기 화면의 「확정」(live_proxy.mjs·wait_choice.mjs 가 쓰는 decision.json)이나 --decide 로 남긴 decisions.json 에서 읽는다.
+decisions.json 이 깨져 있으면(JSON 이 아님) 알리고, --decide 는 덮어쓰지 않고 1 로 끝난다.
 """
 from __future__ import annotations
 
 import json
 import sys
 from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import knowledge  # noqa: E402  (단계마다 볼 규칙은 knowledge.py 하나로)
 
 SKILL = Path(__file__).resolve().parent.parent
 S = (SKILL / "scripts").as_posix()  # 다음 명령에 실제 경로를 찍는다(${CLAUDE_SKILL_DIR} 를 글자로 찍으면 그대로 남았다)
@@ -22,6 +26,8 @@ LABEL = {"brief": "맥락 정리", "board": "바탕 고르기 화면", "base": "
          "palette": "색·글꼴 확정", "design": "DESIGN.md", "main": "메인 페이지 시안"}
 SHARED_VIEWER = "board-data"  # make_board.py 공용 틀 표시
 PALETTE_VIEWER = "palette-switcher.js"
+TEMPLATE_MARK = "<!-- 채우기 전 -->"  # base_material.py 가 만든 빈 틀 표시 — 다 채우고 지우기 전에는 바탕 자료가 안 된 것으로 본다
+BROKEN = "decisions.json 을 읽을 수 없어요(JSON 형식이 깨짐) — 손으로 고치기 전에는 --decide 로 쓰지 않습니다"
 
 
 def read(p: Path) -> str:
@@ -31,19 +37,27 @@ def read(p: Path) -> str:
         return ""
 
 
-def decisions(root: Path) -> dict:
-    out = {}
+def saved(root: Path) -> dict | None:
+    """decisions.json 의 내용. 없으면 빈 dict, 깨졌으면(JSON 이 아니거나 객체가 아님) None."""
+    text = read(root / "decisions.json")
+    if not text.strip():
+        return {}
     try:
-        out.update(json.loads(read(root / "decisions.json") or "{}"))
+        data = json.loads(text)
     except json.JSONDecodeError:
-        pass
-    # 보기 화면의 「확정」 — wait_choice.mjs 가 쓴 decision.json
+        return None
+    return data if isinstance(data, dict) else None
+
+
+def decisions(root: Path) -> dict:
+    out = dict(saved(root) or {})
+    # 보기 화면의 「확정」 — live_proxy.mjs(후보)·wait_choice.mjs(팔레트)가 쓴 decision.json
     for key, where in (("base", root / "formats" / "decision.json"), ("palette", root / "palette" / "decision.json")):
         if key not in out and where.is_file():
             try:
                 d = json.loads(read(where))
                 out[key] = d.get("label") or d.get("choice") or "확정됨"
-            except json.JSONDecodeError:
+            except (json.JSONDecodeError, AttributeError):
                 pass
     return out
 
@@ -66,35 +80,46 @@ def status(root: Path) -> tuple[dict, list[str]]:
     boards, own_boards = viewers(fm, SHARED_VIEWER)
     pals, own_pals = viewers(root / "palette", PALETTE_VIEWER)
     material = [fm / "바탕-구성.md", fm / "바탕-움직임.md"]
+    filled = TEMPLATE_MARK not in read(material[0])
     snap = any((fm / "snapshot").glob("*/index.html")) if (fm / "snapshot").is_dir() else False
     design = read(root / "DESIGN.md")
     done = {
         "brief": bool(read(root / "concept-brief.md").strip()),
         "board": bool(boards),
         "base": "base" in d,
-        "material": all(p.is_file() for p in material) and snap,
+        "material": all(p.is_file() for p in material) and snap and filled,
         "palette": "palette" in d,
         "design": "바탕에서 바꾼 곳" in design and "부품 출처" in design,
         "main": (root / "mockups" / "index.html").is_file(),
     }
-    issues = [f"공용 틀이 아님: {p.relative_to(root)} — 보기 화면은 make_live_board.py 로만 만든다" for p in own_boards]
+    issues = [BROKEN] if saved(root) is None else []
+    issues += [f"공용 틀이 아님: {p.relative_to(root)} — 보기 화면은 make_live_board.py 로만 만든다" for p in own_boards]
     issues += [f"공용 틀이 아님: {p.relative_to(root)} — 팔레트 화면은 palette-switcher.js 틀로만 만든다(comparison-board.md § Palettes)" for p in own_pals]
     # 순서 어김: 뒤 단계의 결과물이 앞 단계 확정 없이 생겼다
     made = {"board": done["board"], "material": any(p.is_file() for p in material) or snap,
             "palette": bool(pals or own_pals), "design": bool(design), "main": done["main"]}
-    for i, st in enumerate(STAGES):
+    for st in STAGES:
         if made.get(st):
-            missing = [s for s in STAGES[:i] if not done[s]]
+            missing = _missing(done, st)
             if missing:
                 issues.append(f"순서 어김: {LABEL[st]}이(가) 있는데 앞 단계가 안 됨 — {', '.join(LABEL[s] for s in missing)}")
     return done, issues
 
 
+def _missing(done: dict, stage: str) -> list[str]:
+    return [s for s in STAGES[:STAGES.index(stage)] if not done[s]]
+
+
+def missing_before(root: Path, stage: str) -> list[str]:
+    """stage 를 만들기 전에 끝나야 하는데 아직 안 된 앞 단계들(stage.py --require 와 hooks/guard.py 가 함께 쓴다)."""
+    return _missing(status(root)[0], stage)
+
+
 NEXT = {
     "brief": "concept-brief.md 에 맥락(주 업무·손님·싫은 것·사진 누구 것)을 적는다 — 질문은 한 번에 하나",
-    "board": f"후보 spec(formats/board-spec.json) → python {S}/make_live_board.py formats/board-spec.json formats/보기.html → node {S}/live_proxy.mjs formats/board-spec.json (OPEN 주소를 의뢰인에게) → node {S}/wait_choice.mjs formats/보기.html formats/decision.json",
-    "base": f"의뢰인이 보기 화면에서 「확정」을 누르기를 기다린다(wait_choice.mjs). 채팅으로 답하면: python {S}/stage.py . --decide base \"<번호 이름>\"",
-    "material": f"고른 바탕에 대해: node {S}/snapshot.mjs formats/jobs-base.json formats/snapshot · node {S}/motion.mjs <바탕 주소> formats/바탕-움직임.md · node {S}/capture.mjs formats/jobs-base.json formats/base-cap · node {S}/extract_styles.mjs <바탕 주소> formats/추출-1280.json --width 1280 → formats/바탕-구성.md 를 쓴다",
+    "board": f"후보 spec(formats/board-spec.json) → node {S}/live_proxy.mjs formats/board-spec.json (공용 틀 보기 화면을 만들고 OPEN 주소 하나를 찍는다 — 그 주소만 의뢰인에게. 「확정」은 DECISION 줄과 formats/decision.json 으로 온다)",
+    "base": f"의뢰인이 보기 화면에서 「확정」을 누르기를 기다린다(live_proxy.mjs 가 DECISION 줄을 찍고 formats/decision.json 을 쓴다). 채팅으로 답하면: python {S}/stage.py . --decide base \"<번호 이름>\"",
+    "material": f"고른 바탕에 대해 먼저: python {S}/base_material.py . <바탕 주소> (jobs-base.json·바탕-구성.md 틀) → node {S}/snapshot.mjs formats/jobs-base.json formats/snapshot · node {S}/motion.mjs <바탕 주소> formats/바탕-움직임.md · node {S}/capture.mjs formats/jobs-base.json formats/base-cap · node {S}/extract_styles.mjs <바탕 주소> formats/추출-1280.json --width 1280 → formats/바탕-구성.md 를 채우고 맨 위 「채우기 전」 줄을 지운다",
     "palette": f"palette/index.html 을 palette-switcher.js 틀로(comparison-board.md § Palettes, 바탕의 4~6색 조합에서 출발), 글꼴은 python {S}/fonts.py pick --style <고딕|명조|손글씨|제목용> 에서만(references/fonts.md) → python {S}/fonts.py check palette → wait_choice.mjs palette/index.html palette/decision.json",
     "design": "DESIGN.md 를 design-md-format.md 틀로 — § 바탕에서 바꾼 곳, § 부품 출처 포함",
     "main": f"references/build-rules.md 를 따라 mockups/ 에 메인 페이지 — 완성 시안은 하위 에이전트 하나에 파일 경로와 build-rules.md 경로를 넘긴다 → python {S}/preflight.py .",
@@ -109,6 +134,12 @@ def main(argv: list[str]) -> int:
         return 0
     root = Path(argv[0]).resolve()
     if len(argv) >= 4 and argv[1] == "--decide":
+        if argv[2] not in STAGES:
+            print(f"모르는 단계: {argv[2]} ({', '.join(STAGES)})", file=sys.stderr)
+            return 2
+        if saved(root) is None:
+            print(f"! {BROKEN}: {root / 'decisions.json'}", file=sys.stderr)
+            return 1
         d = decisions(root)
         d[argv[2]] = argv[3]
         (root / "decisions.json").write_text(json.dumps(d, ensure_ascii=False, indent=1), encoding="utf-8")
@@ -120,7 +151,7 @@ def main(argv: list[str]) -> int:
         if st not in STAGES:
             print(f"모르는 단계: {st} ({', '.join(STAGES)})", file=sys.stderr)
             return 2
-        missing = [s for s in STAGES[:STAGES.index(st)] if not done[s]]
+        missing = _missing(done, st)
         if missing:
             print(f"아직 {LABEL[st]}을(를) 만들 수 없음 — 먼저: {', '.join(LABEL[s] for s in missing)}")
             return 1
@@ -132,6 +163,12 @@ def main(argv: list[str]) -> int:
         print(f"  ! {line}")
     nxt = next((s for s in STAGES if not done[s]), None)
     print(f"다음: {NEXT[nxt]}" if nxt else "다음: 메인 페이지까지 끝 — 의뢰인 판별을 받는다")
+    # 그 단계에서 자주 결정을 가르는 규칙 몇 개 — 긴 지식 문서를 찾아 읽지 않아도 필요한 때 눈앞에 오게
+    tips = knowledge.stage_lines(nxt or "review")
+    if tips:
+        print("이 단계에서 볼 규칙(부품별로 더: python " + f"{S}/knowledge.py ask --part <부품>):")
+        for t in tips:
+            print(f"  {t}")
     return 0
 
 

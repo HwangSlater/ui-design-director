@@ -1,6 +1,6 @@
 # Coded concept previews
 
-Skip this gate when the live palette preview (`comparison-board.md` § Palettes) already settled format and palette together.
+Skip this gate when the live palette preview (`comparison-board.md` § Palettes and fonts) already settled format and palette together.
 
 ## Control the comparison
 
