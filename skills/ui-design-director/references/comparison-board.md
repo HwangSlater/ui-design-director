@@ -47,7 +47,7 @@ Put the candidates in `<script type="application/json" id="palettes" data-step="
 ```html
 <link rel="stylesheet" href="dock.css"><link rel="stylesheet" href="palette-switcher.css">
 <script type="application/json" id="palettes" data-step="팔레트 고르기">
-[{"id": "A", "name": "바탕 그대로", "source": "<base url>",
+[{"id": "A", "name": "바탕의 색 관계, 우리 색", "source": "<base url> 의 4~6색 관계",
   "colors": ["#f6f1e9", "#ffffff", "#2b2622", "#8a4b2a", "#d9a441"],
   "roles": {"bg": "#f6f1e9", "surface": "#ffffff", "text": "#2b2622", "action": "#8a4b2a", "on-action": "#ffffff", "accent": "#d9a441"},
   "note": "면 색은 배경에 흰색 6%를 섞음"}]

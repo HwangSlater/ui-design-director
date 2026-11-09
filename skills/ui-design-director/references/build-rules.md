@@ -24,6 +24,7 @@ The answer key is the base's own page; reproduce its design, then make it ours.
 
 - Our name, content, photos and the chosen colours. Character comes through photos and wording, not added boxes: a first screen the base keeps to photo and menu stays photo and menu.
 - Nobody should say 「이거 ○○ 아냐?」 at first glance: no base logo, mascot, brand colour, set phrases or a component only the base has. Tell the client which recognisable parts you changed.
+- Follow the base's structure, never its finish as well. At least two of these must be ours, and `DESIGN.md` § 바탕에서 바꾼 곳 names them: the colour family (never the base's exact palette), the name/wordmark treatment, the finish of the repeated item (card, row, tile: border, fill, corner, divider), and one signature element that comes from this client's job (for Korean NBA fans: today's games on Korean time, the broadcast channel). When `skeleton.mjs --base` finds 0 「바꿀 곳」 the structure stays — these finish changes are still required. `python ${CLAUDE_SKILL_DIR}/scripts/copy_check.py <project>` (also run by `preflight.py`) refuses a first screen whose colours equal the base's.
 - A base part you keep keeps its look (drawing, lines, photo); if you cannot carry the look, drop it rather than leave a bare text version.
 - At most one section from another shortlisted site, by name and for a stated reason. Never copy protected logos, illustrations or text.
 

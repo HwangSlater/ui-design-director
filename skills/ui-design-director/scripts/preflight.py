@@ -22,6 +22,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import check_site  # noqa: E402  (접근성 바닥·토큰 어긋남은 check_site.py 하나로 — 마지막 점검 뒤 고친 것도 보낼 때 다시 잡게)
+import copy_check  # noqa: E402  (베낀 티 판단은 copy_check.py 하나로)
 import fonts  # noqa: E402  (AI 글꼴 판단은 fonts.py 하나로)
 from common import TOOL_DIRS, read  # noqa: E402  (read 는 권한 오류에도 빈 글 — stage.read 와 같게)
 
@@ -154,6 +155,9 @@ def check(root: Path) -> list[str]:
             bp.feed(read(p))
             for line, cls in bp.pairs[:1]:  # 한 파일에 하나만 — 같은 부품이 반복될 뿐
                 out.append(f"단추 한 쌍: {p.relative_to(root)}:{line} ({cls}) — 같은 크기 채운·선 단추 쌍은 키트 티. 연락 수단을 참고들이 어떻게 놓는지 보고 고를 것")
+
+    # 5b. 베낀 티 — 짜임은 바탕을 따라도 되지만 첫 화면 색·마감까지 같으면 바탕 사이트로 보였다(NBA 11차)
+    out += copy_check.check_project(root)
 
     # 6. AI 글꼴 — 기억으로 고른 글꼴은 늘 같은 기본 글꼴이었다(10차·재연 둘 다). 판단은 fonts.py 하나로
     allowed = fonts.client_fonts(root)
