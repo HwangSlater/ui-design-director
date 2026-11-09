@@ -3,8 +3,11 @@
 // 둥글기·여백 같은 작은 값(extract_styles.mjs)이 같아도 구성이 다르면 실제 사이트처럼 보이지 않는다. 그래서 따로 잰다.
 // 사용: node compose_metrics.mjs <out.md> --width 1280 이름=주소 이름=주소 ... [--ours 이름]
 //   --ours 로 우리 화면을 지정하면 나머지(기준 사이트)의 가운데 값과 비교해 미달 항목을 표시한다.
+// 결과 .md 맨 위에 비교한 사이트와 폭을 적고, 옆 「구성-기록.json」에 돌릴 때마다 한 줄씩 쌓는다(preflight.py 가 읽는다) —
+//   미달이 나온 뒤 기준 사이트를 바꿔 통과시키면 preflight 가 「비교 사이트를 바꿈」으로 알린다.
 // 외부 패키지 없음. Edge/Chrome DevTools 프로토콜만 쓴다.
-import { writeFileSync } from "node:fs";
+import { existsSync, readFileSync, writeFileSync } from "node:fs";
+import { basename, dirname, join } from "node:path";
 import { evaluate, goto, launch, openPage, scrollWakeExpr, sleep, HIDE_OVERLAYS, VIEWPORT } from "./browser.mjs";
 
 const SETTLE_MS = 3000;
@@ -17,6 +20,8 @@ const SHORT_RATIO = 0.7;
 // 빵집 비교에서 Tatte·태극당이 한 번은 88%·60%, 다음 번엔 1% 로 재져 기준이 흔들렸다.
 const BLANK_REF = 0.9;
 const MIN_REFS = 2;
+const HISTORY_NAME = "구성-기록.json"; // preflight.py 의 HISTORY_NAME 과 같게
+const HISTORY_MAX = 100; // 오래된 기록부터 버린다
 
 const args = process.argv.slice(2);
 const out = args[0];
@@ -137,7 +142,8 @@ function report(rows) {
   const refs = rows.filter((r) => r.name !== ours && !blankRefs.includes(r));
   const tooFew = Boolean(ours) && refs.length < MIN_REFS;
   const me = rows.find((r) => r.name === ours);
-  const lines = [`# 구성 비교 — ${width}px`, "", `| 항목 | ${rows.map((r) => r.name).join(" | ")} |${me ? " 판정 |" : ""}`, `|---|${rows.map(() => "---").join("|")}|${me ? "---|" : ""}`];
+  const sites = targets.filter(([n]) => n !== ours);
+  const lines = [`# 구성 비교 — ${width}px`, "", `비교 사이트(${width}px): ${sites.map(([n, u]) => `${n} ${u}`).join(" · ")}`, ...(ours ? [`우리 화면: ${ours}`] : []), "", `| 항목 | ${rows.map((r) => r.name).join(" | ")} |${me ? " 판정 |" : ""}`, `|---|${rows.map(() => "---").join("|")}|${me ? "---|" : ""}`];
   let short = 0;
   for (const [k, label, fmt] of METRICS) {
     let verdict = "";
@@ -154,7 +160,18 @@ function report(rows) {
   if (tooFew) lines.push("", `판정 못 함 — 제대로 잰 기준 사이트가 ${refs.length}곳뿐이다(${MIN_REFS}곳 이상 필요). 다시 돌린다.`);
   else if (me) lines.push("", `미달 ${short}개 — 미달이 있으면 보여 주지 않고 구성을 다시 짠다(references/blind-judge.md § Composition numbers).`);
   writeFileSync(out, lines.join("\n") + "\n");
+  record({ at: new Date().toISOString(), file: basename(out), width, ours, sites: sites.map(([name, url]) => ({ name, url })), short: me && !tooFew ? short : null });
   console.log(lines.join("\n"));
+}
+
+// 돌릴 때마다 한 줄 — 같은 폭에서 미달 뒤 기준 사이트가 바뀌었는지 preflight.py 가 본다
+function record(entry) {
+  const file = join(dirname(out), HISTORY_NAME);
+  let list = [];
+  try { list = existsSync(file) ? JSON.parse(readFileSync(file, "utf8")) : []; } catch { list = []; } // 깨졌으면 새로 쌓는다
+  if (!Array.isArray(list)) list = [];
+  list.push(entry);
+  writeFileSync(file, JSON.stringify(list.slice(-HISTORY_MAX), null, 1) + "\n");
 }
 
 main().catch((err) => {

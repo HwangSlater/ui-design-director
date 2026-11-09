@@ -25,6 +25,7 @@ Copy this checklist into your reply when you start and tick it as you go. Before
                 companion-skills.md § Start-of-project check, once, with the machine owner
 - [ ] board     candidates by design-selection.md §§ 2–3 → formats/board-spec.json →
                 node ${CLAUDE_SKILL_DIR}/scripts/live_proxy.mjs formats/board-spec.json   (background)
+                if it warns about a broken candidate, replace that candidate before giving the address;
                 give the client its one OPEN address; 확정 arrives as a DECISION line + formats/decision.json
 - [ ] material  python ${CLAUDE_SKILL_DIR}/scripts/base_material.py . <base url>
                 run the snapshot/motion/capture/extract_styles commands it prints; fill formats/바탕-구성.md
@@ -32,8 +33,9 @@ Copy this checklist into your reply when you start and tick it as you go. Before
                 python ${CLAUDE_SKILL_DIR}/scripts/fonts.py pick --style <…> (fonts.md); wait_choice.mjs for 확정
 - [ ] design    node ${CLAUDE_SKILL_DIR}/scripts/skeleton.mjs … --base <base> (page-design.md § Skeleton from the base)
                 → 「바꿀 곳 n/N」; DESIGN.md (design-md-format.md, § 바탕에서 바꾼 곳 and § 부품 출처)
-- [ ] main      mockups/ by build-rules.md → compose_metrics.mjs → side_by_side.py → plain-model test (once)
-                → preflight.py → send
+- [ ] main      before each part: knowledge.py ask --part <part> (you and each mockup subagent; Korean names work)
+                mockups/ by build-rules.md → compose_metrics.mjs → side_by_side.py → plain-model test (once)
+                → preflight.py (includes check_site) after the LAST edit → send; never send an edit without it
 ```
 
 A chat answer instead of 확정: `python ${CLAUDE_SKILL_DIR}/scripts/stage.py <project> --decide <step> "<choice>"`. Whole site: after **design**, follow [site-plan.md](references/site-plan.md) § Gates (whole site) 6–10.
@@ -58,11 +60,13 @@ Run `python ${CLAUDE_SKILL_DIR}/scripts/preflight.py <project>` and fix or answe
 6. **Dislikes and reasons hold** at every step, and each deliverable matches the reason you gave for it.
 7. **Look at it** at the size the client will see it; check that fonts actually differ between font options.
 
-**Quality bar.** A design professional shown our page shuffled with running sites of the field should not pick ours out as AI-made. Before the client sees a first screen, in this order: composition numbers against two to four running sites (`compose_metrics.mjs`, `blind-judge.md` § Composition numbers; never show while a line reads 「미달」), a 1:1 side-by-side with the base (`side_by_side.py`), and once a **plain-model test** — one subagent builds the same first screen from the client's words only, with no skill; if ours differs only in colour or the plain one shows more of the product's own character, rework ours. A blind judge runs once, only when the client asks.
+**Quality bar.** A design professional shown our page shuffled with running sites of the field should not pick ours out as AI-made. Before the client sees a first screen, in this order: composition numbers against two to four running sites (`compose_metrics.mjs`, `blind-judge.md` § Composition numbers; never show while a line reads 「미달」; if you change the comparison sites after a 미달, tell the client which and why), a 1:1 side-by-side with the base (`side_by_side.py`), and once a **plain-model test** — one subagent builds the same first screen from the client's words only, with no skill; if ours differs only in colour or the plain one shows more of the product's own character, rework ours. A blind judge runs once, only when the client asks.
 
 ## Conversation
 
 Lead: one consequential question at a time, numbered choices shown as pictures, plain words instead of design vocabulary, the next step always obvious ([references/guided-conversation.md](references/guided-conversation.md)). **Candidates are live sites in the shared viewer**, never captures or a viewer of your own ([references/comparison-board.md](references/comparison-board.md)). A site that refuses a frame: first its proxy view in the same board; 「실제 창으로」 (the real site in a sized window of the client's browser) to judge motion and feel; a snapshot only for exact material. Captures (2×) only for login-walled pages or a client who can only look at images. If the client delegates a choice, make it and record that it was delegated.
+
+**Every line the client sees is Korean** — questions, answers and progress notes alike (「바탕 재는 중이에요」, never 「Capturing the base…」).
 
 ## Route the request
 

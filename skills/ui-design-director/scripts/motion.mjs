@@ -7,6 +7,7 @@
 import { mkdirSync, writeFileSync } from "node:fs";
 import { basename, dirname, join } from "node:path";
 import { evaluate, goto, launch, openPage, scrollWakeExpr, sleep, HIDE_OVERLAYS } from "./browser.mjs";
+import { requireStage } from "./stage_guard.mjs";
 
 const SETTLE_MS = 2500, SCROLL_STEP_MS = 400, MAX_SCROLL = 12000;
 const HOVER_MAX = 14;          // 마우스 올림을 볼 단추·링크 수(첫 화면에서)
@@ -101,6 +102,7 @@ const args = process.argv.slice(2);
 const wi = args.indexOf("--width"); const width = wi >= 0 ? Number(args.splice(wi, 2)[1]) : 1280;
 const [url, outMd] = args;
 if (!url || !outMd) { console.error("사용: node motion.mjs <주소> <out.md> [--width 1280]"); process.exit(2); }
+requireStage(outMd); // 스킬 프로젝트 formats/ 안이면 바탕 확정 뒤에만(바탕 자료) — 밖이면 그대로
 const shotDir = join(dirname(outMd), basename(outMd, ".md") + "-움직임");
 
 const ev = (cdp, expression, awaitPromise = false) => evaluate(cdp, expression, { awaitPromise });

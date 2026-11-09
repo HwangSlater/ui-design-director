@@ -55,3 +55,52 @@ def test_preflight_flags_ai_font(tmp_path: Path) -> None:
     (tmp_path / "palette" / "index.html").write_text('<script id="fonts">[{"heading": "SUIT, sans-serif"}]</script>', encoding="utf-8")
     out = run(str(SCRIPTS / "preflight.py"), str(tmp_path)).stdout
     assert "AI 글꼴: palette" in out and "SUIT" in out
+
+
+def palette_page(heading: str, body: str = "serif") -> str:
+    fonts_json = json.dumps([{"id": "1", "name": "후보", "heading": heading, "body": body}], ensure_ascii=False)
+    return f'<script src="../palette-switcher.js"></script><script type="application/json" id="fonts">{fonts_json}</script>'
+
+
+def guard(path: Path, content: str) -> subprocess.CompletedProcess:
+    data = {"tool_name": "Write", "tool_input": {"file_path": str(path), "content": content}}
+    return subprocess.run([sys.executable, str(ROOT / "hooks" / "guard.py")], input=json.dumps(data, ensure_ascii=False).encode("utf-8"), capture_output=True)
+
+
+def test_unknown_palette_fonts() -> None:
+    assert fonts.unknown_fonts(palette_page('"Made Up Grotesk", "나눔바른고딕", serif', "system-ui, sans-serif")) == ["Made Up Grotesk"]
+    assert fonts.unknown_fonts(palette_page('"Made Up Grotesk", serif'), {fonts.norm("Made Up Grotesk")}) == []  # 의뢰인 글꼴
+    assert fonts.unknown_fonts("<p>글꼴 후보 없음</p>") == []
+
+
+def test_hook_blocks_font_not_in_table(tmp_path: Path) -> None:
+    (tmp_path / "concept-brief.md").write_text("주 업무", encoding="utf-8")
+    r = guard(tmp_path / "palette" / "index.html", palette_page('"Made Up Grotesk", serif'))
+    assert r.returncode == 2 and "표에 없는 글꼴: Made Up Grotesk — fonts.py pick 에서 고르세요" in r.stderr.decode("utf-8")
+    (tmp_path / "concept-brief.md").write_text("주 업무\n의뢰인 글꼴: Made Up Grotesk", encoding="utf-8")
+    r = guard(tmp_path / "palette" / "index.html", palette_page('"Made Up Grotesk", serif'))
+    assert "표에 없는 글꼴" not in r.stderr.decode("utf-8")  # 의뢰인 글꼴은 지나간다(앞 단계가 안 돼 막히는 것은 따로)
+
+
+def test_pick_prints_webfont_and_face_prints_css() -> None:
+    out = run(str(SCRIPTS / "fonts.py"), "pick", "--style", "고딕", "--top", "5").stdout
+    assert "    웹폰트: font-family" in out
+    assert out.rstrip().endswith("후보는 이 목록에서만 — fonts.json 을 직접 읽지 마세요")
+    face = run(str(SCRIPTS / "fonts.py"), "face", "G마켓 산스")
+    assert face.returncode == 0 and "@font-face" in face.stdout and "GMarketSans" in face.stdout
+    assert run(str(SCRIPTS / "fonts.py"), "face", "GMarketSans").returncode == 0  # CSS 이름으로도 찾는다
+    missing = run(str(SCRIPTS / "fonts.py"), "face", "Made Up Grotesk")
+    assert missing.returncode == 1 and "표에 없는 글꼴" in missing.stderr
+
+
+def test_webfont_css_name_counts_as_known() -> None:
+    assert fonts.unknown_fonts(palette_page("'GMarketSans', sans-serif")) == []
+
+
+def test_merge_adds_webfont(tmp_path: Path) -> None:
+    sys.path.insert(0, str(ROOT / "scripts" / "font-research"))
+    import merge  # noqa: E402
+    (tmp_path / "366.css").write_text("@font-face { font-family: 'GMarketSans'; }\n", encoding="utf-8")
+    rows = [{"name": "G마켓 산스", "noonnu": "https://noonnu.cc/font_page/366"}, {"name": "없음", "noonnu": ""}]
+    assert merge.add_webfonts(rows, tmp_path) == 1
+    assert rows[0]["webfont"].startswith("@font-face") and "webfont" not in rows[1]

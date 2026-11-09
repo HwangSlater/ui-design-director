@@ -14,9 +14,10 @@
 // 문서 응답이 400 이상이면 저장하지 않고 실패로 보고한다.
 
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
-import { join } from "node:path";
+import { basename, join } from "node:path";
 import { judgeFillExpr } from "./judge_fill.mjs";
 import { goto, launch, openPage, scrollWakeExpr, sleep, HIDE_OVERLAYS } from "./browser.mjs";
+import { requireStage } from "./stage_guard.mjs";
 
 const SCREEN_SLICES = 16; // 맨 위부터 한 화면씩 잘라 따로 저장할 최대 수(screens/ 폴더). 4장만 자르면 페이지 아래쪽(시간표·질문·오시는 길)을 못 봤다
 const MAX_PAGE_HEIGHT = 16000; // 8000 에서 잘려 긴 페이지(나이키 12,857px)의 아래쪽을 못 봤다
@@ -135,6 +136,8 @@ async function shoot(port, { url, width, steps = [], scrollY = null, keepOverlay
 async function main() {
   const { widths, scale, rest } = parseArgs(process.argv.slice(2));
   const [jobsPath, outDir] = rest;
+  // 바탕 자료(base_material.py 가 만든 jobs-base.json)를 찍을 때만 바탕 확정을 본다 — 후보 캡처(바탕 고르기 전)는 그대로
+  if (/^jobs-base/i.test(basename(jobsPath || ""))) requireStage(outDir);
   const jobs = JSON.parse(readFileSync(jobsPath, "utf8"));
   mkdirSync(outDir, { recursive: true });
   const { port, close } = await launch("capture-");

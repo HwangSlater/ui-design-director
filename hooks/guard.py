@@ -6,9 +6,10 @@ PreToolUse(Write·Edit·MultiEdit) 입력을 표준 입력으로 받아, ui-desi
   - palette/ 의 HTML: palette-switcher.js 틀이 아니면 막는다
   - 바탕-구성.md·바탕-움직임.md, palette/, DESIGN.md, layouts/·mockups/: 앞 단계가 확정되지 않았으면 막는다
   - palette/·layouts/·mockups/·DESIGN.md·tokens.css 에 AI 글꼴(assets/fonts/ai-fonts.json)을 넣으면 막는다
+  - palette/ HTML 의 글꼴 후보(heading·body)가 표(assets/fonts/fonts.json)에도 의뢰인 글꼴에도 없으면 막는다
 막을 때는 종료 코드 2와 이유(표준 오류)를 돌려준다. Claude Code 는 그 이유를 디자이너에게 보여 준다.
 SKILL.md 의 frontmatter 에 hooks 를 넣지 않은 까닭: claude.ai·API 에 올릴 때 모르는 항목이면 업로드가 실패한다.
-Bash 로 쓰는 파일(스크립트 출력)은 보지 않는다 — 스크립트는 공용 틀로만 쓴다.
+Bash 로 쓰는 파일(스크립트 출력)은 보지 않는다 — 바탕 자료 스크립트는 stage.py --guard 로 스스로 멈춘다.
 """
 from __future__ import annotations
 
@@ -20,19 +21,10 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "skills" / "ui-d
 import fonts  # noqa: E402  (AI 글꼴 판단은 fonts.py 하나로)
 import stage  # noqa: E402  (단계 판단은 stage.py 하나로)
 
-PROJECT_MARKS = ("concept-brief.md", "decisions.json", "formats/board-spec.json")
 MATERIAL = {"바탕-구성.md", "바탕-움직임.md"}
 FONT_DIRS = {"palette", "layouts", "mockups"}
 FONT_FILES = {"DESIGN.md", "tokens.css", "components.css"}
 FONT_SUFFIXES = {".html", ".css", ".js", ".json", ".md"}
-
-
-def project_root(path: Path) -> Path | None:
-    """파일 위쪽 폴더 가운데 스킬 프로젝트(맥락 정리·확정 기록·후보 spec 이 있는 곳)를 찾는다."""
-    for folder in path.parents:
-        if any((folder / m).is_file() for m in PROJECT_MARKS):
-            return folder
-    return None
 
 
 def text_after(tool: str, inp: dict, path: Path) -> str | None:
@@ -56,7 +48,7 @@ def check(tool: str, inp: dict) -> str | None:
     if not raw:
         return None
     path = Path(raw).resolve()
-    root = project_root(path)
+    root = stage.project_root(path)
     if root is None:
         return None
     rel = path.relative_to(root).parts
@@ -84,6 +76,12 @@ def check(tool: str, inp: dict) -> str | None:
             body = text_after(tool, inp, path)
             if body is not None and stage.PALETTE_VIEWER not in body:
                 return "팔레트 화면은 palette-switcher.js 틀로만 만듭니다(comparison-board.md § Palettes)."
+            # 표에 없는 글꼴 — 기억으로 고른 글꼴이 근거 없이 후보에 들어갔다
+            unknown = fonts.unknown_fonts(body or "", fonts.client_fonts(path.parent))
+            if unknown:
+                return (f"표에 없는 글꼴: {', '.join(unknown)} — fonts.py pick 에서 고르세요"
+                        f"(python {stage.S}/fonts.py pick --style <성격>, CSS 이름은 그 아래 웹폰트 줄). "
+                        "의뢰인이 이미 쓰는 글꼴이면 concept-brief.md 에 「의뢰인 글꼴: 이름」을 적으세요.")
     elif rel == ("DESIGN.md",):
         need = "design"
     elif top in ("layouts", "mockups"):

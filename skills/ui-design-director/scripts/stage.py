@@ -3,7 +3,8 @@
 
     python stage.py <project folder>            # 단계 표 + 다음 명령 (늘 종료 코드 0 — 스킬을 열 때 자동으로 돈다)
     python stage.py <project folder> --require <단계>   # 그 단계를 만들어도 되는지: 앞 단계가 다 됐으면 0, 아니면 1
-    python stage.py <project folder> --decide <단계> "<고른 것>"   # 채팅으로 받은 확정을 decisions.json 에 남긴다
+    python stage.py <project folder> --decide <base|palette> "<고른 것>"   # 채팅으로 받은 확정을 decisions.json 에 남긴다
+    python stage.py --guard <단계> <쓸 곳>   # 스크립트(snapshot·motion·capture)가 프로젝트 formats/ 에 쓰기 전에: 되면 0, 아니면 1
 
 단계(메인 페이지만): brief → board → base → material → palette → design → main
 단계는 파일로 판단한다 — 규칙 글만으로는 디자이너가 틀을 건너뛰거나(직접 짠 보기 화면) 앞 단계 확정 없이 다음 화면을 만들었다.
@@ -27,6 +28,8 @@ LABEL = {"brief": "맥락 정리", "board": "바탕 고르기 화면", "base": "
 SHARED_VIEWER = "board-data"  # make_board.py 공용 틀 표시
 PALETTE_VIEWER = "palette-switcher.js"
 TEMPLATE_MARK = "<!-- 채우기 전 -->"  # base_material.py 가 만든 빈 틀 표시 — 다 채우고 지우기 전에는 바탕 자료가 안 된 것으로 본다
+DECIDABLE = ("base", "palette")  # --decide 로 남기는 확정은 이 둘뿐 — 「board」로 남겨 바탕이 안 정해진 채 남았다
+PROJECT_MARKS = ("concept-brief.md", "decisions.json", "formats/board-spec.json")  # 스킬 프로젝트 폴더 표시
 BROKEN = "decisions.json 을 읽을 수 없어요(JSON 형식이 깨짐) — 손으로 고치기 전에는 --decide 로 쓰지 않습니다"
 
 
@@ -115,11 +118,33 @@ def missing_before(root: Path, stage: str) -> list[str]:
     return _missing(status(root)[0], stage)
 
 
+def project_root(path: Path) -> Path | None:
+    """파일 위쪽 폴더 가운데 스킬 프로젝트(맥락 정리·확정 기록·후보 spec 이 있는 곳). 없으면 None(hooks/guard.py 도 쓴다)."""
+    for folder in path.parents:
+        if any((folder / m).is_file() for m in PROJECT_MARKS):
+            return folder
+    return None
+
+
+def output_block(out: Path, need: str) -> str | None:
+    """스크립트가 프로젝트 formats/ 안에 쓰려는데 need 단계의 앞 단계가 안 됐으면 막을 이유. 프로젝트 밖이면 None.
+    훅(guard.py)은 Write·Edit 만 보므로 바탕 자료를 만드는 스크립트는 이것으로 스스로 멈춘다."""
+    out = Path(out).resolve()
+    root = project_root(out / "_")  # out 이 폴더여도 그 자신부터 위로 찾는다
+    if root is None or out == root or out.relative_to(root).parts[0] != "formats":
+        return None
+    missing = missing_before(root, need)
+    if not missing:
+        return None
+    return (f"아직 {LABEL[need]}을(를) 만들 수 없음 — 먼저: {', '.join(LABEL[s] for s in missing)}. "
+            f"python {S}/stage.py {root.as_posix()} 로 다음 명령을 보세요.")
+
+
 NEXT = {
     "brief": "concept-brief.md 에 맥락(주 업무·손님·싫은 것·사진 누구 것)을 적는다 — 질문은 한 번에 하나",
     "board": f"후보 spec(formats/board-spec.json) → node {S}/live_proxy.mjs formats/board-spec.json (공용 틀 보기 화면을 만들고 OPEN 주소 하나를 찍는다 — 그 주소만 의뢰인에게. 「확정」은 DECISION 줄과 formats/decision.json 으로 온다)",
     "base": f"의뢰인이 보기 화면에서 「확정」을 누르기를 기다린다(live_proxy.mjs 가 DECISION 줄을 찍고 formats/decision.json 을 쓴다). 채팅으로 답하면: python {S}/stage.py . --decide base \"<번호 이름>\"",
-    "material": f"고른 바탕에 대해 먼저: python {S}/base_material.py . <바탕 주소> (jobs-base.json·바탕-구성.md 틀) → node {S}/snapshot.mjs formats/jobs-base.json formats/snapshot · node {S}/motion.mjs <바탕 주소> formats/바탕-움직임.md · node {S}/capture.mjs formats/jobs-base.json formats/base-cap · node {S}/extract_styles.mjs <바탕 주소> formats/추출-1280.json --width 1280 → formats/바탕-구성.md 를 채우고 맨 위 「채우기 전」 줄을 지운다",
+    "material": f"고른 바탕에 대해 먼저: python {S}/base_material.py . (바탕 주소는 확정과 board-spec.json 에서 읽어 「바탕 주소:」로 찍는다 — 그 주소를 아래 <바탕 주소> 에. jobs-base.json·바탕-구성.md 틀) → node {S}/snapshot.mjs formats/jobs-base.json formats/snapshot · node {S}/motion.mjs <바탕 주소> formats/바탕-움직임.md · node {S}/capture.mjs formats/jobs-base.json formats/base-cap · node {S}/extract_styles.mjs <바탕 주소> formats/추출-1280.json --width 1280 → formats/바탕-구성.md 를 채우고 맨 위 「채우기 전」 줄을 지운다",
     "palette": f"palette/index.html 을 palette-switcher.js 틀로(comparison-board.md § Palettes, 바탕의 4~6색 조합에서 출발), 글꼴은 python {S}/fonts.py pick --style <고딕|명조|손글씨|제목용> 에서만(references/fonts.md) → python {S}/fonts.py check palette → wait_choice.mjs palette/index.html palette/decision.json",
     "design": "DESIGN.md 를 design-md-format.md 틀로 — § 바탕에서 바꾼 곳, § 부품 출처 포함",
     "main": f"references/build-rules.md 를 따라 mockups/ 에 메인 페이지 — 완성 시안은 하위 에이전트 하나에 파일 경로와 build-rules.md 경로를 넘긴다 → python {S}/preflight.py .",
@@ -132,10 +157,19 @@ def main(argv: list[str]) -> int:
     if not argv:
         print(__doc__.strip(), file=sys.stderr)
         return 0
+    if argv[0] == "--guard":
+        if len(argv) < 3 or argv[1] not in STAGES:
+            print(f"사용: stage.py --guard <단계> <쓸 곳> ({', '.join(STAGES)})", file=sys.stderr)
+            return 2
+        reason = output_block(Path(argv[2]), argv[1])
+        if reason:
+            print(reason, file=sys.stderr)
+        return 1 if reason else 0
     root = Path(argv[0]).resolve()
     if len(argv) >= 4 and argv[1] == "--decide":
-        if argv[2] not in STAGES:
-            print(f"모르는 단계: {argv[2]} ({', '.join(STAGES)})", file=sys.stderr)
+        if argv[2] not in DECIDABLE:
+            what = "" if argv[2] in STAGES else f"모르는 단계: {argv[2]}. "
+            print(f"{what}--decide 는 {'·'.join(DECIDABLE)} 만 받습니다. 후보 고르기는 base 로 남깁니다: --decide base \"<번호 이름>\"", file=sys.stderr)
             return 2
         if saved(root) is None:
             print(f"! {BROKEN}: {root / 'decisions.json'}", file=sys.stderr)

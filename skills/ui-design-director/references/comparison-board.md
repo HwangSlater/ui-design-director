@@ -42,6 +42,28 @@ Put the candidates in `<script type="application/json" id="palettes" data-step="
 
 **Fonts on the same page.** The switcher also takes font candidates from `<script type="application/json" id="fonts">` (`id`, `name`, `heading`, `body` font stacks, `css` stylesheet URLs and/or `faces` — `{family, src, weight}` for fonts published only as files — plus `maker`, `license`, `source`, `note`). The candidates come from [fonts.md](fonts.md) (`fonts.py pick`), never from memory; put each font's origin in `source` and its licence conditions in `license`. Run `python ${CLAUDE_SKILL_DIR}/scripts/fonts.py check palette` before sending; when a font loads from a mirror for the preview, note that the real site should self-host the official files. The page uses `--f-heading` and `--f-body`. Set `data-sample` on the fonts script to a line from this project (`"19:30 영통 A코트 · 승점 19"`), never one left from another project.
 
+**Complete example — copy and fill; do not read the switcher script.** Angle-bracket values come from the tools named; everything else is the exact field set the switcher reads. A palette needs `id` and all six `roles` (one missing and the switcher drops that candidate); a font needs `id`, `heading` and `body`. `colors` are the swatches on the chip, `source` opens from the bar, `note` shows under the name. For a font, take the webfont line `fonts.py pick` prints: a stylesheet goes in `css`; for a font published only as files run `python ${CLAUDE_SKILL_DIR}/scripts/fonts.py face "<name>"` and copy each printed `@font-face` rule's `font-family`, `src` url and `font-weight` into one `faces` item (`style` is optional, default `normal`).
+
+```html
+<link rel="stylesheet" href="dock.css"><link rel="stylesheet" href="palette-switcher.css">
+<script type="application/json" id="palettes" data-step="팔레트 고르기">
+[{"id": "A", "name": "바탕 그대로", "source": "<base url>",
+  "colors": ["#f6f1e9", "#ffffff", "#2b2622", "#8a4b2a", "#d9a441"],
+  "roles": {"bg": "#f6f1e9", "surface": "#ffffff", "text": "#2b2622", "action": "#8a4b2a", "on-action": "#ffffff", "accent": "#d9a441"},
+  "note": "면 색은 배경에 흰색 6%를 섞음"}]
+</script>
+<script type="application/json" id="fonts" data-sample="<a line from this project>">
+[{"id": "1", "name": "<pick name>", "heading": "\"<family>\", serif", "body": "\"<family>\", sans-serif",
+  "css": ["<stylesheet url from fonts.py pick>"],
+  "maker": "<maker>", "license": "<licence conditions>", "source": "<official page>", "note": "제목·본문 같은 글꼴"},
+ {"id": "2", "name": "<pick name>", "heading": "\"<family>\", serif", "body": "\"<family>\", serif",
+  "faces": [{"family": "<font-family from fonts.py face>", "src": "<src url from fonts.py face>", "weight": "400"},
+            {"family": "<font-family from fonts.py face>", "src": "<src url of the bold file>", "weight": "700"}],
+  "maker": "<maker>", "license": "<licence conditions>", "source": "<official page>", "note": "미리 보기는 사본, 실제 사이트는 공식 파일을 직접 올림"}]
+</script>
+<script src="dock.js"></script><script src="palette-switcher.js"></script>
+```
+
 **The 확정 button on the palette page.** Start the waiter before giving out the address:
 
 ```bash

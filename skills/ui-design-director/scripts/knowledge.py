@@ -5,6 +5,7 @@
     python knowledge.py stage <brief|board|palette|design|main|review> [--top 4]    # stage.py 가 단계 표 끝에 붙인다
     python knowledge.py show <id>                                                    # 한 규칙의 근거·출처 전부
     python knowledge.py parts                                                        # 쓸 수 있는 부품 이름
+    부품 이름은 한국어로도 된다: --part 단추,입력 양식,첫 화면 (PART_ALIASES)
 
 긴 문서(references/knowledge-*.md)를 통째로 읽으면 절마다 3천~8천 토큰이 들고, 필요한 순간에 떠올리지 못하면 안 쓰였다.
 한 줄에 규칙 · 값 · 출처 이름, 끝에 자료끼리 다른 곳(있으면 바탕 값을 따른다).
@@ -12,6 +13,7 @@
 from __future__ import annotations
 
 import argparse
+import difflib
 import json
 import sys
 from functools import lru_cache
@@ -25,6 +27,65 @@ AI_FONT_NAMES = tuple(n for f in json.loads((DATA.parent.parent / "fonts" / "ai-
 # 스킬 단계(stage.py) → 지식의 단계
 STAGE_MAP = {"brief": "brief", "board": "board", "base": "board", "material": "design", "palette": "palette",
              "design": "design", "main": "main", "review": "review"}
+
+# 한국어 부품 이름 → 규칙 표의 부품 id. 의뢰인·디자이너가 쓰는 말로 물어도 맞는 규칙이 나오게
+PART_ALIASES = {
+    "머리": "header", "머리글": "header", "헤더": "header", "상단": "header",
+    "메뉴": "nav", "내비": "nav", "내비게이션": "nav", "네비": "nav",
+    "첫 화면": "first-screen", "첫화면": "first-screen", "히어로": "first-screen",
+    "바닥": "footer", "바닥글": "footer", "푸터": "footer", "하단": "footer",
+    "제목": "heading", "본문": "body-text", "숫자": "numbers", "한글": "korean-text",
+    "단추": "button", "버튼": "button", "링크": "link", "카드": "card",
+    "폼": "form", "입력 양식": "form", "입력양식": "form", "양식": "form",
+    "입력칸": "input", "입력": "input", "오류": "error-state", "에러": "error-state",
+    "빈 화면": "empty-state", "빈화면": "empty-state", "불러오는 중": "loading", "로딩": "loading",
+    "목록": "list", "리스트": "list", "표": "table", "테이블": "table",
+    "사진": "image", "이미지": "image", "아이콘": "icon", "로고": "logo",
+    "색": "colour", "색깔": "colour", "색상": "colour", "대비": "contrast", "명암비": "contrast",
+    "어두운 구역": "dark-section", "어두운구역": "dark-section",
+    "간격": "spacing", "여백": "spacing", "격자": "grid", "그리드": "grid", "반응형": "responsive",
+    "움직임": "motion", "모션": "motion", "애니메이션": "motion", "마우스 올림": "hover", "호버": "hover",
+    "문구": "copy", "카피": "copy", "신뢰": "trust", "예약": "booking",
+    "쇼핑": "shop", "가게": "shop", "쇼핑몰": "shop", "접근성": "accessibility",
+    "생성 티": "generated-look", "ai 티": "generated-look", "글꼴": "font-choice", "폰트": "font-choice",
+    "페이지": "page", "화면": "page",
+    # 자주 쓰는 영어 이름 중 id 와 다른 것
+    "hero": "first-screen", "menu": "nav", "navigation": "nav", "color": "colour", "font": "font-choice",
+    "typography": "font-choice", "photo": "image", "footer-nav": "footer", "body": "body-text", "text": "body-text",
+    "cta": "button", "error": "error-state", "empty": "empty-state", "animation": "motion",
+}
+
+
+def part_ids() -> set[str]:
+    return {p for r in rules() for p in r.get("parts", [])}
+
+
+def resolve_parts(raw: str) -> tuple[set[str], list[str]]:
+    """쉼표로 받은 부품 이름을 id 로. 한국어 이름도 받고, 모르는 이름은 따로 돌려준다."""
+    ids, unknown = part_ids(), []
+    out: set[str] = set()
+    for name in (x.strip() for x in raw.split(",")):
+        if not name:
+            continue
+        key = " ".join(name.lower().split())
+        pid = key if key in ids else PART_ALIASES.get(key) or PART_ALIASES.get(key.replace(" ", ""))
+        if pid:
+            out.add(pid)
+        else:
+            unknown.append(name)
+    return out, unknown
+
+
+def nearest_parts(name: str, n: int = 4) -> list[str]:
+    """모르는 부품 이름과 가까운 id — 영어 id 와 한국어 이름 모두에서 찾는다."""
+    ids = sorted(part_ids())
+    key = name.lower().strip()
+    found = difflib.get_close_matches(key, ids, n=n, cutoff=0.4)
+    for alias in difflib.get_close_matches(key, list(PART_ALIASES), n=n, cutoff=0.4):
+        if PART_ALIASES[alias] not in found:
+            found.append(PART_ALIASES[alias])
+    found += [i for i in ids if (key in i or i in key) and i not in found]
+    return found[:n]
 
 
 @lru_cache(maxsize=1)
@@ -106,7 +167,7 @@ def main(argv: list[str]) -> int:
     ap = argparse.ArgumentParser(description="디자인 지식 꺼내 보기")
     sub = ap.add_subparsers(dest="cmd", required=True)
     a = sub.add_parser("ask")
-    a.add_argument("--part", default="", help="쉼표로: button,form,first-screen …(parts 로 목록)")
+    a.add_argument("--part", default="", help="쉼표로: button,form,first-screen … 한국어(단추,입력 양식)도 됨(parts 로 목록)")
     a.add_argument("--stage")
     a.add_argument("--field")
     a.add_argument("--q", default="", help="낱말(영어·한국어)")
@@ -136,7 +197,14 @@ def main(argv: list[str]) -> int:
         for ln in stage_lines(args.stage, args.top):
             print(ln)
         return 0
-    parts = {p.strip() for p in args.part.split(",") if p.strip()}
+    parts, unknown = resolve_parts(args.part)
+    if unknown:
+        for name in unknown:
+            near = nearest_parts(name)
+            hint = ", ".join(near) if near else "knowledge.py parts 로 목록을 볼 것"
+            print(f"모르는 부품 이름: {name} → 가까운 이름: {hint}")
+        if not parts:
+            return 1
     words = [x.lower() for x in args.q.split() if x]
     found = pick(parts, STAGE_MAP.get(args.stage, args.stage) if args.stage else None, args.field, words, args.top)
     if not found:

@@ -5,8 +5,7 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 CFG = json.load(open(os.path.join(HERE, "config.json"), encoding="utf-8"))
 BASE = CFG["base"]
 OUT = os.path.join(HERE, "data")
-DET = os.path.join(OUT, "detail")
-os.makedirs(DET, exist_ok=True)
+DET = os.path.join(OUT, "detail")  # 폴더는 돌릴 때 만든다(webfont.py 가 get 만 가져다 쓸 때 빈 폴더가 생기지 않게)
 UA = {"User-Agent": "Mozilla/5.0 (font-licence research; contact via noonnu if needed)"}
 
 
@@ -128,6 +127,7 @@ def crawl_details(ids):
 
 
 if __name__ == "__main__":
+    os.makedirs(DET, exist_ok=True)
     lst = crawl_list()
     if "--list-only" not in sys.argv:
         # 개인 작가 폰트는 상세를 받지 않는다(--all 이면 전부).

@@ -4,6 +4,8 @@
 사용: python preflight.py <프로젝트 폴더>
   읽는 것: concept-brief.md · SITE-PLAN.md · DESIGN.md · formats/(참고 캡처·jobs*.json·뼈대 표) · layouts/ · mockups/
   있는 파일만 본다 — 단계가 앞이면 그 단계 것만 걸린다. 걸린 게 있으면 끝 코드 1.
+  시안 폴더에는 check_site.py 를 다시 돌려 FLOOR·DRIFT 를 함께 알리고(점검 뒤 고친 것까지), compose_metrics.mjs 의
+  구성-기록.json 에서 미달 뒤 비교 사이트를 바꾼 곳을 「비교 사이트를 바꿈」으로 알린다.
 
 왜 글이 아니라 도구인가(사용자 2026-11-04): 스킬 글이 길어질수록 새 세션이 놓친다. 마당집 카페 역할극에서
 의뢰인이 말한 인스타·네이버를 참고에서 빠뜨림, 참고 공통점을 물어봐야 말함, 사장님 들어가기·폰 분실 화면 빠짐,
@@ -12,12 +14,14 @@
 
 from __future__ import annotations
 
+import json
 import re
 import sys
 from html.parser import HTMLParser
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
+import check_site  # noqa: E402  (접근성 바닥·토큰 어긋남은 check_site.py 하나로 — 마지막 점검 뒤 고친 것도 보낼 때 다시 잡게)
 import fonts  # noqa: E402  (AI 글꼴 판단은 fonts.py 하나로)
 from common import TOOL_DIRS, read  # noqa: E402  (read 는 권한 오류에도 빈 글 — stage.read 와 같게)
 
@@ -38,6 +42,8 @@ SKELETON_HEAD = re.compile(r"# 뼈대 비교 — (\d+)px")
 BTN_CLASS = re.compile(r"\b(btn|button|cta)\b", re.I)
 WORK_PAGE = re.compile(r"owner|admin|login|code|lost|confirm|check|404|not-found", re.I)  # 확인 창·오류 화면의 두 단추는 정상
 SKIP = TOOL_DIRS | {"cap", "captures", "blind"}
+HISTORY_NAME = "구성-기록.json"  # compose_metrics.mjs 가 결과 .md 옆에 쌓는 기록(같은 이름을 쓴다)
+SITE_LINES_MAX = 20  # check_site 결과를 이보다 많이 늘어놓지 않는다(나머지는 수만)
 
 
 def mock_dir(root: Path) -> Path:
@@ -159,6 +165,46 @@ def check(root: Path) -> list[str]:
                 hits = fonts.ai_fonts_in(read(p), allowed)
                 if hits:
                     out.append(f"AI 글꼴: {p.relative_to(root)} — {', '.join(hits)} · references/fonts.md 대로 fonts.py pick 에서 고를 것")
+    out += site_checks(mock_dir(root), root)
+    out += changed_refs(root)
+    return out
+
+
+def site_checks(mock: Path, root: Path) -> list[str]:
+    """시안 폴더에 check_site.py 를 다시 돌린 FLOOR·DRIFT — 점검을 돌린 뒤 고친 곳이 새로 어긋나도 보내기 전에 잡는다."""
+    if not files(mock, "*.html"):
+        return []
+    found = [f for f in check_site.run(mock).findings if f.tier in ("FLOOR", "DRIFT")]
+    found.sort(key=lambda f: (f.tier != "FLOOR", f.path, f.line))
+    where = mock.relative_to(root).as_posix()
+    out = [f"{f.tier} {where}/{Path(f.path).as_posix()}:{f.line} {f.rule} — {f.message}" for f in found[:SITE_LINES_MAX]]
+    if len(found) > SITE_LINES_MAX:
+        out.append(f"FLOOR·DRIFT 그 밖 {len(found) - SITE_LINES_MAX}개 — python check_site.py {where} 로 전부 볼 것")
+    return out
+
+
+def changed_refs(root: Path) -> list[str]:
+    """같은 폭의 구성 비교에서 미달이 나온 뒤 기준 사이트를 바꿨는가 — 기준을 바꿔 통과시키면 의뢰인에게 까닭을 말해야 한다."""
+    out = []
+    for hist in files(root, HISTORY_NAME):
+        try:
+            runs = json.loads(read(hist) or "[]")
+        except json.JSONDecodeError:
+            continue
+        by_width: dict[str, list[dict]] = {}
+        for r in runs if isinstance(runs, list) else []:
+            if isinstance(r, dict):
+                by_width.setdefault(str(r.get("width")), []).append(r)
+        for width, rs in by_width.items():
+            first = next((i for i, r in enumerate(rs) if isinstance(r.get("short"), int) and r["short"] > 0), None)
+            if first is None or first == len(rs) - 1:
+                continue
+            pair = (rs[first], rs[-1])
+            sites = [[s for s in r.get("sites") or [] if isinstance(s, dict)] for r in pair]
+            if {s.get("url") for s in sites[0]} != {s.get("url") for s in sites[1]}:
+                names = [", ".join(str(s.get("name", "")) for s in group) for group in sites]
+                out.append(f"비교 사이트를 바꿈: {hist.relative_to(root).as_posix()} {width}px — 미달이 나온 뒤 기준이 「{names[0]}」에서 "
+                           f"「{names[1]}」로 바뀜. 왜 바꿨는지 의뢰인에게 말할 것(기준을 바꿔 통과시킨 것으로 보인다)")
     return out
 
 

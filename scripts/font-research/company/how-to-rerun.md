@@ -9,6 +9,9 @@
    - 처음부터 새로 받으려면 `data/` 를 지운다. 개인 작가 글꼴까지 받으려면 `--all`.
    - 눈누는 빠르게 요청하면 429(Too Many Requests)를 돌려준다. `config.json` 의 `workers` 1, `delay_sec` 1.2 이상을 지킨다.
 2. `python -I build.py` → `company-fonts.json`, `company-fonts.md` 를 다시 만든다.
+3. 웹폰트 글: `python -I webfont.py <저장소>/skills/ui-design-director/assets/fonts/fonts.json`
+   - fonts.json 의 눈누 글꼴마다 상세 페이지의 「웹폰트로 사용」 @font-face 글만 시스템 임시 폴더 `uidd-noonnu-webfont/<id>.css` 에 둔다(없으면 `<id>.none`). 다시 돌리면 받은 것은 건너뛴다.
+   - 1.2초에 한 번(약 830곳이면 20분). 합치기는 `merge.py --webfont <그 폴더> …/fonts.json` (조사를 다시 했으면 merge.py 끝에 `--webfont <그 폴더>`).
 
 손볼 곳
 - 만든 곳 갈래(회사/공공기관·지자체/단체/개인): `classify.py` 의 `INDIVIDUAL`, `FONT_CO`, `OVERRIDE`. 새 제작처가 생기면 여기에 넣는다.

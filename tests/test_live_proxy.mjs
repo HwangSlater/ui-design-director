@@ -23,6 +23,7 @@ before(async () => {
   site = createServer((req, res) => {
     lastHeaders = req.headers;
     hits[req.url] = (hits[req.url] || 0) + 1;
+    if (req.url === "/gone") { res.writeHead(403, { "content-type": "text/html" }); res.end("<p>forbidden</p>"); return; }
     if (req.url === "/hop") { res.writeHead(302, { location: "/lazy" }); res.end(); return; }
     if (req.url === "/away") { res.writeHead(302, { location: `http://localhost:${site.address().port}/` }); res.end(); return; }
     if (req.url === "/loop") { res.writeHead(301, { location: "/loop" }); res.end(); return; }
@@ -171,4 +172,19 @@ test("같은 페이지는 한 번만 받는다: 묻기(probe) 뒤 화면 요청�
   const page = await via(url, "?ua=pc&js=1");
   assert.equal(page.status, 200);
   assert.equal((hits["/app?once=1"] || 0) - before, 1);
+});
+
+test("띄우기 전에 후보 첫 페이지를 확인해 고장 난 후보를 알린다(그래도 OPEN 은 찍는다)", async () => {
+  const d3 = mkdtempSync(join(tmpdir(), "live-proxy-chk-"));
+  writeFileSync(join(d3, "board.html"), '<script type="application/json" id="board-data">{}</script><script src="board.js"></script>');
+  writeFileSync(join(d3, "spec.json"), JSON.stringify({ candidates: [
+    { n: "1", name: "멀쩡", pages: { 홈: `${origin}/` } }, { n: "2", name: "막힘", pages: { 홈: `${origin}/gone` } }] }));
+  const p = spawn(process.execPath, [PROXY, join(d3, "board.html"), join(d3, "spec.json")]);
+  let text = "";
+  try {
+    await new Promise((r) => p.stdout.on("data", (d) => { text += d; if (/OPEN /.test(text)) r(); }));
+    assert.match(text, /후보 2 막힘: 403 — 바꾸거나 빼고 다시 띄우세요/);
+    assert.ok(!/후보 1 멀쩡:/.test(text), "멀쩡한 후보가 찍힘");
+    assert.ok(text.indexOf("403") < text.indexOf("OPEN "), "경고가 OPEN 보다 늦게 나옴");
+  } finally { p.kill(); }
 });

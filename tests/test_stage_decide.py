@@ -46,3 +46,35 @@ def test_unfilled_template_is_not_material(tmp_path: Path) -> None:
     assert stage.status(tmp_path)[0]["material"] is False
     (fm / "바탕-구성.md").write_text("# 구성", encoding="utf-8")
     assert stage.status(tmp_path)[0]["material"] is True
+
+
+def test_decide_only_base_and_palette(tmp_path: Path) -> None:
+    # 디자이너가 --decide board 로 남겨 바탕이 안 정해진 채 남았다
+    r = run(str(tmp_path), "--decide", "board", "3 Norm")
+    assert r.returncode == 2 and '--decide base "<번호 이름>"' in r.stderr
+    assert not (tmp_path / "decisions.json").exists()
+    assert run(str(tmp_path), "--decide", "palette", "B 숲").returncode == 0
+
+
+def project_with_board(root: Path) -> None:
+    (root / "concept-brief.md").write_text("주 업무", encoding="utf-8")
+    (root / "formats").mkdir()
+    (root / "formats" / "보기.html").write_text('<script id="board-data">{}</script>', encoding="utf-8")
+
+
+def test_guard_blocks_material_before_base(tmp_path: Path) -> None:
+    project_with_board(tmp_path)
+    out = tmp_path / "formats" / "snapshot"
+    assert "바탕 확정" in (stage.output_block(out, "material") or "")
+    r = run("--guard", "material", str(out))
+    assert r.returncode == 1 and "바탕 확정" in r.stderr
+    assert stage.output_block(tmp_path / "mockups" / "x.md", "material") is None  # formats/ 밖은 보지 않는다
+    (tmp_path / "decisions.json").write_text('{"base": "1 가"}', encoding="utf-8")
+    assert stage.output_block(out, "material") is None
+    assert run("--guard", "material", str(out)).returncode == 0
+
+
+def test_guard_ignores_folders_outside_projects(tmp_path: Path) -> None:
+    (tmp_path / "formats").mkdir()  # 표시 파일(concept-brief.md·decisions.json·board-spec.json)이 없으면 스킬 프로젝트가 아니다
+    assert stage.output_block(tmp_path / "formats" / "snapshot", "material") is None
+    assert run("--guard", "material", str(tmp_path / "formats" / "a.md")).returncode == 0

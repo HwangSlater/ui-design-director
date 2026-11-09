@@ -12,6 +12,7 @@ import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node
 import { join, resolve } from "node:path";
 import { pathToFileURL } from "node:url";
 import { goto, launch, openPage, scrollWakeExpr, sleep, HIDE_OVERLAYS } from "./browser.mjs";
+import { requireStage } from "./stage_guard.mjs";
 
 const SETTLE_MS = 2500, SCROLL_STEP_MS = 300, MAX_SCROLL = 16000;
 // 사이트 대신 확인·차단 화면이 왔는지 — 그대로 저장하면 그 화면이 후보처럼 보인다
@@ -117,6 +118,7 @@ async function snap(port, url, width, dir) {
 
 async function main() {
   const { widths, rest: [jobsPath, outDir] } = parseArgs(process.argv.slice(2));
+  requireStage(outDir); // 스킬 프로젝트 formats/ 안이면 바탕 확정 뒤에만(바탕 자료) — 밖이면 그대로
   const jobs = JSON.parse(readFileSync(jobsPath, "utf8"));
   mkdirSync(outDir, { recursive: true });
   const { port, close } = await launch("snap-");

@@ -1,16 +1,20 @@
 #!/usr/bin/env python3
 """글꼴 조사 두 갈래를 스킬이 읽는 fonts.json 하나로 합친다.
 
-    python -X utf8 scripts/font-research/merge.py <조사 폴더> skills/ui-design-director/assets/fonts/fonts.json
+    python -X utf8 scripts/font-research/merge.py <조사 폴더> skills/ui-design-director/assets/fonts/fonts.json [--webfont <웹폰트 폴더>]
+    python -X utf8 scripts/font-research/merge.py --webfont <웹폰트 폴더> skills/ui-design-director/assets/fonts/fonts.json
+        (조사를 다시 하지 않고 지금 fonts.json 에 웹폰트 글만 붙인다)
 
 <조사 폴더> 에는 how-to-rerun.md 대로 만든 결과가 있어야 한다:
   licenses.json, fonts.json            방문 상위 사이트에서 잰 글꼴과 라이선스(measure.mjs·analyze.mjs)
   company/company-fonts.json           눈누 전체에서 회사·기관·단체가 낸 웹 임베딩 가능 글꼴(company/build.py)
+<웹폰트 폴더> 는 company/webfont.py 가 눈누 상세 페이지에서 받은 「웹폰트로 사용」 글(<눈누 id>.css)이다 → 각 글꼴의 webfont.
 AI 글꼴(assets/fonts/ai-fonts.json)은 여기서 빼지 않는다 — 고르는 도구(fonts.py)가 뺀다. 목록이 바뀌어도 다시 합칠 필요가 없게.
 """
 from __future__ import annotations
 
 import json
+import re
 import sys
 from pathlib import Path
 
@@ -27,7 +31,39 @@ def load(p: Path):
     return json.loads(p.read_text(encoding="utf-8"))
 
 
+def save(data: dict, out: Path) -> None:
+    out.parent.mkdir(parents=True, exist_ok=True)
+    out.write_text(json.dumps(data, ensure_ascii=False, indent=0), encoding="utf-8")
+
+
+def add_webfonts(rows, folder: Path) -> int:
+    """눈누 id 로 웹폰트 글을 붙인다. 붙인 글꼴 수."""
+    n = 0
+    for row in rows:
+        m = re.search(r"/font_page/(\d+)", row.get("noonnu") or "")
+        f = folder / f"{m.group(1)}.css" if m else None
+        if f and f.is_file() and f.read_text(encoding="utf-8").strip():
+            row["webfont"] = f.read_text(encoding="utf-8").strip()
+            n += 1
+    return n
+
+
 def main(argv: list[str]) -> int:
+    webfont = None
+    if "--webfont" in argv:
+        i = argv.index("--webfont")
+        webfont = Path(argv[i + 1]) if i + 1 < len(argv) else None
+        argv = argv[:i] + argv[i + 2:]
+        if webfont is None or not webfont.is_dir():
+            print("--webfont 뒤에 company/webfont.py 가 만든 폴더를 주세요", file=sys.stderr)
+            return 2
+    if webfont and len(argv) == 1:  # 지금 표에 웹폰트만
+        out = Path(argv[0])
+        data = load(out)
+        n = add_webfonts(data["fonts"], webfont)
+        save(data, out)
+        print(f"웹폰트 글 {n}개 / 글꼴 {len(data['fonts'])}개 → {out}")
+        return 0
     if len(argv) != 2:
         print(__doc__.strip(), file=sys.stderr)
         return 2
@@ -67,9 +103,9 @@ def main(argv: list[str]) -> int:
         "source": "방문 상위 사이트 186곳 실측 + 눈누 전체 중 회사·기관·단체 공개 글꼴(웹 임베딩 가능)",
         "fonts": sorted(rows.values(), key=lambda r: (-r["top_sites"], -r["views"], r["name"])),
     }
-    out.parent.mkdir(parents=True, exist_ok=True)
-    out.write_text(json.dumps(data, ensure_ascii=False, indent=0), encoding="utf-8")
-    print(f"글꼴 {len(data['fonts'])}개 → {out}")
+    n = add_webfonts(data["fonts"], webfont) if webfont else 0
+    save(data, out)
+    print(f"글꼴 {len(data['fonts'])}개(웹폰트 글 {n}개) → {out}")
     return 0
 
 

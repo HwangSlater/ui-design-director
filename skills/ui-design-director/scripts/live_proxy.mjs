@@ -253,6 +253,40 @@ const proxyServer = createServer(async (req, res) => {
   }
 });
 
+// 띄우기 전에 후보마다 첫 페이지를 받아 본다(PC, 받은 것은 기억해 두어 미리 받기·첫 화면이 다시 쓴다).
+// 고장 난 후보(403·404·5xx·응답 없음)를 그대로 의뢰인에게 보였다 — 주소를 주기 전에 디자이너가 바꾸거나 빼게 알린다.
+const CHECK_PARALLEL = 4;
+const candList = (spec.candidates || []).map((c, i) => ({ id: String(c.id ?? c.n ?? i + 1), title: c.title || c.name || "", url: Object.values(c.pages || c.urls || {})[0] })).filter((c) => c.url);
+// 돌려줌: { bad: 고장 이유 } 또는 { note: 참고 } 또는 {}
+const checkOne = async (c) => {
+  let item;
+  try { item = await getUpstream(new URL(c.url), "GET", "pc"); } catch (err) {
+    return { bad: err.name === "TimeoutError" ? `응답 없음(${TIMEOUT_MS / 1000}초)` : `받지 못함(${err.cause?.code || err.message})` };
+  }
+  if (!item) return { bad: "후보가 아닌 사이트로 넘김" };
+  if (item.status >= 400) return { bad: String(item.status) };
+  if (!(item.headers.get("content-type") || "").includes("text/html")) return {};
+  const html = item.body.toString("utf8");
+  if (CHALLENGE_RE.test(html.slice(0, 20000))) return { note: "「브라우저 확인 중」 화면 — 보기 화면이 스크립트를 켜서 띄움, 그래도 안 넘어가면 캡처로" };
+  if (!/<script\b/i.test(html) && visibleText(html) < TEXT_MIN) return { note: "글이 거의 없는 빈 페이지" };
+  return {};
+};
+const checkAll = async () => {
+  const results = new Array(candList.length);
+  let next = 0;
+  const worker = async () => { while (next < candList.length) { const i = next++; results[i] = await checkOne(candList[i]); } };
+  await Promise.all(Array.from({ length: CHECK_PARALLEL }, worker));
+  return candList.map((c, i) => ({ ...c, ...results[i] }));
+};
+console.log(`후보 ${candList.length}곳의 첫 페이지를 확인하는 중…`);
+const checked = await checkAll();
+const broken = checked.filter((c) => c.bad);
+if (broken.length) {
+  console.log(`! 고장 난 후보 ${broken.length}곳 — 의뢰인에게 주기 전에:`);
+  for (const c of broken) console.log(`  후보 ${c.id} ${c.title}: ${c.bad} — 바꾸거나 빼고 다시 띄우세요`);
+}
+for (const c of checked.filter((x) => x.note)) console.log(`  참고: 후보 ${c.id} ${c.title}: ${c.note}`);
+
 const listen = (srv) => new Promise((r) => srv.listen(0, HOST, () => r(srv.address().port)));
 const pPort = await listen(proxyServer);
 proxyBase = `http://${HOST}:${pPort}/${key}/`; // lint:allow url 내 컴퓨터 안에서 연 프록시 주소

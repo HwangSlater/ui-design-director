@@ -5,6 +5,7 @@
 
 from __future__ import annotations
 
+import json
 import sys
 import tempfile
 import unittest
@@ -83,6 +84,38 @@ class Parts(unittest.TestCase):
         self.assertTrue(found(root, "바탕 빠짐"))
         root = project({"layouts/home-1.html": "<p>x</p>", "DESIGN.md": "부품 출처\n## 바탕에서 바꾼 곳\n- 끝에 전화 3/3곳"})
         self.assertFalse(found(root, "바탕 빠짐"))
+
+
+class SiteChecksAgain(unittest.TestCase):
+    def test_check_site_floor_and_drift_are_findings(self):
+        # 마지막 check_site 뒤에 고친 시안 — 보낼 때 다시 돌려 잡는다
+        page = '<!doctype html><html><head><meta name="viewport" content="width=device-width"></head><body><img src="a.jpg"><style>a{transition:all .2s}</style></body></html>'
+        lines = preflight.check(project({"concept-brief.md": "x", "mockups/index.html": page}))
+        self.assertTrue(any(l.startswith("FLOOR mockups/index.html") and "html-lang" in l for l in lines), lines)
+        self.assertTrue(any(l.startswith("FLOOR") and "img-alt" in l for l in lines))
+        self.assertTrue(any(l.startswith("DRIFT") and "transition-all" in l for l in lines))
+
+    def test_no_mockups_no_site_checks(self):
+        lines = preflight.check(project({"concept-brief.md": "x"}))
+        self.assertFalse(any(l.startswith(("FLOOR", "DRIFT")) for l in lines))
+
+
+class ChangedReferences(unittest.TestCase):
+    @staticmethod
+    def runs(*entries):
+        return json.dumps([{"width": w, "short": s, "sites": [{"name": n, "url": f"u/{n}"} for n in names]} for w, s, names in entries])
+
+    def test_switching_refs_after_short_is_flagged(self):
+        hist = self.runs((1280, 2, ["가", "나"]), (1280, 0, ["가", "다"]))
+        self.assertTrue(found(project({"concept-brief.md": "x", "mockups/구성-기록.json": hist}), "비교 사이트를 바꿈"))
+
+    def test_same_refs_or_no_short_is_fine(self):
+        same = self.runs((1280, 2, ["가", "나"]), (1280, 0, ["나", "가"]), (390, 0, ["라"]))
+        self.assertFalse(found(project({"concept-brief.md": "x", "mockups/구성-기록.json": same}), "비교 사이트를 바꿈"))
+        never_short = self.runs((1280, 0, ["가", "나"]), (1280, 0, ["가", "다"]))
+        self.assertFalse(found(project({"concept-brief.md": "x", "mockups/구성-기록.json": never_short}), "비교 사이트를 바꿈"))
+        other_width = self.runs((1280, 1, ["가", "나"]), (390, 0, ["다"]))
+        self.assertFalse(found(project({"concept-brief.md": "x", "formats/구성-기록.json": other_width}), "비교 사이트를 바꿈"))
 
 
 if __name__ == "__main__":

@@ -45,3 +45,52 @@ def test_does_not_overwrite(tmp_path: Path) -> None:
 
 def test_rejects_non_http(tmp_path: Path) -> None:
     assert run(str(tmp_path), "file:///etc/passwd").returncode == 2
+
+
+A = "https://a.example"  # lint:allow url 시험용 가짜 주소(접속하지 않음)
+B = "https://b.example"  # lint:allow url 시험용 가짜 주소(접속하지 않음)
+SPEC = {"pages": [{"key": "home", "label": "첫 화면"}, {"key": "work", "label": "작업"}],
+        "candidates": [{"id": "1", "title": "가람", "urls": {"home": f"{A}/ko/home", "work": f"{A}/work"}},
+                       {"id": "2", "title": "Norm Architects", "urls": {"work": f"{B}/w", "home": f"{B}/studio"}}]}
+
+
+def decided_project(root: Path) -> Path:
+    fm = root / "formats"
+    fm.mkdir()
+    (root / "concept-brief.md").write_text("주 업무", encoding="utf-8")
+    (fm / "보기.html").write_text('<script id="board-data">{}</script>', encoding="utf-8")
+    (fm / "board-spec.json").write_text(json.dumps(SPEC), encoding="utf-8")
+    return fm
+
+
+def test_url_from_board_decision(tmp_path: Path) -> None:
+    # 보기 화면 「확정」: 사이트 첫 화면이 아니라 보기 화면이 띄운 페이지(첫 화면 칸) 주소를 쓴다
+    fm = decided_project(tmp_path)
+    (fm / "decision.json").write_text(json.dumps({"label": "2 Norm Architects", "choice": {"candidate": "2", "title": "Norm Architects"}}), encoding="utf-8")
+    r = run(str(tmp_path))
+    assert r.returncode == 0, r.stderr
+    assert f"바탕 주소: {B}/studio" in r.stdout
+    assert json.loads((fm / "jobs-base.json").read_text(encoding="utf-8"))[0]["url"] == f"{B}/studio"
+    assert "2 Norm Architects" in (fm / "바탕-구성.md").read_text(encoding="utf-8")
+
+
+def test_url_from_decide_text(tmp_path: Path) -> None:
+    decided_project(tmp_path)
+    (tmp_path / "decisions.json").write_text(json.dumps({"base": "1번 가람"}, ensure_ascii=False), encoding="utf-8")
+    r = run(str(tmp_path))
+    assert r.returncode == 0, r.stderr
+    assert f"바탕 주소: {A}/ko/home" in r.stdout
+
+
+def test_url_from_old_spec_form(tmp_path: Path) -> None:
+    fm = decided_project(tmp_path)
+    (fm / "board-spec.json").write_text(json.dumps({"candidates": [{"n": "3", "name": "오후", "pages": {"홈": f"{A}/shop/home"}}]}, ensure_ascii=False), encoding="utf-8")
+    (fm / "decision.json").write_text(json.dumps({"label": "3 오후", "choice": {"candidate": "3"}}, ensure_ascii=False), encoding="utf-8")
+    assert f"바탕 주소: {A}/shop/home" in run(str(tmp_path)).stdout
+
+
+def test_stops_before_base_is_decided(tmp_path: Path) -> None:
+    fm = decided_project(tmp_path)
+    r = run(str(tmp_path), URL)
+    assert r.returncode == 1 and "바탕 확정" in r.stderr
+    assert not (fm / "jobs-base.json").exists() and not (fm / "바탕-구성.md").exists()

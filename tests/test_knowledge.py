@@ -56,3 +56,20 @@ def test_number_rules_in_check_site(tmp_path: Path) -> None:
     assert "body-size" in out and "line-height" in out
     assert out.count("motion-duration") == 1  # 사진 겹쳐 바꾸기(opacity)는 빼고
     json.dumps(out)
+
+
+def test_korean_part_names() -> None:
+    parts, unknown = knowledge.resolve_parts("단추, 입력 양식,첫화면,색,hero")
+    assert parts == {"button", "form", "first-screen", "colour"} and not unknown
+    # 별칭은 모두 실제 부품 id 를 가리키고, 모든 id 에 한국어 이름이 하나 이상 있다
+    ids = knowledge.part_ids()
+    assert set(knowledge.PART_ALIASES.values()) <= ids
+    assert ids <= set(knowledge.PART_ALIASES.values())
+    out = run(str(SCRIPTS / "knowledge.py"), "ask", "--part", "버튼", "--top", "2").stdout
+    assert len([ln for ln in out.splitlines() if ln.startswith("[")]) == 2
+
+
+def test_unknown_part_suggests_nearest() -> None:
+    res = run(str(SCRIPTS / "knowledge.py"), "ask", "--part", "buton")
+    assert res.returncode == 1 and "button" in res.stdout and "맞는 규칙 없음" not in res.stdout
+    assert "button" in knowledge.nearest_parts("buttons")
