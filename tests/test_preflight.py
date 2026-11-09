@@ -109,6 +109,12 @@ class ChangedReferences(unittest.TestCase):
         hist = self.runs((1280, 2, ["가", "나"]), (1280, 0, ["가", "다"]))
         self.assertTrue(found(project({"concept-brief.md": "x", "mockups/구성-기록.json": hist}), "비교 사이트를 바꿈"))
 
+    def test_reason_given_with_why_is_shown(self):
+        runs = json.loads(self.runs((1280, 2, ["가", "나"]), (1280, 0, ["가", "다"])))
+        runs[-1]["why"] = "나 는 쇼핑 첫 화면이라 점수 페이지로 바꿈"
+        lines = preflight.check(project({"concept-brief.md": "x", "mockups/구성-기록.json": json.dumps(runs)}))
+        self.assertTrue(any("비교 사이트를 바꿈" in l and "쇼핑 첫 화면이라" in l for l in lines))
+
     def test_same_refs_or_no_short_is_fine(self):
         same = self.runs((1280, 2, ["가", "나"]), (1280, 0, ["나", "가"]), (390, 0, ["라"]))
         self.assertFalse(found(project({"concept-brief.md": "x", "mockups/구성-기록.json": same}), "비교 사이트를 바꿈"))

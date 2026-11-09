@@ -17,6 +17,7 @@ import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
+from common import utf8_console  # noqa: E402  콘솔 한글 깨짐 막기는 common 하나로
 import make_board  # noqa: E402
 
 
@@ -42,6 +43,7 @@ def normalise(spec: dict) -> dict:
 
 
 def main(argv: list[str]) -> int:
+    utf8_console()
     if len(argv) != 2:
         print(__doc__.strip(), file=sys.stderr)
         return 2

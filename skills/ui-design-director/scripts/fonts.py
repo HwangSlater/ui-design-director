@@ -23,6 +23,8 @@ import sys
 from functools import lru_cache
 from pathlib import Path
 
+from common import utf8_console  # 콘솔 한글 깨짐 막기는 common 하나로
+
 ASSETS = Path(__file__).resolve().parent.parent / "assets" / "fonts"
 TEXT_SUFFIXES = {".css", ".html", ".htm", ".json", ".md", ".js"}
 CLIENT_FONT = re.compile(r"의뢰인 글꼴\s*[:：]\s*(.+)")
@@ -230,8 +232,7 @@ def cmd_pick(styles: list[str], top: int, kind: str | None) -> int:
 
 
 def main(argv: list[str]) -> int:
-    for s in (sys.stdout, sys.stderr):
-        s.reconfigure(encoding="utf-8", errors="replace")
+    utf8_console()
     ap = argparse.ArgumentParser(description="글꼴 후보 고르기와 AI 글꼴 검사")
     sub = ap.add_subparsers(dest="cmd", required=True)
     p = sub.add_parser("pick")

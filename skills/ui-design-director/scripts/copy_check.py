@@ -20,6 +20,8 @@ import re
 import sys
 from pathlib import Path
 
+from common import read, utf8_console  # 콘솔 한글 깨짐 막기·파일 읽기는 common 하나로
+
 from PIL import Image, ImageFilter
 
 FIRST_SCREEN = {390: 844, 1280: 900}  # 첫 화면 높이(CSS px) — capture.mjs 와 같은 기기 크기
@@ -152,9 +154,31 @@ def palette_copies(root: Path) -> list[str]:
     return out
 
 
+OWN_HEADING = "바탕에서 바꾼 곳"
+OWN_LAYERS = ("색 계열", "이름 처리", "칸 마감", "대표 요소")  # build-rules.md § Make it ours 의 네 가지
+OWN_MIN = 2
+REAL_LOGO = re.compile(r"실제 로고|견본 로고")  # 의뢰인이 실제 로고·사진을 쓰라 했으면 이름 처리는 바탕(남의 것) 그대로다
+
+
+def own_finish(root: Path) -> list[str]:
+    """DESIGN.md § 바탕에서 바꾼 곳의 「우리 것(마감)」에 네 가지 중 둘 이상이 있는가. 절이 없으면 preflight 가 따로 알린다."""
+    text = read(root / "DESIGN.md")
+    m = re.search(rf"^##\s*{OWN_HEADING}[^\n]*\n(.*?)(?=^##\s|\Z)", text, re.M | re.S)
+    if not m:
+        return []
+    layers = [k for k in OWN_LAYERS if k in m.group(1)]
+    if REAL_LOGO.search(text) and "이름 처리" in layers:
+        layers.remove("이름 처리")
+    if len(layers) >= OWN_MIN:
+        return []
+    note = " (실제·견본 로고를 쓰므로 이름 처리는 세지 않음)" if REAL_LOGO.search(text) else ""
+    return [f"우리 것 마감이 둘 미만: DESIGN.md § {OWN_HEADING} 「우리 것(마감)」에 {', '.join(layers) or '없음'}{note} — "
+            f"{'·'.join(OWN_LAYERS)} 중 둘 이상을 우리 것으로 정해 적을 것(build-rules.md § Make it ours)"]
+
+
 def check_project(root: Path) -> list[str]:
-    """preflight.py 도 부른다 — 바탕 그대로인 팔레트 후보, 베낀 티가 있는 폭마다 한 줄."""
-    out = palette_copies(root)
+    """preflight.py 도 부른다 — 바탕 그대로인 팔레트 후보, 우리 것 마감 수, 베낀 티가 있는 폭마다 한 줄."""
+    out = palette_copies(root) + own_finish(root)
     for view, base, bw, ours, ow in pairs(root):
         if not base or not ours:
             continue
@@ -166,8 +190,7 @@ def check_project(root: Path) -> list[str]:
 
 
 def main(argv: list[str]) -> int:
-    for s in (sys.stdout, sys.stderr):
-        s.reconfigure(encoding="utf-8", errors="replace")
+    utf8_console()
     ap = argparse.ArgumentParser(description="베낀 티 재기")
     ap.add_argument("project", nargs="?")
     ap.add_argument("--pair", nargs=2)
@@ -178,7 +201,7 @@ def main(argv: list[str]) -> int:
         print(f"짜임 {lay:.2f} · 색 {col:.2f} → {'베낀 티' if copied else '괜찮음'}")
         return 1 if copied else 0
     root = Path(a.project or ".")
-    pal = palette_copies(root)
+    pal = palette_copies(root) + own_finish(root)
     for line in pal:
         print(line)
     rows = len(pal)

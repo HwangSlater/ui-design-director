@@ -18,6 +18,7 @@ import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
+from common import utf8_console  # noqa: E402  콘솔 한글 깨짐 막기는 common 하나로
 import knowledge  # noqa: E402  (단계마다 볼 규칙은 knowledge.py 하나로)
 
 SKILL = Path(__file__).resolve().parent.parent
@@ -142,7 +143,7 @@ def output_block(out: Path, need: str) -> str | None:
 
 NEXT = {
     "brief": "concept-brief.md 에 맥락(주 업무·손님·싫은 것·사진 누구 것)을 적는다 — 질문은 한 번에 하나",
-    "board": f"후보 spec(formats/board-spec.json) → node {S}/live_proxy.mjs formats/board-spec.json (공용 틀 보기 화면을 만들고 OPEN 주소 하나를 찍는다 — 그 주소만 의뢰인에게. 「확정」은 DECISION 줄과 formats/decision.json 으로 온다)",
+    "board": f"후보 spec(formats/board-spec.json) → node {S}/live_proxy.mjs formats/board-spec.json (공용 틀 보기 화면을 만들고 OPEN 주소 하나를 찍는다 — 그 주소만 의뢰인에게. 「확정」은 DECISION 줄과 formats/decision.json 으로 온다). 의뢰인이 채팅으로 고르면: python {S}/stage.py . --decide base \"<번호 이름>\"",
     "base": f"의뢰인이 보기 화면에서 「확정」을 누르기를 기다린다(live_proxy.mjs 가 DECISION 줄을 찍고 formats/decision.json 을 쓴다). 채팅으로 답하면: python {S}/stage.py . --decide base \"<번호 이름>\"",
     "material": f"고른 바탕에 대해 먼저: python {S}/base_material.py . (바탕 주소는 확정과 board-spec.json 에서 읽어 「바탕 주소:」로 찍는다 — 그 주소를 아래 <바탕 주소> 에. jobs-base.json·바탕-구성.md 틀) → node {S}/snapshot.mjs formats/jobs-base.json formats/snapshot · node {S}/motion.mjs <바탕 주소> formats/바탕-움직임.md · node {S}/capture.mjs formats/jobs-base.json formats/base-cap · node {S}/extract_styles.mjs <바탕 주소> formats/추출-1280.json --width 1280 → formats/바탕-구성.md 를 채우고 맨 위 「채우기 전」 줄을 지운다",
     "palette": f"palette/index.html 을 palette-switcher.js 틀로(comparison-board.md § Palettes, 바탕의 4~6색 조합에서 출발), 글꼴은 python {S}/fonts.py pick --style <고딕|명조|손글씨|제목용> 에서만(references/fonts.md) → python {S}/fonts.py check palette → wait_choice.mjs palette/index.html palette/decision.json",
@@ -152,8 +153,7 @@ NEXT = {
 
 
 def main(argv: list[str]) -> int:
-    for s in (sys.stdout, sys.stderr):
-        s.reconfigure(encoding="utf-8", errors="replace")  # 윈도 기본(cp949)으로 찍으면 스킬 지시문에 한글이 깨져 들어갔다
+    utf8_console()
     if not argv:
         print(__doc__.strip(), file=sys.stderr)
         return 0

@@ -1,13 +1,16 @@
 #!/usr/bin/env node
 // 화면 「구성」을 숫자로 잰다 — 첫 화면에서 사진·색 판·빈 바탕이 차지하는 비율, 가장 큰 글자, 진한 색 덩어리 수, 내용 폭.
 // 둥글기·여백 같은 작은 값(extract_styles.mjs)이 같아도 구성이 다르면 실제 사이트처럼 보이지 않는다. 그래서 따로 잰다.
-// 사용: node compose_metrics.mjs <out.md> --width 1280 이름=주소 이름=주소 ... [--ours 이름]
+// 사용: node compose_metrics.mjs <out.md> --width 1280 이름=주소 이름=주소 ... [--ours 이름] [--why "<까닭>"]
 //   --ours 로 우리 화면을 지정하면 나머지(기준 사이트)의 가운데 값과 비교해 미달 항목을 표시한다.
 // 결과 .md 맨 위에 비교한 사이트와 폭을 적고, 옆 「구성-기록.json」에 돌릴 때마다 한 줄씩 쌓는다(preflight.py 가 읽는다) —
 //   미달이 나온 뒤 기준 사이트를 바꿔 통과시키면 preflight 가 「비교 사이트를 바꿈」으로 알린다.
+//   같은 폭의 첫 기록과 다른 비교 사이트로 돌리려면 --why 로 까닭을 적어야 한다(없으면 재지 않고 멈춤) — 까닭은 기록에 남아
+//   preflight 가 함께 보여 준다. 비교 사이트는 시작할 때 한 번, 우리와 같은 일을 하는 페이지로 고른다.
 // 외부 패키지 없음. Edge/Chrome DevTools 프로토콜만 쓴다.
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
-import { basename, dirname, join } from "node:path";
+import { basename, dirname, join, resolve } from "node:path";
+import { pathToFileURL } from "node:url";
 import { evaluate, goto, launch, openPage, scrollWakeExpr, sleep, HIDE_OVERLAYS, VIEWPORT } from "./browser.mjs";
 
 const SETTLE_MS = 3000;
@@ -23,12 +26,43 @@ const MIN_REFS = 2;
 const HISTORY_NAME = "구성-기록.json"; // preflight.py 의 HISTORY_NAME 과 같게
 const HISTORY_MAX = 100; // 오래된 기록부터 버린다
 
-const args = process.argv.slice(2);
-const out = args[0];
-const width = Number(args[args.indexOf("--width") + 1]) || 1280;
-const ours = args.includes("--ours") ? args[args.indexOf("--ours") + 1] : null;
-const targets = args.slice(1).filter((a) => a.includes("=") && !a.startsWith("--")).map((a) => { const i = a.indexOf("="); return [a.slice(0, i), a.slice(i + 1)]; });
-if (!out || !targets.length) { console.error("사용: node compose_metrics.mjs <out.md> --width 1280 이름=주소 ... [--ours 이름]"); process.exit(1); }
+const VALUE_FLAGS = new Set(["--width", "--ours", "--why"]); // 뒤에 값이 오는 선택지 — 그 값(「a=b」 같은 까닭)을 사이트로 읽지 않게
+
+export function parseArgs(argv) {
+  const opt = {}, rest = [];
+  for (let i = 0; i < argv.length; i++) {
+    if (VALUE_FLAGS.has(argv[i])) opt[argv[i].slice(2)] = argv[++i];
+    else rest.push(argv[i]);
+  }
+  const targets = rest.slice(1).filter((a) => a.includes("=") && !a.startsWith("--")).map((a) => { const i = a.indexOf("="); return [a.slice(0, i), a.slice(i + 1)]; });
+  return { out: rest[0], width: Number(opt.width) || 1280, ours: opt.ours ?? null, why: (opt.why || "").trim(), targets };
+}
+
+// 같은 폭 첫 기록의 비교 사이트와 지금 것이 다르면 그 첫 기록, 같거나 첫 기록이 없으면 null
+export function siteChange(history, width, sites) {
+  const first = (Array.isArray(history) ? history : []).find((r) => r && Number(r.width) === Number(width) && Array.isArray(r.sites));
+  if (!first) return null;
+  const key = (list) => [...new Set(list.map((s) => String(s?.url ?? "").replace(/\/+$/, "")))].sort().join("\n");
+  return key(first.sites) === key(sites) ? null : first;
+}
+
+// 오래된 것부터 버리되 폭마다 첫 기록은 남긴다 — 비교 사이트를 바꿨는지는 첫 기록과 견준다
+export function trimHistory(list, max = HISTORY_MAX) {
+  if (list.length <= max) return list;
+  const firsts = new Set(), seen = new Set();
+  list.forEach((r, i) => { const w = String(r?.width); if (!seen.has(w)) { seen.add(w); firsts.add(i); } });
+  const tail = new Set(list.map((_, i) => i).slice(-Math.max(0, max - firsts.size)));
+  return list.filter((_, i) => firsts.has(i) || tail.has(i));
+}
+
+const { out, width, ours, why, targets } = parseArgs(process.argv.slice(2));
+const historyFile = () => join(dirname(out), HISTORY_NAME);
+function readHistory() {
+  try {
+    const list = existsSync(historyFile()) ? JSON.parse(readFileSync(historyFile(), "utf8")) : [];
+    return Array.isArray(list) ? list : [];
+  } catch { return []; } // 깨졌으면 새로 쌓는다
+}
 
 // 페이지 안에서 도는 측정. 문서 순서대로 칠해서(나중 요소가 위) 칸마다 사진/색 판/바탕을 정한다
 const PROBE = `(() => {
@@ -104,10 +138,10 @@ async function measureAll(port) {
   try {
     for (const [name, url] of targets) {
       let v;
-      try { v = await measureOne(page.cdp, url); } catch (err) { console.log(`실패  ${name}  (${err.message})`); continue; }
-      if (!v) { console.log(`실패  ${name}  (값을 읽지 못함 — 봇 막힘일 수 있음)`); continue; }
+      try { v = await measureOne(page.cdp, url); } catch (err) { console.log(`FAIL  ${name}  (${err.message})`); continue; }
+      if (!v) { console.log(`FAIL  ${name}  (값을 읽지 못함 — 봇 막힘일 수 있음)`); continue; }
       rows.push({ name, url, ...v });
-      console.log(`잼  ${name}`);
+      console.log(`OK    ${name}`);
     }
   } finally {
     await page.close();
@@ -116,6 +150,14 @@ async function measureAll(port) {
 }
 
 async function main() {
+  if (!out || !targets.length) { console.error("사용: node compose_metrics.mjs <out.md> --width 1280 이름=주소 ... [--ours 이름] [--why \"<까닭>\"]"); process.exit(1); }
+  // 재기 전에 본다 — 미달이 나온 뒤 기준을 바꿔 통과시키지 않게(브라우저를 띄우기 전에 멈춘다)
+  const first = siteChange(readHistory(), width, targets.filter(([n]) => n !== ours).map(([name, url]) => ({ name, url })));
+  if (first && !why) {
+    console.error(`멈춤: ${width}px 첫 기록(${first.at || "?"})의 비교 사이트와 다름 — 첫 기록: ${first.sites.map((s) => s.name).join(", ")}.\n` +
+      `같은 사이트로 다시 돌리거나, 바꿔야 하면 --why "<까닭>" 을 붙인다(까닭은 기록에 남고 preflight 가 의뢰인에게 말하라고 알린다).`);
+    process.exit(1);
+  }
   const { port, close } = await launch("compose-"); // 끄기·남은 브라우저 치우기는 browser.mjs 한 곳에서
   try {
     report(await measureAll(port));
@@ -143,7 +185,7 @@ function report(rows) {
   const tooFew = Boolean(ours) && refs.length < MIN_REFS;
   const me = rows.find((r) => r.name === ours);
   const sites = targets.filter(([n]) => n !== ours);
-  const lines = [`# 구성 비교 — ${width}px`, "", `비교 사이트(${width}px): ${sites.map(([n, u]) => `${n} ${u}`).join(" · ")}`, ...(ours ? [`우리 화면: ${ours}`] : []), "", `| 항목 | ${rows.map((r) => r.name).join(" | ")} |${me ? " 판정 |" : ""}`, `|---|${rows.map(() => "---").join("|")}|${me ? "---|" : ""}`];
+  const lines = [`# 구성 비교 — ${width}px`, "", `비교 사이트(${width}px): ${sites.map(([n, u]) => `${n} ${u}`).join(" · ")}`, ...(ours ? [`우리 화면: ${ours}`] : []), ...(why ? [`비교 사이트를 바꾼 까닭: ${why}`] : []), "", `| 항목 | ${rows.map((r) => r.name).join(" | ")} |${me ? " 판정 |" : ""}`, `|---|${rows.map(() => "---").join("|")}|${me ? "---|" : ""}`];
   let short = 0;
   for (const [k, label, fmt] of METRICS) {
     let verdict = "";
@@ -160,21 +202,18 @@ function report(rows) {
   if (tooFew) lines.push("", `판정 못 함 — 제대로 잰 기준 사이트가 ${refs.length}곳뿐이다(${MIN_REFS}곳 이상 필요). 다시 돌린다.`);
   else if (me) lines.push("", `미달 ${short}개 — 미달이 있으면 보여 주지 않고 구성을 다시 짠다(references/blind-judge.md § Composition numbers).`);
   writeFileSync(out, lines.join("\n") + "\n");
-  record({ at: new Date().toISOString(), file: basename(out), width, ours, sites: sites.map(([name, url]) => ({ name, url })), short: me && !tooFew ? short : null });
+  record({ at: new Date().toISOString(), file: basename(out), width, ours, sites: sites.map(([name, url]) => ({ name, url })), short: me && !tooFew ? short : null, ...(why ? { why } : {}) });
   console.log(lines.join("\n"));
 }
 
 // 돌릴 때마다 한 줄 — 같은 폭에서 미달 뒤 기준 사이트가 바뀌었는지 preflight.py 가 본다
 function record(entry) {
-  const file = join(dirname(out), HISTORY_NAME);
-  let list = [];
-  try { list = existsSync(file) ? JSON.parse(readFileSync(file, "utf8")) : []; } catch { list = []; } // 깨졌으면 새로 쌓는다
-  if (!Array.isArray(list)) list = [];
-  list.push(entry);
-  writeFileSync(file, JSON.stringify(list.slice(-HISTORY_MAX), null, 1) + "\n");
+  writeFileSync(historyFile(), JSON.stringify(trimHistory([...readHistory(), entry]), null, 1) + "\n");
 }
 
-main().catch((err) => {
-  console.error(`오류: ${err.message}`);
-  process.exit(1);
-});
+if (process.argv[1] && import.meta.url === pathToFileURL(resolve(process.argv[1])).href) {
+  main().catch((err) => {
+    console.error(`오류: ${err.message}`);
+    process.exit(1);
+  });
+}

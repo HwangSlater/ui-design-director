@@ -29,6 +29,7 @@ import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
+from common import utf8_console  # noqa: E402  콘솔 한글 깨짐 막기는 common 하나로
 from frame_check import frame_policy  # noqa: E402  틀 안에 띄울 수 있는지(실제 사이트 모드)
 
 ASSETS = Path(__file__).resolve().parent.parent / "assets"
@@ -179,8 +180,7 @@ def build(spec: dict, candidates: list[dict]) -> str:
 
 
 def main(argv: list[str]) -> int:
-    for stream in (sys.stdout, sys.stderr):
-        stream.reconfigure(errors="replace")
+    utf8_console()
     if len(argv) == 3 and argv[1] == "--jobs":
         mode, spec_path, target = "jobs", Path(argv[0]), Path(argv[2])
     elif len(argv) == 2:

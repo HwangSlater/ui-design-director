@@ -12,6 +12,8 @@ from __future__ import annotations
 import sys
 from pathlib import Path
 
+from common import utf8_console  # 콘솔 한글 깨짐 막기는 common 하나로
+
 import re
 from PIL import Image, ImageStat
 
@@ -38,6 +40,7 @@ def verdict(path: Path, height: int) -> str:
 
 
 def main() -> int:
+    utf8_console()
     args = sys.argv[1:]
     height = int(args[args.index("--height") + 1]) if "--height" in args else 900
     paths = []

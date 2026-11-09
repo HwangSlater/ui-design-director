@@ -1,0 +1,5 @@
+{
+  "userAgent": "ui-design-director-sample-photos/1.0 (+https://github.com/HwangSlater/ui-design-director)",
+  "commonsApi": "https://commons.wikimedia.org/w/api.php",
+  "openverseApi": "https://api.openverse.org/v1/images/"
+}

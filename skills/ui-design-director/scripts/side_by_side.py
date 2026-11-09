@@ -14,6 +14,8 @@ import os
 import sys
 from pathlib import Path
 
+from common import utf8_console  # 콘솔 한글 깨짐 막기는 common 하나로
+
 # 실제 운영 사이트를 「만든 것」처럼 보이게 하는 층. 하나를 빼면 다른 것으로 대신하거나 이유를 적는다
 LAYERS = [
     ("정체성", "로고·엠블럼·워드마크, 머리 띠"),
@@ -31,6 +33,7 @@ LAYERS = [
 
 
 def main(argv: list[str]) -> int:
+    utf8_console()
     if len(argv) < 3 or len(argv[1:]) % 2:
         print(__doc__.strip(), file=sys.stderr)
         return 2

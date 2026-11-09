@@ -11,7 +11,7 @@ formats/board-spec.json 의 후보와 맞춰, 보기 화면이 띄운 그 페이
 - formats/jobs-base.json: capture.mjs·snapshot.mjs 가 읽는 일 목록(바탕 홈, 주소가 사이트 첫 화면이 아니면 첫 화면도)
 - formats/바탕-구성.md: 구역 표·시각 층·바꿀 곳(n/N)을 채우는 빈 틀. formats/추출-1280.json(extract_styles.mjs)이
   있으면 글자 크기를 미리 적는다. 맨 위 「채우기 전」 줄을 지우기 전에는 stage.py 가 바탕 자료를 안 된 것으로 본다.
-이미 있는 파일은 덮어쓰지 않는다(「있음, 건너뜀」). 끝에 다음에 돌릴 명령을 실제 경로로 찍는다.
+이미 있는 파일은 덮어쓰지 않는다(「있음, 건너뜀」). 추출이 나중에 생겼으면 --refresh 가 빈 글자 크기 칸만 채운다. 끝에 다음에 돌릴 명령을 실제 경로로 찍는다.
 """
 from __future__ import annotations
 
@@ -23,10 +23,14 @@ from pathlib import Path
 from urllib.parse import urlsplit
 
 import stage  # 단계 판단·확정 읽기는 stage.py 하나로
+from common import utf8_console  # 콘솔 한글 깨짐 막기는 common 하나로
 from make_live_board import normalise  # 후보 spec 의 두 꼴은 보기 화면을 만드는 쪽과 같게 읽는다
 from stage import S, TEMPLATE_MARK  # 다음 명령의 실제 경로와 빈 틀 표시는 stage.py 와 같게
 
 EXTRACT = "추출-1280.json"
+EXTRACT_FALLBACK = "추출-390.json"  # PC 추출이 없으면 휴대폰 추출로 채운다
+EMPTY_SRC = f"(formats/{EXTRACT} 이 아직 없어 비워 둠 — 추출 뒤 옮겨 적는다)"
+SIZE_COL = 3  # 구역 표에서 「글자 크기(제목/본문)」 칸 차례(0부터)
 ROWS = ["머리(메뉴)", "첫 화면", "", "", "", "바닥"]  # 빈 이름 줄은 바탕을 보며 채운다 — 구역 수는 바탕대로 늘리거나 줄인다
 LAYERS = ["정체성(로고·이름 표기)", "항목 얼굴(카드·목록 한 칸 모양)", "아이콘", "색 덩어리", "데이터 표시(숫자·별점·뱃지)",
           "사진·그림", "깊이(그림자·겹침)", "넓은 화면 단 나눔"]
@@ -105,7 +109,7 @@ def type_sizes(extract: Path) -> tuple[str, str, str]:
 
 def template(name: str, url: str, sizes: tuple[str, str, str]) -> str:
     hero, head, body = sizes
-    src = f"(formats/{EXTRACT} 에서 — 맞는지 스냅샷으로 확인)" if any(sizes) else f"(formats/{EXTRACT} 이 아직 없어 비워 둠 — 추출 뒤 옮겨 적는다)"
+    src = f"(formats/{EXTRACT} 에서 — 맞는지 스냅샷으로 확인)" if any(sizes) else EMPTY_SRC
     # 첫 화면 줄에는 가장 큰 제목, 나머지 구역에는 구역 제목 크기를 먼저 적어 둔다
     rows = [f"| {i + 1} {r} | | | {f'{hero if i == 1 else head} / {body}' if any(sizes) else ''} | | |" for i, r in enumerate(ROWS)]
     layers = [f"| {layer} | | |" for layer in LAYERS]
@@ -123,6 +127,34 @@ def template(name: str, url: str, sizes: tuple[str, str, str]) -> str:
     ])
 
 
+def refresh(doc: Path, fm: Path) -> int:
+    """나중에 생긴 추출로 구역 표의 빈 글자 크기 칸만 채운다 — 디자이너가 적은 칸·줄은 건드리지 않는다."""
+    src = next((fm / n for n in (EXTRACT, EXTRACT_FALLBACK) if (fm / n).is_file()), None)
+    if not doc.is_file() or src is None:
+        print(f"채울 것 없음: {doc.name if doc.is_file() else '바탕-구성.md 가 없음'}"
+              f"{'' if src else f' — formats/{EXTRACT}(또는 {EXTRACT_FALLBACK}) 이 아직 없음'}", file=sys.stderr)
+        return 1
+    hero, head, body = type_sizes(src)
+    if not any((hero, head, body)):
+        print(f"{src.name} 에 글자 크기가 없음 — extract_styles.mjs 를 다시 돌린다", file=sys.stderr)
+        return 1
+    lines, in_table, filled = doc.read_text(encoding="utf-8").split("\n"), False, 0
+    for i, line in enumerate(lines):
+        if line.startswith("## "):
+            in_table = line.strip() == "## 구역"
+        cells = line.split("|")
+        # 머리줄·구분줄은 건너뛰고, 크기 칸이 비어 있는 구역 줄만
+        if not in_table or len(cells) < SIZE_COL + 3 or cells[SIZE_COL + 1].strip() or set(line) <= set("|-: ") \
+                or cells[1].strip().startswith("구역"):
+            continue
+        cells[SIZE_COL + 1] = f" {hero if '첫 화면' in cells[1] else head or hero} / {body} "
+        lines[i], filled = "|".join(cells), filled + 1
+    lines = [f"글자 크기 (formats/{src.name} 에서 — 맞는지 스냅샷으로 확인)" if ln == f"글자 크기 {EMPTY_SRC}" else ln for ln in lines]
+    doc.write_text("\n".join(lines), encoding="utf-8")
+    print(f"채움: 빈 글자 크기 칸 {filled}개 ({src.name}) — {doc}")
+    return 0
+
+
 def write_new(path: Path, text: str) -> None:
     if path.exists():
         print(f"있음, 건너뜀: {path}")
@@ -132,12 +164,12 @@ def write_new(path: Path, text: str) -> None:
 
 
 def main(argv: list[str]) -> int:
-    for s in (sys.stdout, sys.stderr):
-        s.reconfigure(encoding="utf-8", errors="replace")
+    utf8_console()
     ap = argparse.ArgumentParser(description="바탕 자료 준비: jobs-base.json·바탕-구성.md 빈 틀")
     ap.add_argument("project")
     ap.add_argument("url", nargs="?", default="", help="안 주면 확정된 바탕의 페이지 주소")
     ap.add_argument("--name", default="")
+    ap.add_argument("--refresh", action="store_true", help="나중에 생긴 추출로 바탕-구성.md 의 빈 글자 크기 칸만 채움")
     a = ap.parse_args(argv)
     root = Path(a.project)
     fm = root / "formats"
@@ -145,6 +177,8 @@ def main(argv: list[str]) -> int:
     if why:
         print(f"멈춤: {why}", file=sys.stderr)
         return 1
+    if a.refresh:
+        return refresh(fm / "바탕-구성.md", fm)
     if not a.url:
         found = decided_url(root.resolve())
         if not found:
@@ -171,6 +205,7 @@ def main(argv: list[str]) -> int:
                 f"node {S}/extract_styles.mjs {a.url} {f}/{EXTRACT} --width 1280",
                 f"node {S}/skeleton.mjs {f}/뼈대.md --width 1280 base={a.url} <이름=관련 사이트 주소> ... --base base"):
         print(f"  {cmd}")
+    print(f"  → 추출이 바탕-구성.md 보다 늦게 생겼으면: python {S}/base_material.py {a.project} --refresh (빈 글자 크기 칸만 채움)")
     print(f"  → {f}/바탕-구성.md 를 채우고 맨 위 「채우기 전」 줄을 지운다")
     return 0
 

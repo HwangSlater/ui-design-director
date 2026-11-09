@@ -13,6 +13,7 @@ Use this when the user wants help choosing a design but has not given a complete
 - When the user gives schedules, prices, capacities or rules, check them against each other at once (overlapping times for a one-person business, totals that do not add up, rules that contradict) and ask before drawing them.
 - Every preview that carries content (palette preview, layout options, mockups) uses only facts the user gave; anything filled in is marked unconfirmed and listed in the message ("제가 채워 넣은 것: …"). A reference site's claims are not the client's facts: borrow its order and kinds of content, never its sentences.
 - Welcome real content whenever the user offers it (prices, hours, rules, answers to common questions), even before it is asked for, and record it in the brief under the facts that will appear on the pages.
+- **Photos are one yes/no question:** 「사진이 있으세요?」. If yes, ask for them and whose they are. If no (or 「아직 몰라요」), do not ask more and offer no image-strategy options: sample text, searched sample photos (`sample_photos.py`) and letter marks for logos and team marks apply as defaults ([sample-photos.md](sample-photos.md) § Ask once). Logos stay letter marks unless the client asks for real ones.
 
 Do not dump the entire workflow, a large questionnaire, or all unresolved choices into one message.
 

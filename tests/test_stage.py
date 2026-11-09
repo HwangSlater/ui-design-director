@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import json
+import os
 import subprocess
 import sys
 from pathlib import Path
@@ -39,3 +40,16 @@ def test_require_and_decide(tmp_path: Path) -> None:
     assert json.loads((tmp_path / "decisions.json").read_text(encoding="utf-8"))["base"] == "3 Norm"
     assert run(str(tmp_path), "--require", "material").returncode == 0
     assert "[x] 바탕 확정" in run(str(tmp_path)).stdout
+
+
+def test_board_next_shows_chat_fallback(tmp_path: Path) -> None:
+    (tmp_path / "concept-brief.md").write_text("주 업무", encoding="utf-8")
+    out = run(str(tmp_path)).stdout
+    assert '/stage.py . --decide base "<번호 이름>"' in out
+
+
+def test_korean_survives_cp949_console(tmp_path: Path) -> None:
+    """윈도 콘솔 기본(cp949)으로 띄워도 utf8_console 이 UTF-8 로 찍는다(-X utf8 없이)."""
+    env = {**os.environ, "PYTHONIOENCODING": "cp949", "PYTHONUTF8": "0"}
+    r = subprocess.run([sys.executable, str(STAGE), str(tmp_path)], capture_output=True, env=env)
+    assert "맥락 정리" in r.stdout.decode("utf-8")

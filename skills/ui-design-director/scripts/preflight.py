@@ -24,7 +24,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 import check_site  # noqa: E402  (접근성 바닥·토큰 어긋남은 check_site.py 하나로 — 마지막 점검 뒤 고친 것도 보낼 때 다시 잡게)
 import copy_check  # noqa: E402  (베낀 티 판단은 copy_check.py 하나로)
 import fonts  # noqa: E402  (AI 글꼴 판단은 fonts.py 하나로)
-from common import TOOL_DIRS, read  # noqa: E402  (read 는 권한 오류에도 빈 글 — stage.read 와 같게)
+from common import TOOL_DIRS, read, utf8_console  # noqa: E402  (read 는 권한 오류에도 빈 글 — stage.read 와 같게)
 
 # 의뢰인 글에 나오는 말 → 참고·시안에서 찾을 주소 조각
 CHANNELS = {
@@ -207,14 +207,17 @@ def changed_refs(root: Path) -> list[str]:
             sites = [[s for s in r.get("sites") or [] if isinstance(s, dict)] for r in pair]
             if {s.get("url") for s in sites[0]} != {s.get("url") for s in sites[1]}:
                 names = [", ".join(str(s.get("name", "")) for s in group) for group in sites]
+                # compose_metrics.mjs --why 로 적은 까닭(가장 최근 것). 있으면 그 까닭을 의뢰인에게 그대로 말한다
+                why = next((str(r["why"]).strip() for r in reversed(rs[first + 1:]) if str(r.get("why") or "").strip()), "")
+                tail = (f"적은 까닭: 「{why}」 — 이 까닭을 의뢰인에게 말할 것" if why
+                        else "왜 바꿨는지 의뢰인에게 말할 것(기준을 바꿔 통과시킨 것으로 보인다)")
                 out.append(f"비교 사이트를 바꿈: {hist.relative_to(root).as_posix()} {width}px — 미달이 나온 뒤 기준이 「{names[0]}」에서 "
-                           f"「{names[1]}」로 바뀜. 왜 바꿨는지 의뢰인에게 말할 것(기준을 바꿔 통과시킨 것으로 보인다)")
+                           f"「{names[1]}」로 바뀜. {tail}")
     return out
 
 
 def main(argv: list[str]) -> int:
-    for s in (sys.stdout, sys.stderr):
-        s.reconfigure(errors="replace")
+    utf8_console()
     if len(argv) != 1 or not Path(argv[0]).is_dir():
         print(__doc__.strip(), file=sys.stderr)
         return 2

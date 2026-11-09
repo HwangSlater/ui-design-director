@@ -56,6 +56,13 @@ Each change from the base that `skeleton.mjs --base` listed, taken or left,
 with its count (「옆으로 넘기는 띠: 넣음 — 3/5곳」), and any other departure
 with its reason.
 
+End it with a short list 「우리 것(마감)」 naming at least two of 색 계열,
+이름 처리, 칸 마감, 대표 요소, each with what ours is (「- 칸 마감: 둥근 흰 칸,
+선 없음」). `copy_check.py` (also run by `preflight.py`) reports 「우리 것 마감이
+둘 미만」 when fewer than two of those words appear in this section. When the
+client asked for real logos or photos (DESIGN.md says 실제 로고 or 견본 로고),
+이름 처리 does not count as ours; pick two others.
+
 ## 부품 출처
 One line per part: part → form → source (the base, a field trait as n/N, or
 the client's own object such as the menu board or sign).

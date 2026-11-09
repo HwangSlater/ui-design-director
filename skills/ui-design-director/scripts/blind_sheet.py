@@ -17,6 +17,8 @@ import random
 import sys
 from pathlib import Path
 
+from common import utf8_console  # 콘솔 한글 깨짐 막기는 common 하나로
+
 from PIL import Image, ImageDraw
 
 WIDTH = 1280          # 비교 폭(넓은 화면)
@@ -33,6 +35,7 @@ def _box(spec: str) -> tuple[int, int, int, int]:
 
 
 def main() -> int:
+    utf8_console()
     args = sys.argv[1:]
     if len(args) < 3:
         print(__doc__)

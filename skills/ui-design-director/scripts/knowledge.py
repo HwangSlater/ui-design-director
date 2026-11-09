@@ -19,6 +19,8 @@ import sys
 from functools import lru_cache
 from pathlib import Path
 
+from common import utf8_console  # 콘솔 한글 깨짐 막기는 common 하나로
+
 DATA = Path(__file__).resolve().parent.parent / "assets" / "knowledge" / "rules.json"
 PRIORITY_WEIGHT = {1: 3, 2: 2, 3: 1}
 # 자료가 권하는 글꼴 이름(KRDS 의 Pretendard GOV 등)이 후보처럼 읽히지 않게 — 목록은 fonts.py 와 같은 파일
@@ -162,8 +164,7 @@ def stage_lines(stage: str, top: int = 4) -> list[str]:
 
 
 def main(argv: list[str]) -> int:
-    for s in (sys.stdout, sys.stderr):
-        s.reconfigure(encoding="utf-8", errors="replace")
+    utf8_console()
     ap = argparse.ArgumentParser(description="디자인 지식 꺼내 보기")
     sub = ap.add_subparsers(dest="cmd", required=True)
     a = sub.add_parser("ask")

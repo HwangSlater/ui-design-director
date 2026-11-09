@@ -11,10 +11,13 @@
 //   스크롤해도 따라오는 것은 전체 길이 캡처에선 페이지 중간에 박혀 글을 가린 것처럼 보이므로 이렇게 확인한다.
 // 배율: 기본 2배(--scale 1~3, job 마다 "scale"). 그림 크기는 폭×배율 — 그림을 재는 도구는 폭으로 나눠 본다.
 // 결과: <out-dir>/<id>-<width>.jpg. 이미 있는 파일은 건너뛰므로 중간에 끊겨도 다시 돌리면 이어서 찍는다.
+//   단 file:// 로 찍은 우리 시안은 그 html 이나 같은 폴더의 파일(css·사진)이 그림보다 새로우면 다시 찍는다 —
+//   고친 시안을 옛 그림으로 비교했다. 원격 주소는 그대로 건너뛴다. --force 는 늘 다시 찍는다.
 // 문서 응답이 400 이상이면 저장하지 않고 실패로 보고한다.
 
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
-import { basename, join } from "node:path";
+import { existsSync, mkdirSync, readdirSync, readFileSync, statSync, writeFileSync } from "node:fs";
+import { basename, dirname, join, resolve, sep } from "node:path";
+import { fileURLToPath, pathToFileURL } from "node:url";
 import { judgeFillExpr } from "./judge_fill.mjs";
 import { goto, launch, openPage, scrollWakeExpr, sleep, HIDE_OVERLAYS } from "./browser.mjs";
 import { requireStage } from "./stage_guard.mjs";
@@ -29,24 +32,55 @@ const CURRENT_PAGE = "@current"; // url 에 이 값을 주면 steps 를 마친 �
 const DEFAULT_SCALE = 2;
 const JPEG_QUALITY = 92;
 const JPEG_MAX_PX = 65000; // JPEG 한 장의 최대 높이(픽셀) — 넘으면 배율을 낮춰 찍는다
+const SOURCE_DEPTH = 2; // 시안 폴더에서 새로 고친 파일을 찾을 깊이(css/·img/ 정도) — 프로젝트 전체를 훑지 않게
+const SKIP_DIRS = new Set(["node_modules", ".git", "__pycache__"]);
 
 
 
 function parseArgs(argv) {
-  const args = { widths: [1280, 390], scale: DEFAULT_SCALE, rest: [] };
+  const args = { widths: [1280, 390], scale: DEFAULT_SCALE, force: false, rest: [] };
   for (let i = 0; i < argv.length; i++) {
-    if (argv[i] === "--widths") args.widths = argv[++i].split(",").map(Number);
+    if (argv[i] === "--force") args.force = true;
+    else if (argv[i] === "--widths") args.widths = argv[++i].split(",").map(Number);
     else if (argv[i] === "--scale") args.scale = Math.min(3, Math.max(1, Number(argv[++i]) || DEFAULT_SCALE));
     else args.rest.push(argv[i]);
   }
   if (args.rest.length !== 2 || args.widths.some((w) => !Number.isFinite(w) || w < 200)) {
-    console.error("사용: node capture.mjs <jobs.json> <out-dir> [--widths 1280,390] [--scale 2]");
+    console.error("사용: node capture.mjs <jobs.json> <out-dir> [--widths 1280,390] [--scale 2] [--force]");
     process.exit(2);
   }
   return args;
 }
 
 
+// 폴더 안 가장 늦게 고친 시각(ms). 캡처를 담는 폴더(skip)는 뺀다 — 시안 옆 formats/ 에 찍으면 새 그림이 늘 「더 새로움」이 된다
+function newestIn(dir, skip, depth = SOURCE_DEPTH) {
+  let newest = 0;
+  let names = [];
+  try { names = readdirSync(dir, { withFileTypes: true }); } catch { return 0; }
+  for (const d of names) {
+    const p = join(dir, d.name);
+    if (d.isDirectory()) {
+      if (depth > 0 && !SKIP_DIRS.has(d.name) && !(resolve(p) + sep).startsWith(skip)) newest = Math.max(newest, newestIn(p, skip, depth - 1));
+    } else if (d.isFile() && !(resolve(dir) + sep).startsWith(skip)) { // 시안과 같은 폴더에 찍어도 그림끼리 비교하지 않게
+      try { newest = Math.max(newest, statSync(p).mtimeMs); } catch { /* 읽는 사이 지워진 파일 */ }
+    }
+  }
+  return newest;
+}
+
+// 다시 찍을 이유. 없으면 null(건너뜀). 원격 주소는 바뀌었는지 알 수 없으니 그림이 있으면 건너뛴다
+export function recaptureReason(file, url, { force = false, outDir = dirname(file) } = {}) {
+  if (!existsSync(file)) return "없음";
+  if (force) return "--force";
+  if (typeof url !== "string" || !url.startsWith("file:")) return null;
+  let src;
+  try { src = fileURLToPath(url.split(/[?#]/)[0]); } catch { return null; }
+  const shot = statSync(file).mtimeMs;
+  const skip = resolve(outDir) + sep;
+  if (existsSync(src) && statSync(src).mtimeMs > shot) return "시안이 그림보다 새로움";
+  return newestIn(dirname(src), skip) > shot ? "시안 폴더의 파일이 그림보다 새로움" : null;
+}
 
 // 글·입력·사진 중 오른쪽 끝이 화면 너비를 넘는 것(가로로 미는 목록 안은 뺌)
 const OVERFLOW_PROBE = `(() => {
@@ -134,7 +168,7 @@ async function shoot(port, { url, width, steps = [], scrollY = null, keepOverlay
 }
 
 async function main() {
-  const { widths, scale, rest } = parseArgs(process.argv.slice(2));
+  const { widths, scale, force, rest } = parseArgs(process.argv.slice(2));
   const [jobsPath, outDir] = rest;
   // 바탕 자료(base_material.py 가 만든 jobs-base.json)를 찍을 때만 바탕 확정을 본다 — 후보 캡처(바탕 고르기 전)는 그대로
   if (/^jobs-base/i.test(basename(jobsPath || ""))) requireStage(outDir);
@@ -149,10 +183,12 @@ async function main() {
       for (const width of widths) {
         const file = join(outDir, `${job.id}-${width}.jpg`);
         done++;
-        if (existsSync(file)) {
+        const why = recaptureReason(file, job.url, { force, outDir });
+        if (!why) {
           console.log(`[${done}/${total}] 있음, 건너뜀  ${job.id}-${width}`);
           continue;
         }
+        if (why !== "없음") console.log(`[${done}/${total}] 다시 찍음  ${job.id}-${width}  (${why})`);
         try {
           const { data, height, screens, spill = [], marks = [] } = await shoot(port, {
             url: job.url, width, steps: job.steps || [], scrollY: job.scrollY ?? null,
@@ -181,7 +217,9 @@ async function main() {
   }
 }
 
-main().catch((err) => {
-  console.error(`ERROR: ${err.message}`);
-  process.exit(1);
-});
+if (process.argv[1] && import.meta.url === pathToFileURL(resolve(process.argv[1])).href) {
+  main().catch((err) => {
+    console.error(`ERROR: ${err.message}`);
+    process.exit(1);
+  });
+}

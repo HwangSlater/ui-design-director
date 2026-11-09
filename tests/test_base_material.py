@@ -43,6 +43,33 @@ def test_does_not_overwrite(tmp_path: Path) -> None:
     assert (fm / "jobs-base.json").is_file()
 
 
+def test_refresh_fills_only_empty_size_cells(tmp_path: Path) -> None:
+    fm = tmp_path / "formats"
+    fm.mkdir()
+    r = run(str(tmp_path), URL)  # 추출 없이 만든 빈 틀
+    assert r.returncode == 0 and "--refresh" in r.stdout
+    md = fm / "바탕-구성.md"
+    text = md.read_text(encoding="utf-8").replace("| 1 머리(메뉴) | | |  |","| 1 머리(메뉴) | 8% | | 15px / 13px |")
+    md.write_text(text + "\n디자이너 메모\n", encoding="utf-8")
+    extract = {"roles": {"heading": [{"tag": "h1", "size": "56px"}, {"tag": "h2", "size": "32px"}], "body": [{"tag": "p", "size": "17px"}]}}
+    (fm / "추출-390.json").write_text(json.dumps(extract), encoding="utf-8")
+    r = run(str(tmp_path), "--refresh")
+    assert r.returncode == 0, r.stderr
+    out = md.read_text(encoding="utf-8")
+    assert "| 1 머리(메뉴) | 8% | | 15px / 13px |" in out  # 적은 칸은 그대로
+    assert "| 2 첫 화면 | | | 56px / 17px |" in out and "32px / 17px" in out
+    assert "디자이너 메모" in out and "추출-390.json 에서" in out
+    assert "| 구역(위→아래) | 높이 비율 | 사진 비율 | 글자 크기(제목/본문) | 칸 수 | 하는 일 |" in out
+
+
+def test_refresh_without_extraction_says_so(tmp_path: Path) -> None:
+    fm = tmp_path / "formats"
+    fm.mkdir()
+    run(str(tmp_path), URL)
+    r = run(str(tmp_path), "--refresh")
+    assert r.returncode == 1 and "추출-1280.json" in r.stderr
+
+
 def test_rejects_non_http(tmp_path: Path) -> None:
     assert run(str(tmp_path), "file:///etc/passwd").returncode == 2
 

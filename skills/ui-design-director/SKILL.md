@@ -21,7 +21,8 @@ If the line above still shows a command (another tool, or the table was not fill
 Copy this checklist into your reply when you start and tick it as you go. Before you build a step's screen, `python ${CLAUDE_SKILL_DIR}/scripts/stage.py <project> --require <step>` MUST exit 0; if it fails, finish the step it names first. Every client-facing screen comes from the bundled templates — never a viewer, palette page or sheet of your own.
 
 ```
-- [ ] brief     concept-brief.md: main job, customers, dislikes, whose photos (one question at a time);
+- [ ] brief     concept-brief.md: main job, customers, dislikes, 「사진이 있으세요?」 (yes/no; if no, sample_photos.py
+                and letter marks — sample-photos.md), one question at a time;
                 companion-skills.md § Start-of-project check, once, with the machine owner
 - [ ] board     candidates by design-selection.md §§ 2–3 → formats/board-spec.json →
                 node ${CLAUDE_SKILL_DIR}/scripts/live_proxy.mjs formats/board-spec.json   (background)
@@ -67,7 +68,7 @@ Run `python ${CLAUDE_SKILL_DIR}/scripts/preflight.py <project>` and fix or answe
 
 Lead: one consequential question at a time, numbered choices shown as pictures, plain words instead of design vocabulary, the next step always obvious ([references/guided-conversation.md](references/guided-conversation.md)). **Candidates are live sites in the shared viewer**, never captures or a viewer of your own ([references/comparison-board.md](references/comparison-board.md)). A site that refuses a frame: first its proxy view in the same board; 「실제 창으로」 (the real site in a sized window of the client's browser) to judge motion and feel; a snapshot only for exact material. Captures (2×) only for login-walled pages or a client who can only look at images. If the client delegates a choice, make it and record that it was delegated.
 
-**Every line the client sees is Korean** — questions, answers and progress notes alike (「바탕 재는 중이에요」, never 「Capturing the base…」).
+**Every line the client sees is Korean** — questions, answers and progress notes alike, including the one-line progress notes between tool calls (「바탕 재는 중이에요」, never 「Capturing the base…」).
 
 ## Route the request
 

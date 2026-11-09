@@ -170,10 +170,10 @@ async function measureAll(port) {
   try {
     for (const [name, url] of targets) {
       let v;
-      try { v = await measureOne(page.cdp, url); } catch (err) { console.log(`실패  ${name}  (${err.message})`); continue; }
-      if (!v) { console.log(`실패  ${name}`); continue; }
+      try { v = await measureOne(page.cdp, url); } catch (err) { console.log(`FAIL  ${name}  (${err.message})`); continue; }
+      if (!v) { console.log(`FAIL  ${name}`); continue; }
       rows.push({ name, host: url.startsWith("file:") ? `file:${name}` : new URL(url).host, ...v });
-      console.log(`잼  ${name}`);
+      console.log(`OK    ${name}`);
     }
   } finally {
     await page.close();

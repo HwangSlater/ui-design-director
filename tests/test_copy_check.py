@@ -54,6 +54,28 @@ def test_palette_candidate_equal_to_base(tmp_path: Path) -> None:
     assert len(out) == 1 and "A 검정과 파랑" in out[0]
 
 
+def design(tmp: Path, body: str) -> Path:
+    (tmp / "DESIGN.md").write_text(f"# 디자인\n\n## 바탕에서 바꾼 곳\n{body}\n## 부품 출처\n색 계열 이름 처리 칸 마감 대표 요소\n", encoding="utf-8")
+    return tmp
+
+
+def test_own_finish_needs_two(tmp_path: Path) -> None:
+    out = copy_check.own_finish(design(tmp_path, "우리 것(마감)\n- 색 계열: 주황\n"))
+    assert len(out) == 1 and "우리 것 마감이 둘 미만" in out[0]  # 다음 절(부품 출처)의 낱말은 세지 않는다
+    assert copy_check.own_finish(design(tmp_path, "우리 것(마감)\n- 색 계열: 주황\n- 칸 마감: 둥근 칸\n")) == []
+
+
+def test_real_logo_name_layer_not_ours(tmp_path: Path) -> None:
+    body = "우리 것(마감)\n- 색 계열: 주황\n- 이름 처리: 팀 이름\n\n의뢰인 요청으로 실제 로고를 견본으로 씀\n"
+    out = copy_check.own_finish(design(tmp_path, body))
+    assert len(out) == 1 and "이름 처리는 세지 않음" in out[0]
+
+
+def test_no_section_left_to_preflight(tmp_path: Path) -> None:
+    (tmp_path / "DESIGN.md").write_text("# 디자인\n", encoding="utf-8")
+    assert copy_check.own_finish(tmp_path) == []
+
+
 def test_desktop_width_may_differ(tmp_path: Path) -> None:
     """바탕은 1280, 우리는 1440 으로 찍어도 PC 끼리 견준다(NBA 12차에서 PC 를 건너뛰었다)."""
     page(tmp_path / "formats" / "base-cap" / "base-home-1280.jpg", "#0b0b0b", "#1c1c1c", "#1a73e8")

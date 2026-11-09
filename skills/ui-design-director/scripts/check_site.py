@@ -19,7 +19,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 import fonts  # noqa: E402  (글꼴 이름 나누기는 fonts.py 하나로)
 from anchor_check import AnchorTracker  # noqa: E402
 from block_colours import check_blocks  # noqa: E402
-from common import TOOL_DIRS  # noqa: E402
+from common import TOOL_DIRS, utf8_console  # noqa: E402
 from page_rules import PageTracker, report_photo_reuse  # noqa: E402
 
 HTML_SUFFIXES = {".html", ".htm"}
@@ -345,8 +345,7 @@ def run(root: Path) -> Report:
 
 
 def main(argv: list[str]) -> int:
-    for stream in (sys.stdout, sys.stderr):
-        stream.reconfigure(errors="replace")
+    utf8_console()
     args = [a for a in argv if not a.startswith("--")]
     if len(args) != 1:
         print(__doc__.strip(), file=sys.stderr)
