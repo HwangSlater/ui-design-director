@@ -203,6 +203,22 @@ class PageParser(HTMLParser):
                                 f"<{tag}> has no associated label")
 
 
+LEFT_INSET = re.compile(r"\binset\s+([2-9]|\d{2,})px\s+0(?:px)?\s+0")  # 안쪽 그림자로 그린 왼쪽 선
+
+
+def is_left_stroke(prop: str, low: str) -> bool:
+    """칸 왼쪽에만 넣은 색 선(사용자 지적: AI 가 자주 쓰는 방식) — 왼쪽 테두리 2px 이상이거나 안쪽 그림자 왼쪽 선."""
+    if prop in ("border-left", "border-inline-start"):
+        if any(w in low for w in ("none", "transparent", "hidden")):
+            return False
+        m = re.search(r"([\d.]+)px", low)
+        return bool(m) and float(m.group(1)) >= 2
+    if prop in ("border-left-width", "border-inline-start-width"):
+        m = re.match(r"([\d.]+)px", low)
+        return bool(m) and float(m.group(1)) >= 2
+    return prop == "box-shadow" and bool(LEFT_INSET.search(low))
+
+
 def check_reading_rules(src: CssSource, text: str, report: Report) -> None:
     """디자인 지식(knowledge.py)의 숫자 규칙 중 CSS 로 바로 잴 수 있는 것 — 본문 행간·글자 크기, 움직임 길이."""
     for m in RULE_BLOCK.finditer(text):
@@ -261,6 +277,8 @@ def check_css(sources: list[CssSource], report: Report) -> None:
                 em = re.match(r"(-?[\d.]+)(em|px)", low)
                 if em and (float(em.group(1)) >= WIDE_TRACKING_EM if em.group(2) == "em" else float(em.group(1)) >= 2):
                     report.add("DRIFT", src.path, line, "wide-tracking", f"{prop}: {value} — 넓게 벌린 대문자·제목은 생성 티, 바탕에 없으면 보통 자간")
+            if is_left_stroke(prop, low):
+                report.add("DRIFT", src.path, line, "left-stroke", f"{prop}: {value} — 칸·글·목록 왼쪽에만 넣은 색 선은 생성 티, 바탕에 없으면 면·굵기·표시로")
             if prop in ("box-shadow", "filter") and any(int(g) >= 12 for g in GLOW.findall(low)):
                 report.add("DRIFT", src.path, line, "glow", f"{prop}: {value} — 가운데서 번지는 빛, 깊이는 면의 단계와 가는 선으로")
             if prop in ("background-clip", "-webkit-background-clip") and low == "text":

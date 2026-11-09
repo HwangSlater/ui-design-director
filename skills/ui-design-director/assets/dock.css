@@ -36,7 +36,9 @@
   --v-bottom: 16px;
   --v-phone-w: 390px;
   --v-bezel: 12px;
-  --v-scroll-tail: 140px;   /* 막대에 가려도 끝까지 내려 볼 수 있는 여유 */
+  --v-info-w: clamp(180px, 20vw, 300px); /* 1안 이름 칸 — 132px 이면 「실제 꽃집 · 국내 온…」처럼 일찍 잘렸다. 자리가 모자라면 --v-info-min 까지 준다 */
+  --v-info-min: 140px;
+  --v-touch: 44px;          /* 휴대폰 폭에서 누르는 자리 최소 크기 */
 }
 
 /* 막대 — 시안 페이지의 글꼴·색이 섞이지 않게 막대 안에서만 정한다 */
@@ -123,7 +125,9 @@
 /* 1안 — 막대 하나, 얇은 선으로 구획 */
 .dock-1 .v-nav { gap: 0; }
 .dock-1 .v-nav > .v-bar-main { display: flex; align-items: center; gap: var(--v-2); }
-.dock-1 .v-info { width: 132px; flex: none; }
+.dock-1 .v-info { flex: 0 1 var(--v-info-w); min-width: var(--v-info-min); }
+/* 도구 단추 글자는 줄이지 않는다(「스크립트 …」로 잘렸다) — 모자라면 이름 칸이 먼저 준다 */
+.v-g-tools, .v-g-tools > .v-btn { flex: none; }
 
 /* 2안 — 위층 이름·단축키, 아래층 조작. 이름 줄은 막대 폭을 늘리지 않는다(contain). */
 .dock-2 .v-bar-main { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; grid-template-areas: "info info keys" "cands pages tools"; align-items: center; column-gap: var(--v-4); row-gap: var(--v-2); padding: var(--v-3) var(--v-3) var(--v-2); }
@@ -156,6 +160,23 @@
   .v-title { flex: none; }         /* 남은 단계 이름은 짧으니 줄이지 않는다 */
   .v-name { flex-shrink: 0; max-width: 60%; } /* 좁으면 설명보다 후보 이름을 먼저 지킨다 */
   .v-g-cands { max-width: none; }
+}
+/* 휴대폰 폭 — 막대를 여러 줄로 접는다: 이름 줄 · 후보와 화면 · 도구(넘치면 다음 줄). 글자를 자르지 않고, 누르는 자리는 44px */
+@media (max-width: 600px) {
+  :root { --v-ctl: var(--v-touch); --v-thumb-h: var(--v-touch); --v-bottom: var(--v-2); }
+  .v-nav { overflow: visible; flex-wrap: wrap; }
+  .dock-1 .v-nav > .v-bar-main, .dock-2 .v-nav > .v-bar-main { display: flex; flex-wrap: wrap; align-items: center; gap: var(--v-2); width: 100%; padding: var(--v-2); }
+  .v-bar-main > .v-rule { display: none; }
+  .v-info, .dock-1 .v-info, .dock-2 .v-info { order: -1; flex: 1 1 100%; min-width: 0; flex-direction: row; align-items: baseline; gap: var(--v-2); padding: 0 var(--v-1); contain: none; }
+  .v-title { display: none; }
+  .v-name { max-width: none; flex: 0 1 auto; }
+  .v-g-cands { flex: 1 1 0; min-width: 0; max-width: 100%; } /* 썸네일은 옆으로 넘기고 화면 탭과 한 줄에 */
+  .v-g-pages { flex: 0 1 auto; min-width: 0; }
+  .v-g-tools { flex: 1 1 100%; flex-wrap: wrap; gap: var(--v-2); }
+  .v-g-tools > .v-btn { flex: none; }
+  .dock-3 .v-g-cands, .dock-3 .v-g-pages, .dock-3 .v-g-tools { flex: 1 1 auto; }
+  .v-seg .v-btn { height: var(--v-ctl); }
+  .v-btn, .v-btn.icon { min-width: var(--v-touch); }
 }
 @media (prefers-reduced-motion: no-preference) {
   .v-btn, .v-thumb, .v-thumb img { transition: background-color var(--v-dur) var(--v-ease), color var(--v-dur) var(--v-ease), box-shadow var(--v-dur) var(--v-ease), opacity var(--v-dur) var(--v-ease), filter var(--v-dur) var(--v-ease); }

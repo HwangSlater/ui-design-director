@@ -26,3 +26,10 @@ def test_plain_page_not_flagged(tmp_path: Path) -> None:
     out = rules(tmp_path, ".k{letter-spacing:.02em}.c{box-shadow:0 1px 2px rgba(0,0,0,.1)}.c:hover{color:var(--c-a)}", "<p>전화 033-000-0000</p>")
     for rule in ("wide-tracking", "glow", "hover-scale", "emoji-icon"):
         assert rule not in out, rule
+
+
+def test_left_stroke_flagged(tmp_path: Path) -> None:
+    out = rules(tmp_path, ".note{border-left:4px solid var(--c-accent)}.pick{box-shadow:inset 3px 0 0 var(--c-a)}")
+    assert out.count("left-stroke") == 2
+    out = rules(tmp_path, ".row{border-left:1px solid var(--c-line)}.x{border-left:none}.y{box-shadow:0 1px 2px var(--c-s)}")
+    assert "left-stroke" not in out

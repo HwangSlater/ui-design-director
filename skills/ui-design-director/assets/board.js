@@ -17,6 +17,8 @@
   const SPY_OFFSET = 48; // 이어 보기에서 이 높이 안에 들어온 구획을 「지금 화면」으로 친다
   // 사용자가 고른 화면(state.p)은 후보를 넘겨도 바꾸지 않는다. 없는 후보에서는 「없어요」를 보여 준다.
   const state = { c: 0, p: data.pages[0].key, v: "pc" };
+  // 휴대폰 폭 창에서는 휴대폰 보기로 시작한다(주소에 v 가 있으면 그대로) — PC 보기는 글자가 안 읽힐 만큼 줄었다
+  const NARROW = "(max-width: 600px)";
 
   function readHash() {
     const q = new URLSearchParams(location.hash.slice(1));
@@ -24,6 +26,7 @@
     if (ci >= 0) state.c = ci;
     if (data.pages.some((p) => p.key === q.get("p"))) state.p = q.get("p");
     if (VIEWS.includes(q.get("v"))) state.v = q.get("v");
+    else if (matchMedia(NARROW).matches) state.v = "phone";
   }
 
   function writeHash() {
@@ -57,9 +60,19 @@
   // 숨긴 틀은 안 보이게만 한다(display:none 이면 사이트가 그리기를 멈춰 다 뜨지 못했다 — 만개의레시피)
   const hideFrame = (f) => { Object.assign(f.style, { visibility: "hidden", position: "absolute", top: "0", left: "0" }); f.inert = true; };
   const showFrame = (f) => { Object.assign(f.style, { visibility: "visible", position: "static" }); f.inert = false; };
+  // 칸보다 좁게 그리면 오른쪽에 흰 띠가 남았다 — 칸이 기준 폭보다 넓으면 칸 폭 그대로, 좁으면 기준 폭으로 그려 줄인다
   function sizeFrame(box, kind, f) {
-    const k = Math.min(1, box.clientWidth / LIVE_W[kind]);
-    Object.assign(f.style, { width: `${LIVE_W[kind]}px`, height: `${box.clientHeight / k}px`, transform: `scale(${k})`, transformOrigin: "0 0", border: "0" });
+    const bw = box.clientWidth, bh = box.clientHeight;
+    if (!bw || !bh) return; // 숨은 칸은 크기가 0 — 보이게 되면 ResizeObserver 가 다시 맞춘다
+    const k = Math.min(1, bw / LIVE_W[kind]);
+    Object.assign(f.style, { width: `${bw / k}px`, height: `${bh / k}px`, transform: `scale(${k})`, transformOrigin: "0 0", border: "0" });
+  }
+  // 칸 크기가 바뀔 때(창 크기, 막대 높이, PC↔휴대폰) 띄운 틀을 모두 다시 맞춘다 — 처음 잴 때는 자리가 덜 잡혀 있었다
+  function watchFrames() {
+    const resize = (box) => box.querySelectorAll(":scope > iframe").forEach((f) => sizeFrame(box, box.dataset.kind, f));
+    const ro = new ResizeObserver((entries) => entries.forEach((e) => resize(e.target)));
+    frames().forEach(([sel, kind]) => { const box = $(sel); box.dataset.kind = kind; ro.observe(box); });
+    window.addEventListener("resize", () => frames().forEach(([sel]) => resize($(sel))));
   }
   // show=false 면 뒤에서 미리 띄우기만 한다(다음·이전 후보)
   function liveFrame(box, kind, cand, url, alt, show = true) {
@@ -314,6 +327,20 @@
     render = function () { plain(); refreshLiveButtons(); followWindow(); };
   }
 
+  // 실제 사이트 모드는 캡처가 없어 썸네일이 번호만 있었다 — live_proxy.mjs 가 뒤에서 찍는 thumbs/<id>.jpg 를 생길 때까지 다시 불러 본다.
+  // 다 받은 뒤에만 붙인다(깨진 그림 표시가 보이지 않게). 번호 표시는 그대로.
+  const THUMB_RETRY_MS = 3000;
+  const THUMB_RETRY_MAX = 40; // 3초 × 40 = 2분 — 그 뒤에도 없으면 번호만
+  function liveThumb(button, cand) {
+    const base = `thumbs/${encodeURIComponent(cand.id)}.jpg`;
+    let tries = 0;
+    const img = el("img");
+    img.alt = "";
+    img.addEventListener("load", () => button.prepend(img), { once: true });
+    img.addEventListener("error", () => { if (++tries < THUMB_RETRY_MAX) setTimeout(() => { img.src = `${base}?t=${tries}`; }, THUMB_RETRY_MS); });
+    img.src = base;
+  }
+
   function build() {
     const thumbs = $(".v-thumbs");
     data.candidates.forEach((c, i) => {
@@ -323,14 +350,14 @@
       b.setAttribute("aria-label", `${c.id}번 ${c.title}`);
       b.dataset.tip = `${c.id} ${c.title}${c.meta ? " · " + c.meta : ""}`;
       const src = thumbSrc(c);
+      b.append(el("span", "v-thumb-num", c.id));
       if (src) {
         const img = el("img");
         img.src = src;
         img.alt = "";
         img.loading = "lazy";
-        b.append(img);
-      }
-      b.append(el("span", "v-thumb-num", c.id));
+        b.prepend(img);
+      } else if (data.live) liveThumb(b, c);
       b.addEventListener("click", () => { state.c = i; render(); });
       li.append(b);
       thumbs.append(li);
@@ -353,6 +380,8 @@
     $(".v-hide").addEventListener("click", toggleDock);
     $(".v-reveal").addEventListener("click", toggleDock);
     if (data.live) buildLive();
+    watchFrames();
+    window.Dock.reserveSpace($(".v-nav"));
 
     hideTip = window.Dock.installTip($(".v-nav"));
     refreshConfirm = window.Dock.installConfirm($(".v-nav"), $(".v-confirm"), () => {

@@ -9,14 +9,14 @@ a { color: inherit; }
 svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; flex: none; }
 
 /* 무대 — PC는 화면 전부, 휴대폰은 가운데 실제 폭 */
-.v-stage { position: fixed; inset: var(--v-gap); display: flex; justify-content: center; }
+/* 아래는 막대 높이(--v-dock-space, dock.js 가 잰다)만큼 비운다 — 막대가 사이트 아래쪽 단추를 가렸다 */
+.v-stage { position: fixed; inset: var(--v-gap); bottom: calc(var(--v-dock-space, 0px) + var(--v-gap)); display: flex; justify-content: center; }
 .v-desktop, .v-phone { min-height: 0; display: flex; }
 .v-desktop { flex: 1; border-radius: var(--v-r); overflow: hidden; background: var(--v-paper); }
 .v-phone { display: none; width: calc(var(--v-phone-w) + 2 * var(--v-bezel)); padding: var(--v-bezel); border-radius: var(--v-r-phone); background: var(--v-frame); box-shadow: 0 0 0 1px var(--v-bar-edge); }
 .is-phone .v-desktop { display: none; }
 .is-phone .v-phone { display: flex; }
 .v-scroll { flex: 1; overflow-y: auto; background: var(--v-paper); min-height: 0; scrollbar-width: thin; }
-.v-scroll:has(> img)::after { content: ""; display: block; height: var(--v-scroll-tail); background: var(--v-stage); }
 .v-phone .v-scroll { border-radius: calc(var(--v-r-phone) - var(--v-bezel)); }
 .v-scroll img { display: block; width: 100%; height: auto; }
 /* 이어 보기 — 화면마다 이름 띠가 위에 붙어 따라온다 */
@@ -28,3 +28,9 @@ svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width:
 
 /* 실제 사이트 모드: 숨긴 단추는 늘 숨김(.v-btn 의 display 가 hidden 을 덮어썼다) */
 .v-btn[hidden] { display: none !important; }
+
+/* 휴대폰 폭 창 — 휴대폰 틀의 테두리를 빼고 폭을 다 쓴다(틀 폭 414px 가 화면보다 넓었다) */
+@media (max-width: 600px) {
+  .v-phone { width: 100%; padding: 0; border-radius: var(--v-r); background: transparent; box-shadow: none; }
+  .v-phone .v-scroll { border-radius: var(--v-r); }
+}

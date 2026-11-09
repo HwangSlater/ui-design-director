@@ -16,7 +16,8 @@
 .ps-font-menu[hidden] { display: none; }
 .ps-font-item { display: grid; gap: 2px; min-height: 44px; padding: var(--v-2) var(--v-3); border: 0; border-radius: var(--v-r-sm); background: transparent; color: var(--v-ink); text-align: left; cursor: pointer; }
 .ps-font-item:hover { background: var(--v-hover); }
-.ps-font-item[aria-pressed="true"] { background: var(--v-raise); box-shadow: inset 3px 0 0 var(--v-pick); }
+.ps-font-item[aria-pressed="true"] { background: var(--v-raise); font-weight: 600; } /* 왼쪽 색 선은 생성 티 — 면과 굵기로 */
+.ps-font-item[aria-pressed="true"] b::after { content: " ✓"; color: var(--v-pick); }
 .ps-font-item:focus-visible { outline: 2px solid var(--v-focus); outline-offset: -2px; }
 .ps-font-item b { font-size: var(--v-md); font-weight: 600; }
 .ps-font-item span { font-size: var(--v-sm); color: var(--v-ink); }

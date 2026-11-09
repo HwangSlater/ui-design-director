@@ -17,6 +17,8 @@ Spec (paths relative to the spec file):
 Captured files are expected at <captures>/<slug>-<page>-<width>.jpg. A page appears
 for a candidate when at least one width was captured; missing pages are disabled.
 assets/dock.css, dock.js (shared bottom bar), board.css and board.js are copied next to the output.
+In live mode without captures, thumbnails come from <out dir>/thumbs/<candidate id>.jpg, which
+live_proxy.mjs shoots in the background after OPEN (board.js retries until they appear).
 """
 
 from __future__ import annotations

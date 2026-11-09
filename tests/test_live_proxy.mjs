@@ -114,7 +114,7 @@ test("공용 틀이 아닌 보기 화면은 열지 않는다", async () => {
   const dir = mkdtempSync(join(tmpdir(), "live-proxy-own-"));
   writeFileSync(join(dir, "own.html"), "<p>직접 짠 보기 화면</p><iframe src=x></iframe>");
   writeFileSync(join(dir, "spec.json"), JSON.stringify({ candidates: [{ n: "1", name: "가짜", pages: { 홈: `${origin}/` } }] }));
-  const p = spawn(process.execPath, [PROXY, join(dir, "own.html"), join(dir, "spec.json")]);
+  const p = spawn(process.execPath, [PROXY, join(dir, "own.html"), join(dir, "spec.json"), "--no-thumbs"]);
   const code = await new Promise((r) => p.on("exit", r));
   assert.equal(code, 3);
 });
@@ -155,7 +155,7 @@ test("--decision 으로 확정 파일 자리를 바꾼다", async () => {
   writeFileSync(join(d2, "board.html"), '<script type="application/json" id="board-data">{}</script><script src="board.js"></script>');
   writeFileSync(join(d2, "spec.json"), JSON.stringify({ candidates: [{ n: "1", name: "가짜", pages: { 홈: `${origin}/` } }] }));
   const target = join(d2, "고름.json");
-  const p = spawn(process.execPath, [PROXY, join(d2, "board.html"), join(d2, "spec.json"), "--decision", target]);
+  const p = spawn(process.execPath, [PROXY, join(d2, "board.html"), join(d2, "spec.json"), "--decision", target, "--no-thumbs"]);
   try {
     const u = new URL(await new Promise((r) => p.stdout.on("data", (d) => { const m = String(d).match(/OPEN (\S+)/); if (m) r(m[1]); })));
     const token = new URLSearchParams(u.hash.slice(1)).get("wait").split("-")[1];
@@ -179,7 +179,7 @@ test("띄우기 전에 후보 첫 페이지를 확인해 고장 난 후보를 �
   writeFileSync(join(d3, "board.html"), '<script type="application/json" id="board-data">{}</script><script src="board.js"></script>');
   writeFileSync(join(d3, "spec.json"), JSON.stringify({ candidates: [
     { n: "1", name: "멀쩡", pages: { 홈: `${origin}/` } }, { n: "2", name: "막힘", pages: { 홈: `${origin}/gone` } }] }));
-  const p = spawn(process.execPath, [PROXY, join(d3, "board.html"), join(d3, "spec.json")]);
+  const p = spawn(process.execPath, [PROXY, join(d3, "board.html"), join(d3, "spec.json"), "--no-thumbs"]);
   let text = "";
   try {
     await new Promise((r) => p.stdout.on("data", (d) => { text += d; if (/OPEN /.test(text)) r(); }));
@@ -187,4 +187,17 @@ test("띄우기 전에 후보 첫 페이지를 확인해 고장 난 후보를 �
     assert.ok(!/후보 1 멀쩡:/.test(text), "멀쩡한 후보가 찍힘");
     assert.ok(text.indexOf("403") < text.indexOf("OPEN "), "경고가 OPEN 보다 늦게 나옴");
   } finally { p.kill(); }
+});
+
+// 이 시험은 브라우저(Edge·Chrome)로 가짜 사이트 첫 화면을 찍는다 — 맨 처음 띄운 프록시가 OPEN 뒤에 뒤에서 찍은 것
+test("OPEN 뒤에 후보 첫 화면 썸네일을 thumbs/<id>.jpg 로 찍고 한 줄 알린다, 보드 서버가 내준다", async () => {
+  const deadline = Date.now() + 90000;
+  while (!/썸네일 \d+장 저장/.test(out) && Date.now() < deadline) await new Promise((r) => setTimeout(r, 300));
+  assert.match(out, /썸네일 1장 저장/);
+  const jpg = readFileSync(join(dir, "thumbs", "1.jpg"));
+  assert.equal(jpg[0], 0xff); assert.equal(jpg[1], 0xd8); // JPEG
+  assert.ok(jpg.length < 60000, `썸네일이 너무 큼: ${jpg.length}`);
+  const r = await fetch(`${open.origin}/thumbs/1.jpg`);
+  assert.equal(r.status, 200);
+  assert.equal(r.headers.get("content-type"), "image/jpeg");
 });

@@ -3,6 +3,7 @@
 // 사용: node live_proxy.mjs <spec.json> [--decision <decision.json>]  — 공용 틀 보기 화면(보기.html)을 만들어 연다.
 //   이미 만든 화면이면 <보기.html> <spec.json>. --decision 을 안 주면 보기 화면 옆 decision.json.
 //   → 「OPEN http://127.0.0.1:<보드 포트>/<보드>?proxy=…#wait=…」 한 줄을 찍는다. 그 주소 하나만 사용자에게 준다.
+//   OPEN 을 찍은 뒤 뒤에서 후보마다 첫 페이지 썸네일을 보기 화면 옆 thumbs/<후보 id>.jpg 로 찍는다(브라우저 하나, 다 찍으면 끈다, --no-thumbs 로 끔).
 //   의뢰인이 「확정」을 누르면 decision.json 을 쓰고 「DECISION <고른 것>」을 찍은 뒤 계속 띄운다(다시 확정하면 덮어쓴다). Ctrl+C 로 끈다.
 // 방법은 willyogo/iframe-proxy(MIT)의 생각을 빌려 외부 패키지 없이 다시 썼다:
 //   막는 응답 머리를 지우고, <base> 로 그림·글꼴은 원래 사이트에서 바로 받게 하고, 페이지 안 링크·fetch·XHR 을 이 프록시로 돌린다.
@@ -12,12 +13,13 @@
 //   ?probe=1 로 「스크립트 없이는 빈 화면인가」를 보드에 알려 준다(보드가 스크립트를 켤지 정한다).
 // 한계: 로그인·웹소켓·자기 서버에 쓰기(POST)가 필요한 화면, 스크립트가 화면을 숨겨 버리는 곳은 그대로 안 보인다 → 그런 후보는 capture.mjs 그림으로.
 import { createServer } from "node:http";
-import { readFileSync, existsSync, statSync } from "node:fs";
+import { readFileSync, existsSync, statSync, mkdirSync, writeFileSync } from "node:fs";
 import { dirname, join, resolve, extname, basename, sep } from "node:path";
 import { randomBytes } from "node:crypto";
 import { spawnSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 import { choiceHandler, newChoiceToken, waitHash, HOST } from "./wait_choice.mjs";
+import { launch, openPage, goto, evaluate, sleep, HIDE_OVERLAYS } from "./browser.mjs";
 
 // 브라우저 이름은 측정 도구와 같은 한 곳(assets/browser.json) — 버전이 도구마다 달랐다
 const BROWSER = JSON.parse(readFileSync(join(dirname(fileURLToPath(import.meta.url)), "..", "assets", "browser.json"), "utf8"));
@@ -48,6 +50,9 @@ const TYPES = { ".html": "text/html; charset=utf-8", ".css": "text/css", ".js": 
 // 인자가 spec 하나면 그 옆에 「보기.html」을 공용 틀로 직접 만든 뒤 연다.
 const SHARED_MARK = /id=["']board-data["'][\s\S]*board\.js|board\.js[\s\S]*id=["']board-data["']/;
 const argv = process.argv.slice(2);
+const ni = argv.indexOf("--no-thumbs");
+const noThumbs = ni >= 0;
+if (noThumbs) argv.splice(ni, 1);
 const di = argv.indexOf("--decision");
 let decisionPath = di >= 0 ? argv.splice(di, 2)[1] : "";
 let [boardPath, specPath] = argv;
@@ -305,3 +310,51 @@ const firstPages = (blockedUrls || (spec.candidates || []).map((c) => Object.val
 const jobs = firstPages.flatMap((u) => ["pc", "phone"].map((ua) => () => getUpstream(new URL(u), "GET", ua).catch(() => null)));
 const runPrewarm = async () => { while (jobs.length) await jobs.shift()(); };
 Promise.all(Array.from({ length: PREWARM_PARALLEL }, runPrewarm)).then(() => console.log(`미리 받아 둠: 후보 ${firstPages.length}곳`));
+
+// 썸네일 — 실제 사이트 모드는 캡처를 안 찍어 아래 막대 썸네일이 번호만 있는 빈 칸이었다.
+// 후보마다 첫 페이지의 첫 화면을 작은 JPEG 로 찍어 보드 폴더의 thumbs/ 에 둔다(보드 서버가 그대로 내준다, 보드는 생길 때까지 다시 불러 본다).
+// 브라우저는 하나만, 한 곳씩, 곳마다 짧게. 같은 주소로 이미 찍은 것은 건너뛴다(thumbs/index.json — 중간에 끊겨도 다음에 이어 찍는다).
+const THUMB_DIR = join(boardDir, "thumbs");
+const THUMB_VIEW = { width: 1280, height: 800 };
+const THUMB_W = 320;          // 저장하는 그림 폭(막대 썸네일 64~72px 의 2배 넘게 — 선명하고 파일은 작게)
+const THUMB_QUALITY = 70;
+const THUMB_TIMEOUT_MS = 12000; // 다 안 열려도 이때까지 그려진 것을 찍는다
+const THUMB_SETTLE_MS = 1200;
+const SAFE_ID = /^[\p{L}\p{N}_-]{1,40}$/u; // 파일 이름으로 쓰는 후보 id — 경로 문자는 받지 않는다
+const makeThumbs = async () => {
+  mkdirSync(THUMB_DIR, { recursive: true });
+  const indexPath = join(THUMB_DIR, "index.json");
+  let index = {};
+  try { index = JSON.parse(readFileSync(indexPath, "utf8")); } catch { index = {}; }
+  const file = (c) => join(THUMB_DIR, `${c.id}.jpg`);
+  const usable = checked.filter((c) => !c.bad && SAFE_ID.test(c.id));
+  const todo = usable.filter((c) => !(index[c.id] === c.url && existsSync(file(c))));
+  let saved = 0;
+  if (todo.length) {
+    let browser = null;
+    try {
+      browser = await launch("capture-thumbs-");
+      for (const c of todo) {
+        const page = await openPage(browser.port, THUMB_VIEW).catch(() => null);
+        if (!page) continue;
+        try {
+          await goto(page.cdp, c.url, { timeout: THUMB_TIMEOUT_MS }).catch(() => {}); // 늦게 끝나는 곳도 그려진 만큼 찍는다
+          await sleep(THUMB_SETTLE_MS);
+          await evaluate(page.cdp, HIDE_OVERLAYS).catch(() => {});
+          const shot = await page.cdp.send("Page.captureScreenshot", { format: "jpeg", quality: THUMB_QUALITY, clip: { x: 0, y: 0, ...THUMB_VIEW, scale: THUMB_W / THUMB_VIEW.width } });
+          writeFileSync(file(c), Buffer.from(shot.data, "base64"));
+          index[c.id] = c.url;
+          writeFileSync(indexPath, JSON.stringify(index, null, 1));
+          saved++;
+        } catch { /* 이 후보만 건너뛴다 — 보드는 번호만 보인다 */ } finally { await page.close(); }
+      }
+    } catch (err) {
+      console.log(`썸네일을 찍지 못했어요: ${err.message}`);
+    } finally {
+      await browser?.close();
+    }
+  }
+  const kept = usable.length - todo.length;
+  console.log(`썸네일 ${saved}장 저장${kept ? `(이미 있던 ${kept}장 그대로)` : ""} → ${THUMB_DIR}`);
+};
+if (!noThumbs) makeThumbs();

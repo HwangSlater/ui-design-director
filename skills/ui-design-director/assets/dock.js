@@ -182,5 +182,19 @@
     return refresh;
   }
 
-  window.Dock = { $, $$, el, installTip, syncFocus, toggleDock, onKeys, writeHash, installConfirm, waiting: Boolean(WAIT) };
+  // 막대가 차지하는 높이(화면 아래 끝에서 막대 맨 위까지)를 --v-dock-space 로 알린다.
+  // 무대가 그만큼 비워 막대가 시안·사이트 아래쪽(단추 등)을 가리지 않게 한다. 숨기거나 펼치거나 줄이 바뀌면 다시 잰다.
+  function reserveSpace(nav) {
+    const measure = () => {
+      const tops = [nav, ...nav.querySelectorAll(":scope > *, .v-info")].map((n) => n.getBoundingClientRect()).filter((r) => r.height > 0).map((r) => r.top);
+      const space = tops.length ? Math.max(0, Math.ceil(innerHeight - Math.min(...tops))) : 0;
+      document.documentElement.style.setProperty("--v-dock-space", `${space}px`);
+    };
+    new ResizeObserver(measure).observe(nav);
+    window.addEventListener("resize", measure);
+    new MutationObserver(measure).observe(document.body, { attributes: true, attributeFilter: ["class"] }); // 숨기기·펼치기
+    measure();
+  }
+
+  window.Dock = { $, $$, el, installTip, syncFocus, toggleDock, onKeys, writeHash, installConfirm, reserveSpace, waiting: Boolean(WAIT) };
 })();
