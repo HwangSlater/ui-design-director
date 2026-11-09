@@ -48,6 +48,7 @@ Also generated unless the base has them (from unslop's signs list, Damir Sokolov
 - **One 「견본」 line.** Everything that is sample — text and photos — is listed in one 「견본」 line at the page foot (「사진과 소개 글은 견본이에요」), never marked on the page itself.
 - **No empty boxes.** Never a hatched box, dashed slot or 「… 자리」 label: every photo slot gets a licence-checked sample photo of the right subject ([sample-photos.md](sample-photos.md)). When no fitting sample exists (before/after of the same room, a staff photo), drop the part and ask the client for the photo.
 - Never invented testimonials, reviews, logos, statistics or awards; leave those parts out until the client supplies real ones.
+- Real logos, team marks or photos found by search (the client may ask for them as samples): use them only marked 견본, tell the client in the same message that a live site needs the owners' permission (league, team, photographer), and list them in the 「견본」 footer line. Never present them as approved for launch.
 - Times, open/closed, counts and totals come from one function and one data file; check the edge cases.
 - Photos: credited, licence checked; crop people, signs and number plates the client has not cleared. No generated imagery.
 

@@ -23,6 +23,9 @@ from pathlib import Path
 from PIL import Image, ImageFilter
 
 FIRST_SCREEN = {390: 844, 1280: 900}  # 첫 화면 높이(CSS px) — capture.mjs 와 같은 기기 크기
+# 화면 종류마다 찾을 폭 — 디자이너가 PC 를 1440 으로 찍어 1280 만 찾던 검사가 PC 를 건너뛰었다(NBA 12차)
+VIEWS = {"휴대폰": (390, 375, 360, 414, 430), "PC": (1280, 1440, 1366, 1536, 1600, 1920)}
+VIEW_HEIGHT = {"휴대폰": 844, "PC": 900}
 GRID_W = 48                            # 짜임 비교 칸 수(가로)
 PALETTE_N = 6
 # NBA 11차(theScore 를 그대로 옮김)가 걸리고, 바탕을 따르되 우리 색·마감을 쓴 시안은 지나가게 잡은 값(2026-11-09 시안 8개로 맞춤)
@@ -30,10 +33,10 @@ COLOUR_COPY = 0.92
 STATE_WORDS = re.compile(r"empty|offline|error|loading|judge|빈|오류|실패", re.I)
 
 
-def first_screen(path: Path, width: int) -> Image.Image:
+def first_screen(path: Path, width: int, height: int | None = None) -> Image.Image:
     im = Image.open(path).convert("RGB")
     scale = im.width / width  # 2배 캡처도 같은 비율로
-    h = min(im.height, int(FIRST_SCREEN.get(width, 900) * scale))
+    h = min(im.height, int((height or FIRST_SCREEN.get(width, 900)) * scale))
     return im.crop((0, 0, im.width, h))
 
 
@@ -85,10 +88,27 @@ def colour_similarity(a: Image.Image, b: Image.Image) -> float:
     return max(0.0, 1 - (one + two) / 2 * 4)  # 평균 거리 0.25(꽤 다른 색)면 0
 
 
-def judge(base: Path, ours: Path, width: int) -> tuple[float, float, bool]:
-    a, b = first_screen(base, width), first_screen(ours, width)
+def judge(base: Path, ours: Path, width: int, ours_width: int | None = None, height: int | None = None) -> tuple[float, float, bool]:
+    a, b = first_screen(base, width, height), first_screen(ours, ours_width or width, height)
     lay, col = layout_similarity(a, b), colour_similarity(a, b)
     return lay, col, col >= COLOUR_COPY
+
+
+def find_view(folder: Path, view: str, prefer: str = "") -> tuple[Path, int] | tuple[None, None]:
+    """그 화면 종류(휴대폰·PC)로 찍은 캡처와 그 폭 — 있는 폭 가운데 앞의 것."""
+    for width in VIEWS[view]:
+        f = find(folder, width, prefer)
+        if f:
+            return f, width
+    return None, None
+
+
+def pairs(root: Path):
+    """화면 종류마다 (종류, 바탕, 바탕 폭, 우리, 우리 폭) — 하나라도 없으면 None 자리."""
+    for view in VIEWS:
+        base, bw = find_view(root / "formats" / "base-cap", view, prefer="home")
+        ours, ow = find_view(root / "mockups" / "보낼-그림", view, prefer="main")
+        yield view, base, bw, ours, ow
 
 
 def find(folder: Path, width: int, prefer: str = "") -> Path | None:
@@ -110,7 +130,9 @@ def hex_rgb(h: str) -> tuple[int, int, int] | None:
 def palette_copies(root: Path) -> list[str]:
     """팔레트 화면의 후보 가운데 바탕 색을 그대로 쓴 것 — 「바탕 그대로」 후보를 의뢰인이 매번 골라 바탕 사이트처럼 보였다."""
     page = root / "palette" / "index.html"
-    base = find(root / "formats" / "base-cap", 1280, prefer="home") or find(root / "formats" / "base-cap", 390, prefer="home")
+    base, bw = find_view(root / "formats" / "base-cap", "PC", prefer="home")
+    if not base:
+        base, bw = find_view(root / "formats" / "base-cap", "휴대폰", prefer="home")
     if not page.is_file():
         return []
     m = re.search(r'id="palettes"[^>]*>(.*?)</script>', page.read_text(encoding="utf-8", errors="replace"), re.S)
@@ -119,7 +141,7 @@ def palette_copies(root: Path) -> list[str]:
     except json.JSONDecodeError:
         return []
     # 강조색은 면적이 작아(단추 하나) 6색으로 줄이면 회색에 섞였다 — 후보와 견줄 때는 16색까지
-    base_cols = [c for c, w in palette(first_screen(base, 1280 if "1280" in base.name else 390), 16, Image.Quantize.FASTOCTREE) if w > 0.002] if base else []
+    base_cols = [c for c, w in palette(first_screen(base, bw), 16, Image.Quantize.FASTOCTREE) if w > 0.002] if base else []
     out = []
     for c in cands:
         roles = c.get("roles") or {}
@@ -133,14 +155,12 @@ def palette_copies(root: Path) -> list[str]:
 def check_project(root: Path) -> list[str]:
     """preflight.py 도 부른다 — 바탕 그대로인 팔레트 후보, 베낀 티가 있는 폭마다 한 줄."""
     out = palette_copies(root)
-    for width in FIRST_SCREEN:
-        base = find(root / "formats" / "base-cap", width, prefer="home")
-        ours = find(root / "mockups" / "보낼-그림", width, prefer="main")
+    for view, base, bw, ours, ow in pairs(root):
         if not base or not ours:
             continue
-        lay, col, copied = judge(base, ours, width)
+        lay, col, copied = judge(base, ours, bw, ow, VIEW_HEIGHT[view])
         if copied:
-            out.append(f"베낀 티({width}px): 색 {col:.2f}(짜임 {lay:.2f}) — 첫 화면 색·마감이 바탕과 거의 같음. "
+            out.append(f"베낀 티({view}): 색 {col:.2f}(짜임 {lay:.2f}) — 첫 화면 색·마감이 바탕과 거의 같음. "
                        "짜임은 따라도 되지만 색 계열·이름 처리·칸 마감·대표 요소 중 둘 이상을 우리 것으로(build-rules.md § Make it ours)")
     return out
 
@@ -162,15 +182,13 @@ def main(argv: list[str]) -> int:
     for line in pal:
         print(line)
     rows = len(pal)
-    for width in FIRST_SCREEN:
-        base = find(root / "formats" / "base-cap", width, prefer="home")
-        ours = find(root / "mockups" / "보낼-그림", width, prefer="main")
+    for view, base, bw, ours, ow in pairs(root):
         if not base or not ours:
-            print(f"{width}px: 캡처 없음(바탕 {base.name if base else '-'} · 우리 {ours.name if ours else '-'})")
+            print(f"{view}: 캡처 없음(바탕 {base.name if base else '-'} · 우리 {ours.name if ours else '-'})")
             continue
-        lay, col, copied = judge(base, ours, width)
+        lay, col, copied = judge(base, ours, bw, ow, VIEW_HEIGHT[view])
         rows += copied
-        print(f"{width}px: 짜임 {lay:.2f} · 색 {col:.2f} → {'베낀 티' if copied else '괜찮음'} ({base.name} ↔ {ours.name})")
+        print(f"{view}: 짜임 {lay:.2f} · 색 {col:.2f} → {'베낀 티' if copied else '괜찮음'} ({base.name} ↔ {ours.name})")
     return 1 if rows else 0
 
 

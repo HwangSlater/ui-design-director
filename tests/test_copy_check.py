@@ -13,7 +13,7 @@ import copy_check  # noqa: E402
 
 def page(path: Path, bg: str, card: str, accent: str, width: int = 1280) -> Path:
     """머리 띠·카드 두 줄·강조 단추가 있는 첫 화면 그림."""
-    h = copy_check.FIRST_SCREEN[width]
+    h = copy_check.FIRST_SCREEN.get(width, 900)
     im = Image.new("RGB", (width, h), bg)
     d = ImageDraw.Draw(im)
     d.rectangle((0, 0, width, 70), fill=card)
@@ -39,7 +39,7 @@ def project(tmp: Path, ours: tuple[str, str, str], palettes: list[dict] | None =
 
 def test_same_finish_is_copy(tmp_path: Path) -> None:
     root = project(tmp_path, ("#0b0b0b", "#1c1c1c", "#1a73e8"))
-    assert any("베낀 티(1280px)" in line for line in copy_check.check_project(root))
+    assert any("베낀 티(PC)" in line for line in copy_check.check_project(root))
 
 
 def test_own_colours_pass(tmp_path: Path) -> None:
@@ -52,3 +52,10 @@ def test_palette_candidate_equal_to_base(tmp_path: Path) -> None:
             {"id": "B", "name": "우리 색", "roles": {"bg": "#f4efe6", "action": "#c2410c"}}]
     out = copy_check.palette_copies(project(tmp_path, ("#f4efe6", "#ffffff", "#c2410c"), pals))
     assert len(out) == 1 and "A 검정과 파랑" in out[0]
+
+
+def test_desktop_width_may_differ(tmp_path: Path) -> None:
+    """바탕은 1280, 우리는 1440 으로 찍어도 PC 끼리 견준다(NBA 12차에서 PC 를 건너뛰었다)."""
+    page(tmp_path / "formats" / "base-cap" / "base-home-1280.jpg", "#0b0b0b", "#1c1c1c", "#1a73e8")
+    page(tmp_path / "mockups" / "보낼-그림" / "main-1440.jpg", "#0b0b0b", "#1c1c1c", "#1a73e8", width=1440)
+    assert any("베낀 티(PC)" in line for line in copy_check.check_project(tmp_path))
