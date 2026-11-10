@@ -41,6 +41,7 @@ BASE_STEPS = re.compile(r"(주문|이용|진행|예약|작업)\s*(순서|단계)
 BASE_HERO_BOX = re.compile(r"글상자|(첫 화면|사진 위|사진에)[^\n|]{0,30}상자")
 EXTRA_SECTIONS = 2
 PAINT = re.compile(r"^(background|background-color)$")
+NEUTRAL_BG = re.compile(r"^(#fff(fff)?|white|#fefefe|#fafafa|var\(--[\w-]*(bg|surface|paper|page)[\w-]*\))", re.I)  # 바탕·흰 면은 「색을 깐 칸」이 아니다
 NO_PAINT = re.compile(r"^(none|transparent|inherit|initial|unset|rgba\([^)]*,\s*0\)|0)$")
 RULE = re.compile(r"([^{}]+)\{([^{}]*)\}")
 DECL = re.compile(r"([-\w]+)\s*:\s*([^;]+)")
@@ -73,6 +74,14 @@ class Node:
         if self.tag in ("script", "style", "svg"):
             return ""
         return " ".join(" ".join(i if isinstance(i, str) else i.visible() for i in self.items).split())
+
+    def inside_node(self, node: "Node") -> bool:
+        p = self.parent
+        while p:
+            if p is node:
+                return True
+            p = p.parent
+        return False
 
     def inside(self, *tags: str) -> bool:
         p = self.parent
@@ -238,7 +247,8 @@ def base_facts(root: Path) -> dict:
              "cta_repeat": max((cta_repeat(t)[1] for t in trees), default=0),
              "faq": max((faq_items(t) for t in trees), default=0),
              "closing": any(closing_band(t, css_index(t.css)) for t in trees),
-             "stats": any(stat_tiles(t) is not None for t in trees)}
+             "stats": any(stat_tiles(t) is not None for t in trees),
+             "cta_box": any(cta_box(t, css_index(t.css)) is not None for t in trees)}
     save_base_marks(root, marks)
     return marks
 
@@ -398,6 +408,25 @@ def stat_tiles(tree: Tree) -> Node | None:
     return None
 
 
+def cta_box(tree: Tree, css: dict) -> Node | None:
+    """첫 화면·머리·바닥 밖에서 색을 깐 칸 안에 제목과 단추 — 「단체 주문 / 전화하기」 남색 칸(빵집 30차). 끝 띠가 아니어도, 안쪽으로 들여도."""
+    tops = [n for n in tree.root.walk() if n.tag == "section" and not n.inside("section", "article", "header", "footer")]
+    first = tops[0] if tops else None
+    for n in tree.root.walk():
+        if n.tag not in ("section", "div", "aside") or n.inside("header", "footer") or n is first or (first is not None and n.inside_node(first)):
+            continue
+        s = style_of(n, css)
+        painted = any(PAINT.match(p) and not NO_PAINT.match(v) and "url(" not in v and not NEUTRAL_BG.match(v) for p, v in s.items())
+        if not painted:
+            continue
+        heads = [k for k in n.walk() if k.tag in ("h2", "h3")]
+        btns = [k for k in n.walk() if k.tag in ("a", "button") and re.search(r"btn|button|cta", k.attrs.get("class", ""), re.I)]
+        links = [k for k in n.walk() if k.tag == "a"]
+        if heads and btns and len(links) <= 3 and len(heads) <= 2:
+            return n
+    return None
+
+
 def closing_band(tree: Tree, css: dict) -> Node | None:
     """바닥글 바로 앞 덩어리가 색을 깐 칸에 제목·단추를 담은 마무리 띠면 그 칸 — 스킬 없는 AI 시안의 끝맺음(애견미용 25차·수학학원 26차)."""
     foot = next((n for n in tree.root.walk() if n.tag == "footer" and not n.inside("footer")), None)
@@ -532,6 +561,10 @@ def check_project(root: Path) -> list[str]:
     if stats is not None and not base_facts(root).get("stats"):
         out.append(f"DRIFT {where}:{stats.line} stat-tiles — 큰 숫자 칸 줄(「8명 · 주 3회 · 3명」)은 생성 티 — 바탕에 없으면 숫자는 문장 속에"
                    "(build-rules.md § What reads as generated)")
+    box = cta_box(tree, css)
+    if box is not None and not base_facts(root).get("cta_box") and not base_facts(root).get("closing"):
+        out.append(f"DRIFT {where}:{box.line} cta-box — 색을 깐 칸 안의 제목·단추(「단체 주문 / 전화하기」 칸)는 생성 티 — 바탕에 없으면 "
+                   "칸을 걷고 바탕 구역처럼 페이지 위에 글과 링크로(build-rules.md § What reads as generated)")
     close = closing_band(tree, css)
     if close is not None and not base_facts(root).get("closing"):
         out.append(f"DRIFT {where}:{close.line} closing-band — 바닥글 바로 위 색 칸에 제목·단추(「…로 먼저 만나요」 띠)는 스킬 없는 AI 시안의 끝맺음 — "

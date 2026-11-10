@@ -192,3 +192,12 @@ def test_stat_tiles_not_steps(tmp_path: Path) -> None:
     assert "stat-tiles" in rules(project(tmp_path / "a", tiles))
     steps = HEAD + '<main><ol><li><span>1</span><p>고르기</p></li><li><span>2</span><p>적기</p></li><li><span>3</span><p>받기</p></li></ol></main></body></html>'
     assert "stat-tiles" not in rules(project(tmp_path / "b", steps))
+
+
+def test_cta_box_anywhere(tmp_path: Path) -> None:
+    """바닥 위가 아니어도, 안쪽으로 들여도 색 칸 + 제목 + 단추는 걸린다(빵집 30차 「단체 주문」)."""
+    body = (HEAD + '<main><section class="hero"><h1>빵</h1></section><section><div class="order"><h2>단체 주문</h2>'
+            '<a class="btn" href="tel:0">전화하기</a></div></section><section><h2>찾아오는 길</h2><p>골목 1층</p></section></main>'
+            '<footer>바닥</footer></body></html>')
+    assert "cta-box" in rules(project(tmp_path / "a", body, css=".order { background: #233446; }"))
+    assert "cta-box" not in rules(project(tmp_path / "b", body, css=".order { background: var(--c-bg); }"))
