@@ -233,6 +233,7 @@ def report(folder: Path, main: Path, memo: Path | None) -> int:
         flat = re.sub(r"\s+", "", re.sub(r"<[^>]+>", " ", text))
         vals = memo_values(memo.read_text(encoding="utf-8"))
         lost = [v for v in vals if not in_page(v, flat)]
+        bad += bool(lost)  # 의뢰인이 준 사실이 시안에 없으면 어긴 일 — 이름·가격을 묻지 않고 빈칸 말을 넣었다(애견미용 21차)
         print(f"\n의뢰인 메모 값이 시안에 있나: {len(vals) - len(lost)}/{len(vals)}" + (f" — 없음: {', '.join(lost)}" if lost else ""))
     spec = folder / "formats" / "board-spec.json"
     if spec.is_file():  # 바탕 후보가 이름난 사이트였나(애견미용 18차: 일본 동네 미용실이 바탕이 됨)

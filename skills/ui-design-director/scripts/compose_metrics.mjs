@@ -25,7 +25,7 @@ const MIN_REFS = 2;
 const HISTORY_NAME = "구성-기록.json"; // preflight.py 의 HISTORY_NAME 과 같게
 const HISTORY_MAX = 100; // 오래된 기록부터 버린다
 
-const VALUE_FLAGS = new Set(["--width", "--ours", "--why"]); // 뒤에 값이 오는 선택지 — 그 값(「a=b」 같은 까닭)을 사이트로 읽지 않게
+const VALUE_FLAGS = new Set(["--width", "--ours", "--why", "--base"]); // 뒤에 값이 오는 선택지 — 그 값(「a=b」 같은 까닭)을 사이트로 읽지 않게
 
 export function parseArgs(argv) {
   const opt = {}, rest = [];
@@ -34,7 +34,10 @@ export function parseArgs(argv) {
     else rest.push(argv[i]);
   }
   const targets = rest.slice(1).filter((a) => a.includes("=") && !a.startsWith("--")).map((a) => { const i = a.indexOf("="); return [a.slice(0, i), a.slice(i + 1)]; });
-  return { out: rest[0], width: Number(opt.width) || 1280, ours: opt.ours ?? null, why: (opt.why || "").trim(), targets };
+  // 바탕: --base 이름, 없으면 우리 화면 말고 첫 사이트(디자이너는 바탕을 맨 앞에 둔다)
+  const ours = opt.ours ?? null;
+  const base = opt.base ?? (targets.find(([n]) => n !== ours) || [null])[0];
+  return { out: rest[0], width: Number(opt.width) || 1280, ours, base, why: (opt.why || "").trim(), targets };
 }
 
 // 같은 폭 첫 기록의 비교 사이트와 지금 것이 다르면 그 첫 기록, 같거나 첫 기록이 없으면 null
@@ -54,7 +57,7 @@ export function trimHistory(list, max = HISTORY_MAX) {
   return list.filter((_, i) => firsts.has(i) || tail.has(i));
 }
 
-const { out, width, ours, why, targets } = parseArgs(process.argv.slice(2));
+const { out, width, ours, base, why, targets } = parseArgs(process.argv.slice(2));
 const historyFile = () => join(dirname(out), HISTORY_NAME);
 function readHistory() {
   try {
@@ -177,6 +180,8 @@ const METRICS = [
   ["textSpan", "글이 차지하는 폭", (x) => `${Math.round(x * 100)}%`],
 ];
 const LOWER_IS_BETTER = new Set(["firstEmpty"]);
+// 사진 비율은 가운데 값이 아니라 바탕에도 못 미치면 미달 — 바탕 41% 에 우리 24% 가 가운데 34% 기준으로 통과했다(애견미용 21차)
+const FOLLOW_BASE = new Set(["firstImg", "pageImg"]);
 const median = (a) => { const s = [...a].sort((x, y) => x - y); const m = Math.floor(s.length / 2); return s.length % 2 ? s[m] : (s[m - 1] + s[m]) / 2; };
 function report(rows) {
   const blankRefs = rows.filter((r) => r.name !== ours && r.firstEmpty > BLANK_REF);
@@ -189,10 +194,11 @@ function report(rows) {
   for (const [k, label, fmt] of METRICS) {
     let verdict = "";
     if (me && !tooFew) {
-      const m = median(refs.map((r) => r[k]));
+      const b = refs.find((r) => r.name === base);
+      const m = FOLLOW_BASE.has(k) && b ? Math.max(median(refs.map((r) => r[k])), b[k]) : median(refs.map((r) => r[k]));
       const bad = LOWER_IS_BETTER.has(k) ? me[k] > m / SHORT_RATIO && me[k] - m > 0.1 : me[k] < m * SHORT_RATIO;
       if (bad) short++;
-      verdict = ` ${bad ? "미달" : "통과"} (기준 가운데 ${fmt(m)}) |`;
+      verdict = ` ${bad ? "미달" : "통과"} (기준 ${FOLLOW_BASE.has(k) && b && b[k] >= m ? "바탕" : "가운데"} ${fmt(m)}) |`;
     }
     lines.push(`| ${label} | ${rows.map((r) => fmt(r[k])).join(" | ")} |${verdict}`);
   }

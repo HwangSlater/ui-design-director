@@ -16,7 +16,8 @@ const LEAD_MAX = 45;      // 제목 바로 밑 이 글자 수 이하의 한 줄 
 const CARD_RADIUS = 12;   // 이 이상 둥근 채운·테두리 상자 = 둥근 카드
 const CARD_AREA = 20000;
 const BAND_MIN_H = 200;   // 진한 띠로 셀 최소 높이(px)
-const NEAR = 0.15;        // 세 값의 차가 이보다 작으면(상대) 「비슷」
+const NEAR = 0.15;
+const INFO_ONLY = new Set(["제목글꼴수", "제목본문같은글꼴"]);  // 표에는 싣되 통과 판정에는 넣지 않는다        // 세 값의 차가 이보다 작으면(상대) 「비슷」
 
 // 페이지 안에서 도는 측정 — 짜임 특징
 const PROBE = `(() => {
@@ -33,10 +34,12 @@ const PROBE = `(() => {
   const fonts = new Set(heads.map((h) => getComputedStyle(h).fontFamily.split(",")[0].replace(/["']/g, "").trim()));
   const bodyFont = getComputedStyle(document.body).fontFamily.split(",")[0].replace(/["']/g, "").trim();
   // 펼침 질문: details·aria-expanded 말고도 「?」로 끝나는 짧은 글을 누르게 한 줄(바탕 Barkbus 는 div 로 만들어 놓쳤다)
-  const qs = new Set(document.querySelectorAll("details, summary, [aria-expanded]"));
+  // details 하나를 summary 와 둘로 세지 않는다(21차에서 6개를 11개로 셌다)
+  const qs = new Set([...document.querySelectorAll("details, [aria-expanded]")].filter((e) => !e.closest("details") || e.tagName === "DETAILS"));
   for (const el of document.querySelectorAll("button, [role=button], div, li, h3, h4, p")) {
     const t = el.textContent.trim(); if (t.length < 4 || t.length > 80 || !/[?？]$/.test(t) || el.children.length > 3) continue;
-    if (getComputedStyle(el).cursor === "pointer" || el.closest("button,[role=button],summary,[aria-expanded]")) qs.add(el.closest("button,[role=button],summary,[aria-expanded]") || el);
+    if (el.closest("details")) continue;
+    if (getComputedStyle(el).cursor === "pointer" || el.closest("button,[role=button],[aria-expanded]")) qs.add(el.closest("button,[role=button],[aria-expanded]") || el);
   }
   const acc = qs.size;
   // 제목 위 작은 윗줄(「소소는 이렇게 해요」 같은 색 글자) — 오답지에 구역마다 있었다
@@ -64,7 +67,11 @@ const PROBE = `(() => {
   // 구역 짜임 되풀이: 큰 덩어리마다 [제목 정렬, 회색 한 줄, 단추] 서명 — 같은 서명이 몇 번 잇달아 나오나
   const blocks = [...document.querySelectorAll("main > *, body > section, main section")].filter((b) => vis(b) && b.getBoundingClientRect().height > 200);
   const sig = blocks.map((b) => { const h = b.querySelector("h2,h3"); if (!h) return "-"; const n = h.nextElementSibling;
-    return [getComputedStyle(h).textAlign === "center" ? "가운데" : "왼쪽", n && n.tagName === "P" && n.textContent.trim().length <= ${LEAD_MAX} ? "한줄" : "", b.querySelector("a[class*=btn],button") ? "단추" : ""].join("·"); });
+    // 제목 다음 첫 내용의 꼴(표·목록·사진·펼침·글)과 사진 수까지 넣는다 — 정렬·한 줄·단추만 보면 다른 구역도 같다고 셌다(애견미용 21차)
+    const body = [...b.querySelectorAll("table, ul, ol, dl, img, picture, details, figure, p")].find((e) => e !== n && h.compareDocumentPosition(e) & 4);
+    const imgs = b.querySelectorAll("img, picture").length;
+    return [getComputedStyle(h).textAlign === "center" ? "가운데" : "왼쪽", n && n.tagName === "P" && n.textContent.trim().length <= ${LEAD_MAX} ? "한줄" : "",
+      b.querySelector("a[class*=btn],button") ? "단추" : "", body ? body.tagName : "", imgs > 2 ? "사진여럿" : imgs ? "사진" : ""].join("·"); });
   let run = 1, best = 1; for (let i = 1; i < sig.length; i++) { if (sig[i] !== "-" && sig[i] === sig[i - 1]) { run++; best = Math.max(best, run); } else run = 1; }
   return { 제목가운데: h2.length ? centred / h2.length : 0, 회색한줄: lead, 제목글꼴수: fonts.size, 제목본문같은글꼴: fonts.size === 1 && fonts.has(bodyFont) ? 1 : 0,
     펼침질문: acc, 둥근카드: cards, 진한띠: bands, 단추: ctas, 사진비율: photo / (W * PH), 첫화면가운데사진위: heroCentredOnPhoto ? 1 : 0,
@@ -103,6 +110,9 @@ export function side(base, ours, ai) {
   }
   const span = Math.max(Math.abs(base), Math.abs(ai), 1e-9);
   const all = Math.max(span, Math.abs(ours));
+  // 잡음 거르기: 세 값이 모두 이 폭 안이면 다르다고 보지 않는다 — 단추 3·2·2, 제목 가운데 0.14·0·0 을 판정에 넣었다(애견미용 21차)
+  const tiny = Number.isInteger(base) && Number.isInteger(ours) && Number.isInteger(ai) ? 1 : 0.15;
+  if (Math.max(base, ours, ai) - Math.min(base, ours, ai) <= tiny) return "가르지 못함";
   // 바탕·오답지 둘 다 없는데 우리만 많은 것 — 스킬 규칙이 덧붙인 것(애견미용 19차의 「회색 한 줄」 4번)
   if (Math.abs(base - ai) / all < NEAR) return Math.abs(ours - base) / all >= 0.5 ? "우리만 다름" : "가르지 못함";
   return Math.abs(ours - ai) < Math.abs(ours - base) ? "오답지 쪽" : "정답지 쪽";
@@ -128,8 +138,10 @@ async function main() {
         rows.push({ key, verdict });
         lines.push(`| ${key} | ${f(v.base[key])} | ${f(v.ours[key])} | ${f(v.ai[key])} | ${verdict} |`);
       }
-      const wrong = rows.filter((r) => r.verdict === "오답지 쪽").map((r) => r.key);
-      const odd = rows.filter((r) => r.verdict === "우리만 다름").map((r) => r.key);
+      // 글꼴 수는 참고만 — 한국 사이트는 한 글꼴로 다 쓰는 일이 흔해 AI 티를 가르지 못한다(애견미용 21차)
+      const judged = rows.filter((r) => !INFO_ONLY.has(r.key));
+      const wrong = judged.filter((r) => r.verdict === "오답지 쪽").map((r) => r.key);
+      const odd = judged.filter((r) => r.verdict === "우리만 다름").map((r) => r.key);
       lines.push("", `오답지 쪽 ${wrong.length}개${wrong.length ? ": " + wrong.join(", ") : ""} · 우리만 다름 ${odd.length}개${odd.length ? ": " + odd.join(", ") : ""}`, "");
       record.widths[w] = { values: v, wrong, odd };
       console.log(`${w}px — 오답지 쪽 ${wrong.length}개${wrong.length ? ": " + wrong.join(", ") : ""} · 우리만 다름 ${odd.length}개${odd.length ? ": " + odd.join(", ") : ""}`);

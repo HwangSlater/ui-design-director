@@ -153,3 +153,18 @@ def test_section_heads_and_cta_repeat(tmp_path: Path) -> None:
     plain = "".join(f"<section><h2>제목{i}</h2><ul><li>내용</li></ul></section>" for i in range(4))
     out = rules(project(tmp_path / "b", HEAD + f'<main>{plain}<a class="btn" href="https://booking.naver.com/">예약</a></main></body></html>'))
     assert "section-heads" not in out and "cta-repeat" not in out
+
+
+def test_placeholder_name(tmp_path: Path) -> None:
+    """이름을 묻지 않고 「가게 이름」을 넣은 시안(애견미용 21차)."""
+    page = '<!doctype html><html><head><title>가게 이름 | 작은 강아지 미용</title></head><body><header><a>가게 이름</a></header></body></html>'
+    assert "placeholder-name" in rules(project(tmp_path / "a", page))
+    ok = '<!doctype html><html><head><title>털손질 소소</title></head><body><header><a>털손질 소소</a></header></body></html>'
+    assert "placeholder-name" not in rules(project(tmp_path / "b", ok))
+
+
+def test_faq_long_on_main(tmp_path: Path) -> None:
+    """메인에 펼침 질문 11개(애견미용 21차) — 6개까지는 통과."""
+    qs = lambda n: "".join(f"<details><summary>질문{i}?</summary><p>답</p></details>" for i in range(n))  # noqa: E731
+    assert "faq-long" in rules(project(tmp_path / "a", HEAD + f"<main>{qs(11)}</main></body></html>"))
+    assert "faq-long" not in rules(project(tmp_path / "b", HEAD + f"<main>{qs(5)}</main></body></html>"))

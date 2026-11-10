@@ -235,7 +235,8 @@ def base_facts(root: Path) -> dict:
     trees = [_tree(p) for p in base_snapshots(root)]
     marks = {"snapshot": True, "numbered": _numbered(root), "icon_row": _icon_row(root),
              "section_heads": max((len(section_heads(t)) for t in trees), default=0),
-             "cta_repeat": max((cta_repeat(t)[1] for t in trees), default=0)}
+             "cta_repeat": max((cta_repeat(t)[1] for t in trees), default=0),
+             "faq": max((faq_items(t) for t in trees), default=0)}
     save_base_marks(root, marks)
     return marks
 
@@ -348,6 +349,27 @@ def cta_repeat(tree: Tree) -> tuple[str, int]:
     return max(count.items(), key=lambda kv: kv[1], default=("", 0))
 
 
+PLACEHOLDER_NAME = re.compile(r"가게\s*이름|상호\s*명|업체\s*명|브랜드\s*명|회사\s*이름|your\s*(brand|company|logo)|\blogo\b|사이트\s*이름", re.I)
+
+
+FAQ_MAX = 6   # 메인 페이지의 펼침 질문이 이보다 많고 바탕보다 많으면 — 21차는 11개, 바탕·스킬 없는 AI 는 0
+
+
+def faq_items(tree: Tree) -> int:
+    """펼침 질문 수 — details, aria-expanded 단추."""
+    return sum(1 for n in tree.root.walk() if n.tag == "details" or (n.tag == "button" and "aria-expanded" in n.attrs))
+
+
+def placeholder_name(tree: Tree) -> str | None:
+    """제목(title)·머리 로고 글에 이름 대신 빈칸 말(「가게 이름」)이 있으면 그 말."""
+    for n in tree.root.walk():
+        if n.tag == "title" or (n.tag == "header" and not n.inside("header")):
+            m = PLACEHOLDER_NAME.search(" ".join(i for i in n.items if isinstance(i, str)) if n.tag == "title" else n.visible())
+            if m:
+                return m.group(0)
+    return None
+
+
 def icon_row(tree: Tree) -> Node | None:
     for n in tree.root.walk():
         kids = [k for k in n.kids if k.tag not in ("script", "style")]
@@ -443,6 +465,13 @@ def check_project(root: Path) -> list[str]:
     if row and not base_icon_row(root):
         out.append(f"DRIFT {where}:{row.line} icon-row — 아이콘·제목·짧은 글 칸 3~4개 줄은 생성 티, 바탕에 없으면 "
                    "바탕의 같은 자리 짜임으로(build-rules.md § What reads as generated)")
+    faq = faq_items(tree)
+    if faq > max(FAQ_MAX, base_facts(root).get("faq", 0)):
+        out.append(f"DRIFT {where}:1 faq-long — 메인 페이지에 펼침 질문 {faq}개 — 바탕 수만큼(많아도 {FAQ_MAX}개), 나머지는 자주 묻는 질문 쪽(링크)으로")
+    name = placeholder_name(tree)
+    if name:
+        out.append(f"DRIFT {where}:1 placeholder-name — 이름 자리에 「{name}」 — 의뢰인에게 이름(임시라도)·가격·영업시간·예약처를 한 번에 묻고 넣는다"
+                   "(guided-conversation.md § Ask for the page's facts)")
     heads = section_heads(tree)
     if len(heads) >= HEADS_MIN and base_facts(root).get("section_heads", 0) < HEADS_MIN:
         out.append(f"DRIFT {where}:{heads[0].line} section-heads — 구역 {len(heads)}곳이 제목 밑 회색 한 줄(또는 제목 위 작은 윗줄)로 열림 — "
