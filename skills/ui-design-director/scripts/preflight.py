@@ -163,8 +163,22 @@ def check(root: Path) -> list[str]:
                     out.append(f"AI 글꼴: {p.relative_to(root)} — {', '.join(hits)} · references/fonts.md 대로 fonts.py pick 에서 고를 것")
     out += site_checks(mock_dir(root), root)
     out += site_shape.check_project(root)
+    out += probe_lines(root)
     out += changed_refs(root)
     return out
+
+
+def probe_lines(root: Path) -> list[str]:
+    """바탕과 우리 시안을 같은 브라우저로 띄워 짜임 특징을 견준다(page_probe.mjs) — 세 쪽 비교와 같은 잣대.
+    점검은 HTML·캡처로, 판정은 화면으로 재서 점검은 통과하고 판정에서 떨어졌다(빵집 32~36차). UIDD_NO_PROBE=1 이면 건너뛴다(시험)."""
+    import os
+    import shutil
+    import subprocess
+    if os.environ.get("UIDD_NO_PROBE") or not (mock_dir(root) / "index.html").is_file() or not shutil.which("node"):
+        return []
+    r = subprocess.run(["node", str(Path(__file__).resolve().parent / "page_probe.mjs"), "--check", str(root)],
+                       capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=600)
+    return [line for line in r.stdout.splitlines() if line.startswith("DRIFT ")]
 
 
 def site_checks(mock: Path, root: Path) -> list[str]:

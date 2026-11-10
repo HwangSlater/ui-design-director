@@ -58,6 +58,7 @@ Also generated unless the base has them (from unslop's signs list, Damir Sokolov
 
 Run, do not read, the bundled scripts; print only their summary lines.
 1. `python ${CLAUDE_SKILL_DIR}/scripts/check_site.py <mockups dir>` — fix every `FLOOR`.
+   `preflight.py` also opens the base and our page in the same browser (`page_probe.mjs`) and reports, at 390 and 1280, every layout trait ours has more of than the base (grey lead lines, overlines, pale or dark bands, closing bands, number tiles, rounded cards, open-and-close questions, buttons), photos below 85% of the base's and a cream page on a white base. These are the same measures the reviewer uses; fix them in the page, never by changing the base.
 2. One `capture.mjs` jobs file for the changed pages at 390 and 1280; open only cropped parts to check a fix.
 3. `python ${CLAUDE_SKILL_DIR}/scripts/side_by_side.py <out.html> <ours.jpg> <base.jpg>` at both widths; fix every place ours is emptier, plainer or more boxed than the base.
 4. Hand back at most ten lines: what you built, what is sample, what is left, and the paths of the pictures to send.
