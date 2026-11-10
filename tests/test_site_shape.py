@@ -184,3 +184,11 @@ def test_closing_band_before_footer(tmp_path: Path) -> None:
             '<a class="btn" href="tel:0">전화 상담</a></section></main><footer>바닥</footer></body></html>')
     assert "closing-band" in rules(project(tmp_path / "a", body, css=".cta { background: #3f7a80; }"))
     assert "closing-band" not in rules(project(tmp_path / "b", body))  # 색을 깔지 않았으면 페이지 위 글
+
+
+def test_stat_tiles_not_steps(tmp_path: Path) -> None:
+    """「8명 · 2갈래 · 0원」 큰 숫자 칸은 걸리고, 1·2·3 번호 단계는 numbered-steps 몫(수학학원 28차)."""
+    tiles = HEAD + '<main><ul><li><b>8명</b><h3>반당 최대</h3></li><li><b>2갈래</b><h3>내신·선행</h3></li><li><b>0원</b><h3>테스트</h3></li></ul></main></body></html>'
+    assert "stat-tiles" in rules(project(tmp_path / "a", tiles))
+    steps = HEAD + '<main><ol><li><span>1</span><p>고르기</p></li><li><span>2</span><p>적기</p></li><li><span>3</span><p>받기</p></li></ol></main></body></html>'
+    assert "stat-tiles" not in rules(project(tmp_path / "b", steps))

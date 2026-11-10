@@ -237,7 +237,8 @@ def base_facts(root: Path) -> dict:
              "section_heads": max((len(section_heads(t)) for t in trees), default=0),
              "cta_repeat": max((cta_repeat(t)[1] for t in trees), default=0),
              "faq": max((faq_items(t) for t in trees), default=0),
-             "closing": any(closing_band(t, css_index(t.css)) for t in trees)}
+             "closing": any(closing_band(t, css_index(t.css)) for t in trees),
+             "stats": any(stat_tiles(t) is not None for t in trees)}
     save_base_marks(root, marks)
     return marks
 
@@ -372,6 +373,31 @@ def made_up_reviews(tree: Tree, brief: str) -> Node | None:
     return next((n for n in tree.root.walk() if n.tag in ("h2", "h3") and REVIEW_HEAD.search(n.visible())), None)
 
 
+STAT_TEXT = re.compile(r"^[^\s]{0,3}\d[\d,.]*\s?[^\s]{0,4}$")  # 「8명」「주 3회」「6년」「120+」
+
+
+STEP_NO = re.compile(r"^(0?\d|\d단계|step\d)$", re.I)
+
+
+def stat_tiles(tree: Tree) -> Node | None:
+    """형제 3~6개가 저마다 짧은 숫자 글(「8명」「주 3회」)로 시작하는 큰 숫자 칸 줄 — 바탕·스킬 없는 AI 둘 다 없던 것(수학학원 26·28차)."""
+    for par in tree.root.walk():
+        kids = [k for k in par.kids if k.tag in ("li", "div", "article", "dl", "figure")]
+        if not 3 <= len(kids) <= 6:
+            continue
+        hits = 0
+        for k in kids:
+            first = next((n for n in k.walk() if n is not k and not n.kids and n.visible()), None)
+            t = first.visible().replace(" ", "") if first is not None else ""
+            if STEP_NO.match(t):  # 1·2·3, 01, 1단계 는 번호 단계(numbered-steps 가 본다)
+                continue
+            if t and STAT_TEXT.match(t[:10]) and any(ch.isdigit() for ch in t):
+                hits += 1
+        if hits >= 3 and hits >= len(kids) - 1:
+            return par
+    return None
+
+
 def closing_band(tree: Tree, css: dict) -> Node | None:
     """바닥글 바로 앞 덩어리가 색을 깐 칸에 제목·단추를 담은 마무리 띠면 그 칸 — 스킬 없는 AI 시안의 끝맺음(애견미용 25차·수학학원 26차)."""
     foot = next((n for n in tree.root.walk() if n.tag == "footer" and not n.inside("footer")), None)
@@ -502,6 +528,10 @@ def check_project(root: Path) -> list[str]:
     if row and not base_icon_row(root):
         out.append(f"DRIFT {where}:{row.line} icon-row — 아이콘·제목·짧은 글 칸 3~4개 줄은 생성 티, 바탕에 없으면 "
                    "바탕의 같은 자리 짜임으로(build-rules.md § What reads as generated)")
+    stats = stat_tiles(tree)
+    if stats is not None and not base_facts(root).get("stats"):
+        out.append(f"DRIFT {where}:{stats.line} stat-tiles — 큰 숫자 칸 줄(「8명 · 주 3회 · 3명」)은 생성 티 — 바탕에 없으면 숫자는 문장 속에"
+                   "(build-rules.md § What reads as generated)")
     close = closing_band(tree, css)
     if close is not None and not base_facts(root).get("closing"):
         out.append(f"DRIFT {where}:{close.line} closing-band — 바닥글 바로 위 색 칸에 제목·단추(「…로 먼저 만나요」 띠)는 스킬 없는 AI 시안의 끝맺음 — "

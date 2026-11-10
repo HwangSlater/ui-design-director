@@ -39,8 +39,8 @@ STEPS = [
     ("main", "부품마다 지식 묻기", "run:knowledge\\.py\\b.*\\bask"),
     ("main", "견본 사진 찾기", "run:sample_photos\\.py"),
     ("main", "메인 시안", "write:^mockups/index\\.html$"),
-    ("check", "사이트 점검", "run:check_site\\.py"),
-    ("check", "우리 캡처", "run:capture\\.mjs.*mockups"),
+    ("check", "사이트 점검", "run:check_site\\.py|preflight\\.py"),  # preflight 가 check_site 를 안에서 돌린다(수학학원 28차)
+    ("check", "우리 캡처", "run:(?s)capture\\.mjs.*mockups|mockups.*capture\\.mjs"),  # 「cd mockups && node capture.mjs」 꼴도
     ("check", "바탕과 나란히", "run:side_by_side\\.py"),
     ("check", "보내기 전 점검", "run:preflight\\.py"),
     ("after", "시안 승인 기록", "run:stage\\.py\\b.*--decide main"),
@@ -49,7 +49,7 @@ STEPS = [
 # 순서를 볼 대표 결과물 — 앞 단계 확정 없이 다음 단계를 만들면 순서 어김
 GATES = ["맥락 정리(사이트 꼴 포함)", "공용 틀 보기 화면", "바탕 확정 기록", "바탕 구성 표", "색·글꼴 확정 기록", "DESIGN.md", "메인 시안"]
 # 메인 시안을 만든 뒤 한 번 이상 돌아야 하는 점검
-AFTER_PAGE = [("check_site.py", r"check_site\.py"), ("우리 캡처", r"capture\.mjs.*mockups"), ("side_by_side.py", r"side_by_side\.py"),
+AFTER_PAGE = [("check_site.py", r"check_site\.py|preflight\.py"), ("우리 캡처", r"(?s)capture\.mjs.*mockups|mockups.*capture\.mjs"), ("side_by_side.py", r"side_by_side\.py"),
               ("preflight.py", r"preflight\.py")]
 # 하면 안 되는 일: (이름, 정규식, 대상)
 DONT = [
@@ -142,6 +142,12 @@ def first(evs, spec: str, folder: Path):
     return None
 
 
+def shot_time(folder: Path):
+    """mockups/보낼-그림 의 가장 늦은 그림 시각(UTC). 없으면 None."""
+    pics = [p for p in (folder / "mockups" / "보낼-그림").glob("*") if p.suffix.lower() in (".png", ".jpg", ".jpeg")]
+    return max((dt.datetime.fromtimestamp(p.stat().st_mtime, dt.timezone.utc) for p in pics), default=None)
+
+
 def shell_wrote(cmd: str, pat: str) -> bool:
     """셸 명령이 그 파일에 썼나 — 「> 파일」「Out-File 파일」「Path('파일').write_text」. 글 속에 이름만 나온 것(체크리스트 줄)은 아니다."""
     core = pat.strip("^$")
@@ -193,6 +199,8 @@ def report(folder: Path, main: Path, memo: Path | None) -> int:
     missing, order = [], []
     for stage, label, spec in STEPS:
         hit = first(evs, spec, folder)
+        if not hit and label == "우리 캡처" and shot_time(folder):
+            hit = (shot_time(folder), False, "보낼-그림 파일")
         if hit:
             when, sub, body = hit
             done.setdefault(stage, when)
@@ -211,9 +219,14 @@ def report(folder: Path, main: Path, memo: Path | None) -> int:
         if tb < ta:
             order.append(f"「{b}」이(가) 「{a}」보다 먼저")
     page_at = next((w for w, _, k, b in evs if k == "write" and b == "mockups/index.html"), None)
+    shots_at = shot_time(folder)
     for label, spec in AFTER_PAGE:
         rx = re.compile(spec)
-        if page_at and not any(k == "run" and w >= page_at and rx.search(b) for w, _, k, b in evs):
+        ran = page_at and any(k == "run" and w >= page_at and rx.search(b) for w, _, k, b in evs)
+        # 명령 글에 안 보여도(변수 경로·스크립트 파일) 보낼 그림이 시안 뒤에 찍혔으면 캡처한 것(수학학원 28차)
+        if label == "우리 캡처" and shots_at and page_at and shots_at >= page_at:
+            ran = True
+        if page_at and not ran:
             order.append(f"시안을 만든 뒤 「{label}」을(를) 안 돌림")
     last_page = max((w for w, _, k, b in evs if k == "write" and b.startswith("mockups/")), default=None)
     last_check = max((w for w, _, k, b in evs if k == "run" and "preflight.py" in b), default=None)
