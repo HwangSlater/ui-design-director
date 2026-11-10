@@ -201,3 +201,11 @@ def test_cta_box_anywhere(tmp_path: Path) -> None:
             '<footer>바닥</footer></body></html>')
     assert "cta-box" in rules(project(tmp_path / "a", body, css=".order { background: #233446; }"))
     assert "cta-box" not in rules(project(tmp_path / "b", body, css=".order { background: var(--c-bg); }"))
+
+
+def test_single_overline(tmp_path: Path) -> None:
+    """제목 위 작은 윗줄은 한 곳만 있어도 걸린다(빵집 34차 「11월 11일 수요일 · 오늘 나오는 시간」)."""
+    page = HEAD + '<main><section><p class="day">11월 11일 수요일 · 오늘 나오는 시간</p><h1>지금은 소금빵이 나왔어요</h1></section></main></body></html>'
+    assert "overline" in rules(project(tmp_path / "a", page))
+    ok = HEAD + '<main><section><h1>지금은 소금빵이 나왔어요</h1><p>11월 11일 수요일 · 오늘 나오는 시간</p></section></main></body></html>'
+    assert "overline" not in rules(project(tmp_path / "b", ok))

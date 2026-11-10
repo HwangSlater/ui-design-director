@@ -248,7 +248,8 @@ def base_facts(root: Path) -> dict:
              "faq": max((faq_items(t) for t in trees), default=0),
              "closing": any(closing_band(t, css_index(t.css)) for t in trees),
              "stats": any(stat_tiles(t) is not None for t in trees),
-             "cta_box": any(cta_box(t, css_index(t.css)) is not None for t in trees)}
+             "cta_box": any(cta_box(t, css_index(t.css)) is not None for t in trees),
+             "overline": any(overline(t) is not None for t in trees)}
     save_base_marks(root, marks)
     return marks
 
@@ -408,6 +409,20 @@ def stat_tiles(tree: Tree) -> Node | None:
     return None
 
 
+OVERLINE_MAX = 30  # 제목 바로 위 이 글자 수 이하의 글 한 줄 = 작은 윗줄
+
+
+def overline(tree: Tree) -> Node | None:
+    """h1·h2 바로 위 짧은 글 한 줄(「11월 11일 수요일 · 오늘 나오는 시간」) — 한 곳만 있어도 생성 티(빵집 34차). 그 제목을 돌려준다."""
+    for h in tree.root.walk():
+        if h.tag not in ("h1", "h2") or h.inside("a", "header", "footer"):
+            continue
+        before = _next_el(h, -1)
+        if before is not None and before.tag in ("p", "span", "small", "div") and not before.kids and 0 < len(before.visible()) <= OVERLINE_MAX:
+            return h
+    return None
+
+
 def cta_box(tree: Tree, css: dict) -> Node | None:
     """첫 화면·머리·바닥 밖에서 색을 깐 칸 안에 제목과 단추 — 「단체 주문 / 전화하기」 남색 칸(빵집 30차). 끝 띠가 아니어도, 안쪽으로 들여도."""
     tops = [n for n in tree.root.walk() if n.tag == "section" and not n.inside("section", "article", "header", "footer")]
@@ -560,6 +575,10 @@ def check_project(root: Path) -> list[str]:
     stats = stat_tiles(tree)
     if stats is not None and not base_facts(root).get("stats"):
         out.append(f"DRIFT {where}:{stats.line} stat-tiles — 큰 숫자 칸 줄(「8명 · 주 3회 · 3명」)은 생성 티 — 바탕에 없으면 숫자는 문장 속에"
+                   "(build-rules.md § What reads as generated)")
+    over = overline(tree)
+    if over is not None and not base_facts(root).get("overline"):
+        out.append(f"DRIFT {where}:{over.line} overline — 제목 「{over.visible()[:16]}」 위 작은 윗줄은 생성 티 — 바탕에 없으면 그 말은 제목 아래 문장이나 제목 안으로"
                    "(build-rules.md § What reads as generated)")
     box = cta_box(tree, css)
     if box is not None and not base_facts(root).get("cta_box") and not base_facts(root).get("closing"):
