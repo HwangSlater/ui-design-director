@@ -183,3 +183,16 @@ def test_white_band_on_cream_page_is_pale(tmp_path: Path) -> None:
     assert copy_check.pale_bands(base, 1280, page(tmp_path / "o.png", "#fef5e4", "#fffefc"), 1280)
     white = page(tmp_path / "w.png", "#ffffff", None)
     assert copy_check.pale_bands(white, 1280, page(tmp_path / "o2.png", "#ffffff", "#fefefe"), 1280) == []
+
+
+def test_cream_page_on_white_base(tmp_path: Path) -> None:
+    """바탕은 흰 바탕인데 우리는 크림(빵집 32차) — 바탕이 크림이면 통과."""
+    def page(path: Path, bg: str) -> Path:
+        path.parent.mkdir(parents=True, exist_ok=True)
+        Image.new("RGB", (1280, 2400), bg).save(path)
+        return path
+    white = page(tmp_path / "w.png", "#ffffff")
+    ours = page(tmp_path / "o.png", "#fbf6e2")
+    assert any(line.startswith("바탕색(PC)") for line in copy_check.band_lines("PC", white, 1280, ours, 1280))
+    cream = page(tmp_path / "c.png", "#faf4e6")
+    assert not any(line.startswith("바탕색") for line in copy_check.band_lines("PC", cream, 1280, ours, 1280))

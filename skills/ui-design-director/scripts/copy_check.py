@@ -271,6 +271,12 @@ def strong_stack(path: Path, width: int) -> list[tuple[int, int, int]]:
     return list(best)
 
 
+def is_cream(c) -> bool:
+    """누런 빛이 도는 밝은 바탕(크림·미색) — 모델 단골 바탕."""
+    h, l, s = colorsys.rgb_to_hls(*(v / 255 for v in c))
+    return 30 <= h * 360 <= 60 and l >= 0.88 and s >= 0.2
+
+
 def dark_bands(path: Path, width: int) -> list[tuple[int, int, int]]:
     """바닥글까지 넣어 진한 폭 가득 띠의 색들 — 바탕에 하나도 없는데 우리만 진한 바닥·띠를 깔면 오답지와 같다(애견미용 24차)."""
     runs = colour_runs(path, width)
@@ -286,6 +292,7 @@ def band_facts(base: Path, bw: int) -> dict:
     bg = page_bg(runs) if runs else None
     # 바탕의 페이지 바탕색은 「바탕에도 있는 띠 색」이 아니다 — 크림 바탕 위 다른 크림 띠를 봐줬다(빵집 31차)
     return {"pale": [list(c) for c, _, h in runs if h >= BAND_MIN_CSS and (bg is None or cdist(c, bg) >= BAND_NOT_BG)], "strong": len(strong_stack(base, bw)),
+            "bg": list(bg) if bg else None,
             "dark": len(dark_bands(base, bw))}
 
 
@@ -330,6 +337,13 @@ def band_lines(view: str, base: Path | dict, bw: int, ours: Path, ow: int) -> li
     if dark and facts.get("dark", 1) == 0:
         out.append(f"진한 띠({view}): {'·'.join('#%02x%02x%02x' % c for c in dark)} — 바탕에는 진한 띠·바닥이 없음. 바닥글도 바탕처럼 밝게"
                    "(build-rules.md § What reads as generated)")
+    runs = colour_runs(ours, ow)
+    if runs and facts.get("bg"):
+        ob, bb = page_bg(runs), tuple(facts["bg"])
+        # 바탕은 흰 바탕인데 우리는 크림 — 스킬 없는 AI 시안의 바탕색(빵집 32차 #fbf9e6, 바탕 Tartine #ffffff)
+        if cdist(bb, (255, 255, 255)) < BAND_NOT_WHITE and cdist(ob, (255, 255, 255)) >= BAND_NOT_WHITE * 1.5 and is_cream(ob):
+            out.append(f"바탕색({view}): 바탕은 흰 바탕인데 우리는 크림 #%02x%02x%02x — 페이지 바탕은 바탕처럼 흰색으로, 팔레트 색은 단추·강조에"
+                       "(color-selection.md)" % ob)
     stack, base_n = stacked_bands(facts, bw, ours, ow)
     if stack:
         out.append(f"색 띠 쌓기({view}): 진한 띠 {len(stack)}개 잇달아({'·'.join(stack)}), 바탕은 {base_n}개 — 진한 색 판은 "
