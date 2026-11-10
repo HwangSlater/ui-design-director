@@ -176,3 +176,11 @@ def test_made_up_reviews(tmp_path: Path) -> None:
     assert "made-up-reviews" in rules(project(tmp_path / "a", page))
     root = project(tmp_path / "b", page, brief="사이트 꼴: 여러 쪽 · 실제 후기: 네이버 리뷰 3개 받음")
     assert "made-up-reviews" not in rules(root)
+
+
+def test_closing_band_before_footer(tmp_path: Path) -> None:
+    """바닥글 바로 위 색 칸 + 제목 + 단추(「무료 레벨 테스트로 먼저 만나요」, 수학학원 26차)."""
+    body = (HEAD + '<main><section><h2>수업</h2><p>내용</p></section><section class="cta"><h2>무료 레벨 테스트로 먼저 만나요</h2>'
+            '<a class="btn" href="tel:0">전화 상담</a></section></main><footer>바닥</footer></body></html>')
+    assert "closing-band" in rules(project(tmp_path / "a", body, css=".cta { background: #3f7a80; }"))
+    assert "closing-band" not in rules(project(tmp_path / "b", body))  # 색을 깔지 않았으면 페이지 위 글

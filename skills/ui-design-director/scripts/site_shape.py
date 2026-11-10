@@ -236,7 +236,8 @@ def base_facts(root: Path) -> dict:
     marks = {"snapshot": True, "numbered": _numbered(root), "icon_row": _icon_row(root),
              "section_heads": max((len(section_heads(t)) for t in trees), default=0),
              "cta_repeat": max((cta_repeat(t)[1] for t in trees), default=0),
-             "faq": max((faq_items(t) for t in trees), default=0)}
+             "faq": max((faq_items(t) for t in trees), default=0),
+             "closing": any(closing_band(t, css_index(t.css)) for t in trees)}
     save_base_marks(root, marks)
     return marks
 
@@ -371,6 +372,31 @@ def made_up_reviews(tree: Tree, brief: str) -> Node | None:
     return next((n for n in tree.root.walk() if n.tag in ("h2", "h3") and REVIEW_HEAD.search(n.visible())), None)
 
 
+def closing_band(tree: Tree, css: dict) -> Node | None:
+    """바닥글 바로 앞 덩어리가 색을 깐 칸에 제목·단추를 담은 마무리 띠면 그 칸 — 스킬 없는 AI 시안의 끝맺음(애견미용 25차·수학학원 26차)."""
+    foot = next((n for n in tree.root.walk() if n.tag == "footer" and not n.inside("footer")), None)
+    if not foot or not foot.parent:
+        return None
+    sibs = [k for k in foot.parent.kids if k.tag not in ("script", "style", "link")]
+    i = sibs.index(foot)
+    prev = sibs[i - 1] if i else None
+    if prev is not None and prev.tag == "main":
+        inner = [k for k in prev.kids if k.tag not in ("script", "style")]
+        prev = inner[-1] if inner else None
+    if prev is None:
+        return None
+    for n in prev.walk():
+        if n.tag not in ("section", "div", "aside"):
+            continue
+        s = style_of(n, css)
+        painted = any(PAINT.match(p) and not NO_PAINT.match(v) and "url(" not in v for p, v in s.items())
+        has_head = any(k.tag in ("h2", "h3") for k in n.walk())
+        has_btn = any(k.tag in ("a", "button") and re.search(r"btn|button|cta", k.attrs.get("class", ""), re.I) for k in n.walk())
+        if painted and has_head and has_btn:
+            return n
+    return None
+
+
 def placeholder_name(tree: Tree) -> str | None:
     """제목(title)·머리 로고 글에 이름 대신 빈칸 말(「가게 이름」)이 있으면 그 말."""
     for n in tree.root.walk():
@@ -476,6 +502,10 @@ def check_project(root: Path) -> list[str]:
     if row and not base_icon_row(root):
         out.append(f"DRIFT {where}:{row.line} icon-row — 아이콘·제목·짧은 글 칸 3~4개 줄은 생성 티, 바탕에 없으면 "
                    "바탕의 같은 자리 짜임으로(build-rules.md § What reads as generated)")
+    close = closing_band(tree, css)
+    if close is not None and not base_facts(root).get("closing"):
+        out.append(f"DRIFT {where}:{close.line} closing-band — 바닥글 바로 위 색 칸에 제목·단추(「…로 먼저 만나요」 띠)는 스킬 없는 AI 시안의 끝맺음 — "
+                   "바탕에 없으면 빼고 바탕의 마지막 구역대로(build-rules.md § What reads as generated)")
     reviews = made_up_reviews(tree, read(root / "concept-brief.md"))
     if reviews:
         out.append(f"DRIFT {where}:{reviews.line} made-up-reviews — 「{reviews.visible()[:20]}」 — 의뢰인이 준 후기가 없으면 후기 칸은 빼고 「견본」으로도 지어 넣지 않는다"

@@ -1,6 +1,6 @@
 {
   "name": "ui-design-director",
-  "version": "0.3.17",
+  "version": "0.3.18",
   "description": "실제 사이트를 공용 보기 화면에 나란히 놓고 하나를 바탕으로 골라 우리 메인 페이지·사이트 시안까지 한 단계씩 이끄는 스킬(ui-design-director, ui-wording)과, 공용 틀이 아닌 보기 화면·순서를 건너뛴 파일 쓰기를 막는 훅",
   "author": {
     "name": "HwangSlater"

@@ -18,9 +18,9 @@ const CARD_AREA = 20000;
 const BAND_MIN_H = 200;   // 진한 띠로 셀 최소 높이(px)
 const NEAR = 0.15;
 const INFO_ONLY = new Set(["제목글꼴수", "제목본문같은글꼴", "제목수"]);
-const EXACT = new Set(["옅은띠", "진한띠", "제목위윗줄", "첫화면가운데사진위"]);
+const EXACT = new Set(["옅은띠", "진한띠", "제목위윗줄", "첫화면가운데사진위", "큰숫자칸", "끝단추띠"]);
 // 방향: 상자·띠·되풀이는 바탕보다 많을 때만, 사진은 바탕보다 적을 때만 문제 — 23차에 바탕보다 적은 카드·질문을 「오답지 쪽」으로 셌다
-const BAD_IF_MORE = new Set(["둥근카드", "펼침질문", "단추", "진한띠", "옅은띠", "회색한줄", "제목위윗줄", "같은짜임잇달음"]);
+const BAD_IF_MORE = new Set(["둥근카드", "펼침질문", "단추", "진한띠", "옅은띠", "회색한줄", "제목위윗줄", "같은짜임잇달음", "큰숫자칸", "끝단추띠"]);
 const BAD_IF_LESS = new Set(["사진비율"]);  // 잡음 거르기 없이 견준다  // 표에는 싣되 통과 판정에는 넣지 않는다        // 세 값의 차가 이보다 작으면(상대) 「비슷」
 
 // 페이지 안에서 도는 측정 — 짜임 특징
@@ -63,6 +63,25 @@ const PROBE = `(() => {
     if (filled && lum(bg) > 0.85 && Math.hypot(...bg.slice(0, 3).map((v, i) => v - pageBg[i])) > 12 && r.width >= W * 0.95 && r.height >= ${BAND_MIN_H}) pale++;
     if ((el.tagName === "A" || el.tagName === "BUTTON") && filled && Math.hypot(...bg.slice(0, 3).map((v, i) => v - pageBg[i])) > 40 && r.height >= 32 && r.height <= 80) { ctas++; const k = bg.slice(0, 3).map((v) => Math.round(v / 8) * 8).join(","); btnCols[k] = (btnCols[k] || 0) + 1; }
   }
+  // 큰 숫자 칸: 형제 3개 이상이 각각 큰 숫자(본문의 2배 넘는 짧은 글)로 시작 — 「8명 · 주 3회 · 3명 · 6년」(수학학원 26차)
+  const bodyPx = parseFloat(getComputedStyle(document.body).fontSize) || 16;
+  let stats = 0;
+  for (const par of document.querySelectorAll("body *")) {
+    const kids = [...par.children].filter(vis); if (kids.length < 3 || kids.length > 6) continue;
+    const big = kids.filter((k) => [...k.querySelectorAll("*")].concat(k).some((e) => { const t = e.childElementCount ? "" : e.textContent.trim();
+      return t && t.length <= 8 && /[0-9]/.test(t) && parseFloat(getComputedStyle(e).fontSize) >= bodyPx * 2; }));
+    if (big.length >= 3 && big.length >= kids.length - 1) { stats = Math.max(stats, big.length); }
+  }
+  // 끝 단추 띠: 바닥글 바로 위, 폭 넓은 채운 칸 안에 제목과 단추 — 오답지의 마무리 꼴
+  let closing = 0;
+  const foot = document.querySelector("footer");
+  const prev = foot ? (() => { let e = foot.previousElementSibling; while (e && !vis(e)) e = e.previousElementSibling; return e; })() : null;
+  const lastBlock = prev && prev.tagName === "MAIN" ? [...prev.children].filter(vis).pop() : prev;
+  if (lastBlock) {
+    const cand = [lastBlock, ...lastBlock.querySelectorAll("div,section,aside")].find((e) => { const c = rgb(getComputedStyle(e).backgroundColor);
+      return c && (c[3] ?? 1) > 0.5 && Math.hypot(...c.slice(0, 3).map((v, i) => v - pageBg[i])) > 30 && e.getBoundingClientRect().width >= W * 0.7; });
+    if (cand && cand.querySelector("h2,h3,p") && cand.querySelector("a,button")) closing = 1;
+  }
   // 첫 화면: 가장 큰 글이 가운데 정렬이고 사진 위에 있나
   let big = null; for (const h of heads) { const r = h.getBoundingClientRect(); if (r.top < H && (!big || parseFloat(getComputedStyle(h).fontSize) > parseFloat(getComputedStyle(big).fontSize))) big = h; }
   let heroCentredOnPhoto = false;
@@ -82,7 +101,7 @@ const PROBE = `(() => {
   let run = 1, best = 1; for (let i = 1; i < sig.length; i++) { if (sig[i] !== "-" && sig[i] === sig[i - 1]) { run++; best = Math.max(best, run); } else run = 1; }
   return { 제목수: h2.length, 제목가운데: h2.length ? centred / h2.length : 0, 회색한줄: lead, 제목글꼴수: fonts.size, 제목본문같은글꼴: fonts.size === 1 && fonts.has(bodyFont) ? 1 : 0,
     펼침질문: acc, 둥근카드: cards, 진한띠: bands, 단추: ctas, 사진비율: photo / (W * PH), 첫화면가운데사진위: heroCentredOnPhoto ? 1 : 0,
-    같은짜임잇달음: best, 제목위윗줄: eyebrow, 옅은띠: pale,
+    같은짜임잇달음: best, 제목위윗줄: eyebrow, 옅은띠: pale, 큰숫자칸: stats, 끝단추띠: closing,
     바탕색: pageBg.slice(0, 3), 단추색: (Object.entries(btnCols).sort((a, b) => b[1] - a[1])[0]?.[0] || "255,255,255").split(",").map(Number) };
 })()`;
 
