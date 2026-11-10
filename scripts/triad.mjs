@@ -18,7 +18,10 @@ const CARD_AREA = 20000;
 const BAND_MIN_H = 200;   // 진한 띠로 셀 최소 높이(px)
 const NEAR = 0.15;
 const INFO_ONLY = new Set(["제목글꼴수", "제목본문같은글꼴", "제목수"]);
-const EXACT = new Set(["옅은띠", "진한띠", "제목위윗줄", "회색한줄", "첫화면가운데사진위"]);  // 잡음 거르기 없이 견준다  // 표에는 싣되 통과 판정에는 넣지 않는다        // 세 값의 차가 이보다 작으면(상대) 「비슷」
+const EXACT = new Set(["옅은띠", "진한띠", "제목위윗줄", "첫화면가운데사진위"]);
+// 방향: 상자·띠·되풀이는 바탕보다 많을 때만, 사진은 바탕보다 적을 때만 문제 — 23차에 바탕보다 적은 카드·질문을 「오답지 쪽」으로 셌다
+const BAD_IF_MORE = new Set(["둥근카드", "펼침질문", "단추", "진한띠", "옅은띠", "회색한줄", "제목위윗줄", "같은짜임잇달음"]);
+const BAD_IF_LESS = new Set(["사진비율"]);  // 잡음 거르기 없이 견준다  // 표에는 싣되 통과 판정에는 넣지 않는다        // 세 값의 차가 이보다 작으면(상대) 「비슷」
 
 // 페이지 안에서 도는 측정 — 짜임 특징
 const PROBE = `(() => {
@@ -142,7 +145,8 @@ async function main() {
         if (key === "단추색" && !v.base.단추) { lines.push(`| ${key} | 없음 | - | - | 가르지 못함 |`); rows.push({ key, verdict: "가르지 못함" }); continue; }
         const f = (x) => (Array.isArray(x) ? "#" + x.map((n) => Math.min(255, n).toString(16).padStart(2, "0")).join("") : Number.isInteger(x) ? String(x) : x.toFixed(2));
         // 바탕에 제목(h2)이 없으면 제목 정렬은 견줄 것이 없다(22차 준오헤어)
-        const verdict = key === "제목가운데" && !v.base.제목수 ? "가르지 못함" : side(v.base[key], v.ours[key], v.ai[key], !EXACT.has(key));
+        let verdict = key === "제목가운데" && !v.base.제목수 ? "가르지 못함" : side(v.base[key], v.ours[key], v.ai[key], !EXACT.has(key));
+        if ((BAD_IF_MORE.has(key) && v.ours[key] <= v.base[key]) || (BAD_IF_LESS.has(key) && v.ours[key] >= v.base[key])) verdict = "정답지 쪽";
         rows.push({ key, verdict });
         lines.push(`| ${key} | ${f(v.base[key])} | ${f(v.ours[key])} | ${f(v.ai[key])} | ${verdict} |`);
       }

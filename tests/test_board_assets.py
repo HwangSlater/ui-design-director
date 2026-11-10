@@ -3,6 +3,9 @@ from __future__ import annotations
 
 import re
 from pathlib import Path
+import sys
+
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "skills" / "ui-design-director" / "scripts"))
 
 ASSETS = Path(__file__).resolve().parent.parent / "skills" / "ui-design-director" / "assets"
 CSS = {name: (ASSETS / name).read_text(encoding="utf-8") for name in ("board.css", "dock.css")}
@@ -63,3 +66,14 @@ def test_platform_screens_are_not_candidates() -> None:
     spec = {"candidates": [{"title": "베이글버트그루밍 네이버 플레이스", "kind": "real", "known": "x",
                             "urls": {"home": "https://m.place.naver.com/place/123"}}]}
     assert any("플랫폼 화면은 후보가 아님" in line for line in mlb.candidate_issues(spec))
+
+
+def test_board_not_built_with_bad_candidates(tmp_path: Path) -> None:
+    """후보 점검에 걸리면 보기 화면을 만들지 않는다 — 경고만 하니 템플릿을 추천했다(애견미용 23차)."""
+    import json
+    import make_live_board as mlb
+    spec = tmp_path / "board-spec.json"
+    spec.write_text(json.dumps({"market": "한국", "candidates": [{"id": "1", "title": "Groomie", "kind": "template", "recommended": True,
+                                                                  "urls": {"home": "https://groomie.framer.website/"}}]}), encoding="utf-8")
+    assert mlb.main([str(spec), str(tmp_path / "보기.html")]) == 1
+    assert not (tmp_path / "보기.html").exists()

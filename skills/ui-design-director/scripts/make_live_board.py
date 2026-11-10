@@ -87,10 +87,13 @@ def main(argv: list[str]) -> int:
     # make_board 는 spec 파일 위치 기준으로 캡처를 찾는다 — 바꾼 spec 을 원래 자리 옆에 두고 넘긴다(live_proxy.mjs 에도 그대로 쓴다)
     live_spec = spec_path.with_name(spec_path.stem + "-live.json")
     live_spec.write_text(json.dumps(spec, ensure_ascii=False, indent=1), encoding="utf-8")
-    code = make_board.main([str(live_spec), argv[1]])
-    for line in candidate_issues(spec):
-        print(f"후보 점검: {line}")
-    return code
+    issues = candidate_issues(spec)
+    if issues:  # 알리기만 하면 넘어갔다 — 23차는 「이름난 근거 없음」을 보고도 템플릿을 추천했다. 고칠 때까지 화면을 만들지 않는다
+        for line in issues:
+            print(f"후보 점검: {line}", file=sys.stderr)
+        print("보기 화면을 만들지 않았습니다 — board-spec.json 의 후보를 고친 뒤 다시 돌리세요(design-selection.md § 2·3).", file=sys.stderr)
+        return 1
+    return make_board.main([str(live_spec), argv[1]])
 
 
 if __name__ == "__main__":
