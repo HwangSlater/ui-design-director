@@ -142,3 +142,14 @@ def test_sample_mark_outside_the_foot_line(tmp_path: Path) -> None:
     assert "sample-mark" in rules(project(tmp_path / "a", body))
     plain = HEAD + '<main><img src="a.jpg" alt="견본 사진"></main><p>사진은 견본이에요</p></body></html>'
     assert "sample-mark" not in rules(project(tmp_path / "b", plain))
+
+
+def test_section_heads_and_cta_repeat(tmp_path: Path) -> None:
+    """구역마다 제목 밑 회색 한 줄, 같은 예약 단추 여러 개(애견미용 19차 — 바탕·스킬 없는 AI 둘 다 없던 것)."""
+    secs = "".join(f'<section><h2>제목{i}</h2><p>한 줄 설명이에요</p><a class="btn" href="https://booking.naver.com/">예약</a></section>'
+                   for i in range(4))
+    out = rules(project(tmp_path / "a", HEAD + f"<main>{secs}</main></body></html>"))
+    assert "section-heads" in out and "cta-repeat" in out
+    plain = "".join(f"<section><h2>제목{i}</h2><ul><li>내용</li></ul></section>" for i in range(4))
+    out = rules(project(tmp_path / "b", HEAD + f'<main>{plain}<a class="btn" href="https://booking.naver.com/">예약</a></main></body></html>'))
+    assert "section-heads" not in out and "cta-repeat" not in out

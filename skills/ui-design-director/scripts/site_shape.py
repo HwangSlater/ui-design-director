@@ -232,7 +232,10 @@ def base_facts(root: Path) -> dict:
     """바탕 저장본이 있으면 재서 formats/바탕-표지.json 에 남기고, 지워졌으면 남긴 것을 읽는다."""
     if not base_snapshots(root):
         return base_marks(root)
-    marks = {"snapshot": True, "numbered": _numbered(root), "icon_row": _icon_row(root)}
+    trees = [_tree(p) for p in base_snapshots(root)]
+    marks = {"snapshot": True, "numbered": _numbered(root), "icon_row": _icon_row(root),
+             "section_heads": max((len(section_heads(t)) for t in trees), default=0),
+             "cta_repeat": max((cta_repeat(t)[1] for t in trees), default=0)}
     save_base_marks(root, marks)
     return marks
 
@@ -300,6 +303,49 @@ def _icon_item(n: Node) -> bool:
     if head.tag not in ROW_HEAD or not 0 < len(head.visible()) <= ROW_HEAD_MAX:
         return False
     return len(kids) == 2 or (not any(k.tag in ROW_HEAD for k in kids[2].walk()) and len(kids[2].visible()) <= ROW_TEXT_MAX)
+
+
+LEAD_MAX = 45      # 제목 바로 밑 이 글자 수 이하 = 「회색 한 줄 설명」
+EYEBROW_MAX = 24   # 제목 바로 위 이 글자 수 이하 = 작은 윗줄
+HEADS_MIN = 3      # 이만큼 구역이 같은 머리(윗줄·제목·한 줄)로 열리면 생성 티
+CTA_MAX = 3        # 같은 곳으로 가는 채운 단추가 이보다 많으면 단추 되풀이
+
+
+def _tree(page: Path) -> Tree:
+    t = Tree()
+    t.feed(read(page))
+    t.close()
+    return t
+
+
+def _next_el(n: Node, step: int) -> Node | None:
+    if not n.parent:
+        return None
+    kids = n.parent.kids
+    i = kids.index(n) + step
+    return kids[i] if 0 <= i < len(kids) else None
+
+
+def section_heads(tree: Tree) -> list[Node]:
+    """제목(h2) 바로 밑 짧은 한 줄, 또는 바로 위 작은 윗줄로 여는 구역 머리 — 애견미용 19차 4번, 스킬 없는 AI 시안은 윗줄 5번."""
+    out = []
+    for h in (n for n in tree.root.walk() if n.tag == "h2"):
+        after, before = _next_el(h, 1), _next_el(h, -1)
+        lead = after is not None and after.tag == "p" and 0 < len(after.visible()) <= LEAD_MAX
+        brow = before is not None and before.tag in ("p", "span", "div", "small") and 0 < len(before.visible()) <= EYEBROW_MAX and not before.kids
+        if lead or brow:
+            out.append(h)
+    return out
+
+
+def cta_repeat(tree: Tree) -> tuple[str, int]:
+    """같은 주소로 가는 단추 꼴 링크가 가장 많은 것 (주소, 수) — 19차는 네이버 예약 단추 5개, 바탕은 2개."""
+    count: dict[str, int] = {}
+    for n in tree.root.walk():
+        cls = n.attrs.get("class", "")
+        if n.tag in ("a", "button") and re.search(r"btn|button|cta", cls, re.I) and n.attrs.get("href", "#") not in ("", "#"):
+            count[n.attrs["href"]] = count.get(n.attrs["href"], 0) + 1
+    return max(count.items(), key=lambda kv: kv[1], default=("", 0))
 
 
 def icon_row(tree: Tree) -> Node | None:
@@ -397,6 +443,13 @@ def check_project(root: Path) -> list[str]:
     if row and not base_icon_row(root):
         out.append(f"DRIFT {where}:{row.line} icon-row — 아이콘·제목·짧은 글 칸 3~4개 줄은 생성 티, 바탕에 없으면 "
                    "바탕의 같은 자리 짜임으로(build-rules.md § What reads as generated)")
+    heads = section_heads(tree)
+    if len(heads) >= HEADS_MIN and base_facts(root).get("section_heads", 0) < HEADS_MIN:
+        out.append(f"DRIFT {where}:{heads[0].line} section-heads — 구역 {len(heads)}곳이 제목 밑 회색 한 줄(또는 제목 위 작은 윗줄)로 열림 — "
+                   "바탕에 없으면 생성 티, 제목만 두거나 바탕의 구역 머리대로(build-rules.md § What reads as generated)")
+    href, n_cta = cta_repeat(tree)
+    if n_cta > max(CTA_MAX, base_facts(root).get("cta_repeat", 0)):
+        out.append(f"DRIFT {where}:1 cta-repeat — 같은 곳({href[:40]})으로 가는 단추 {n_cta}개 — 바탕 수만큼만, 머리와 첫 화면·끝에 하나씩")
     marks = sample_marks(tree)
     if marks:
         out.append(f"DRIFT {where}:{marks[0].line} sample-mark — 페이지 안에 「견본」 표시 {len(marks)}곳 — 견본은 바닥글 「견본」 한 줄에만 "
