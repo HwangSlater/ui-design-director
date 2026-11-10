@@ -170,7 +170,14 @@ def in_page(value: str, flat: str) -> bool:
         return re.search(rf"(?<!\d)(0?{n}|{int(n) + 12}):00", flat) is not None
     if unit == "만원":
         return f"{n}0,000" in flat or f"{n}만" in flat
+    # 우리말 수로 쓴 것(「하루 여섯 마리」)도 — 25차에서 있는데 없다고 셌다
+    word = NATIVE.get(int(n))
+    if word and unit in ("마리", "명", "개", "팀") and re.search(rf"{word}{unit}", flat):
+        return True
     return re.search(rf"(?<!\d){n}(?!\d)", flat) is not None
+
+
+NATIVE = {1: "한", 2: "두", 3: "세", 4: "네", 5: "다섯", 6: "여섯", 7: "일곱", 8: "여덟", 9: "아홉", 10: "열"}
 
 
 def report(folder: Path, main: Path, memo: Path | None) -> int:

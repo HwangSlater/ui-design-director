@@ -49,3 +49,9 @@ def test_checklist_line_is_not_a_write() -> None:
     """체크리스트에 파일 이름만 적은 셸 명령은 그 파일을 쓴 것이 아니다(치과 17차)."""
     assert not sa.shell_wrote("cat >> checklist.md <<'EOF'\n- [ ] 맥락 정리(concept-brief.md)\nEOF", "^concept-brief\\.md$")
     assert sa.shell_wrote("cat > 'C:/x/concept-brief.md' <<'EOF'", "^concept-brief\\.md$")
+
+
+def test_native_korean_numbers_count() -> None:
+    """「하루 여섯 마리」도 메모의 「6마리」로 친다(애견미용 25차)."""
+    assert sa.in_page("6마리", "하루여섯마리까지받아요")
+    assert not sa.in_page("6마리", "하루다섯마리")
