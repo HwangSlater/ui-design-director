@@ -156,3 +156,14 @@ def test_captures_named_by_view(tmp_path: Path) -> None:
     page(folder / "모바일-이어붙임.jpg", "#ffffff", "#eeeeee", "#000000", width=1210)
     assert copy_check.find_view(folder, "PC") == (None, None)
     assert copy_check.css_width(folder / "모바일-이어붙임.jpg", "휴대폰") == 390  # 이어 붙인 그림은 기본 폭
+
+
+def test_band_checks_survive_capture_deletion(tmp_path: Path) -> None:
+    """승인 뒤 바탕 캡처를 지워도 옅은 띠는 바탕-표지.json 의 사실로 본다(애견미용 22차)."""
+    import shutil
+    long_page(tmp_path / "formats" / "base-cap" / "base-home-1280.png", None)
+    long_page(tmp_path / "mockups" / "보낼-그림" / "main-1280.png", "#e3f7f0")
+    before = [line for line in copy_check.check_project(tmp_path) if line.startswith("옅은 띠")]
+    shutil.rmtree(tmp_path / "formats" / "base-cap")
+    after = [line for line in copy_check.check_project(tmp_path) if line.startswith("옅은 띠")]
+    assert before and after == before

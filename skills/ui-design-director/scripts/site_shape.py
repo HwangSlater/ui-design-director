@@ -330,7 +330,7 @@ def _next_el(n: Node, step: int) -> Node | None:
 def section_heads(tree: Tree) -> list[Node]:
     """제목(h2) 바로 밑 짧은 한 줄, 또는 바로 위 작은 윗줄로 여는 구역 머리 — 애견미용 19차 4번, 스킬 없는 AI 시안은 윗줄 5번."""
     out = []
-    for h in (n for n in tree.root.walk() if n.tag == "h2"):
+    for h in (n for n in tree.root.walk() if n.tag == "h2" and not n.inside("a")):  # 링크 칸 안 제목은 구역 머리가 아니다
         after, before = _next_el(h, 1), _next_el(h, -1)
         lead = after is not None and after.tag == "p" and 0 < len(after.visible()) <= LEAD_MAX
         brow = before is not None and before.tag in ("p", "span", "div", "small") and 0 < len(before.visible()) <= EYEBROW_MAX and not before.kids

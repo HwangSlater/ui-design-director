@@ -132,6 +132,13 @@ def first(evs, spec: str, folder: Path):
         # 셸로 쓴 파일(heredoc·Out-File)도 쓴 것으로 — 치과 17차는 맥락 정리를 셸로 썼다
         if kind == "write" and k == "run" and shell_wrote(body, pat):
             return when, sub, body
+    # 스크립트 안에서 쓴 파일(파이썬 변수 경로 등)은 명령 글로 못 찾는다 — 세션 동안 고쳐진 파일이면 쓴 것으로(애견미용 22차의 바탕-구성.md)
+    if kind == "write" and evs and re.fullmatch(r"\^?[^|()*+?]+\$?", pat):
+        p = folder / pat.strip("^$").replace("\\.", ".")
+        if p.is_file():
+            at = dt.datetime.fromtimestamp(p.stat().st_mtime, dt.timezone.utc)
+            if evs[0][0] <= at <= evs[-1][0] + dt.timedelta(minutes=5):
+                return at, False, "write:" + p.name
     return None
 
 

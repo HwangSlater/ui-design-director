@@ -15,6 +15,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from common import utf8_console  # noqa: E402
+from copy_check import cached_bands  # noqa: E402
 from site_shape import base_facts  # noqa: E402
 from stage import decisions  # noqa: E402
 
@@ -28,7 +29,9 @@ def copies(root: Path) -> list[Path]:
     fm = root / "formats"
     if not fm.is_dir():
         return []
-    return [fm / name for name in COPIES if (fm / name).is_dir()] + sorted(p for p in fm.iterdir() if p.is_file() and p.suffix.lower() in PICTURES)
+    # 이름이 -cap 으로 끝나는 캡처 폴더(board-cap 등)도 — 22차에 board-cap 이 남았다
+    dirs = [p for p in fm.iterdir() if p.is_dir() and (p.name in COPIES or p.name.endswith("-cap"))]
+    return sorted(dirs) + sorted(p for p in fm.iterdir() if p.is_file() and p.suffix.lower() in PICTURES)
 
 
 def main(argv: list[str]) -> int:
@@ -45,6 +48,7 @@ def main(argv: list[str]) -> int:
         print("아직 시안 승인 전이라 지우지 않음 — 의뢰인이 승인하면: python stage.py . --decide main \"<승인한 말>\"", file=sys.stderr)
         return 1
     marks = base_facts(root)
+    cached_bands(root)  # 옅은 띠·띠 쌓기 점검에 쓰는 바탕 띠 사실도 지우기 전에
     for p in found:
         print(f"{'지울 것' if dry else '지움'}: {p.relative_to(root)}")
         if not dry:

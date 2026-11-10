@@ -17,7 +17,8 @@ const CARD_RADIUS = 12;   // 이 이상 둥근 채운·테두리 상자 = 둥근
 const CARD_AREA = 20000;
 const BAND_MIN_H = 200;   // 진한 띠로 셀 최소 높이(px)
 const NEAR = 0.15;
-const INFO_ONLY = new Set(["제목글꼴수", "제목본문같은글꼴"]);  // 표에는 싣되 통과 판정에는 넣지 않는다        // 세 값의 차가 이보다 작으면(상대) 「비슷」
+const INFO_ONLY = new Set(["제목글꼴수", "제목본문같은글꼴", "제목수"]);
+const EXACT = new Set(["옅은띠", "진한띠", "제목위윗줄", "회색한줄", "첫화면가운데사진위"]);  // 잡음 거르기 없이 견준다  // 표에는 싣되 통과 판정에는 넣지 않는다        // 세 값의 차가 이보다 작으면(상대) 「비슷」
 
 // 페이지 안에서 도는 측정 — 짜임 특징
 const PROBE = `(() => {
@@ -30,7 +31,8 @@ const PROBE = `(() => {
   const h2 = heads.filter((h) => h.tagName !== "H3");
   const centred = h2.filter((h) => getComputedStyle(h).textAlign === "center").length;
   let lead = 0;
-  for (const h of h2) { let n = h.nextElementSibling; if (n && n.tagName === "P" && vis(n) && n.textContent.trim().length <= ${LEAD_MAX}) lead++; }
+  // 링크 칸(a) 안의 제목·설명은 구역 머리가 아니다(22차의 「네이버로 예약하기 →」 칸)
+  for (const h of h2) { if (h.closest("a")) continue; let n = h.nextElementSibling; if (n && n.tagName === "P" && vis(n) && n.textContent.trim().length <= ${LEAD_MAX}) lead++; }
   const fonts = new Set(heads.map((h) => getComputedStyle(h).fontFamily.split(",")[0].replace(/["']/g, "").trim()));
   const bodyFont = getComputedStyle(document.body).fontFamily.split(",")[0].replace(/["']/g, "").trim();
   // 펼침 질문: details·aria-expanded 말고도 「?」로 끝나는 짧은 글을 누르게 한 줄(바탕 Barkbus 는 div 로 만들어 놓쳤다)
@@ -45,7 +47,7 @@ const PROBE = `(() => {
   // 제목 위 작은 윗줄(「소소는 이렇게 해요」 같은 색 글자) — 오답지에 구역마다 있었다
   let eyebrow = 0;
   for (const h of h2) { const pr = h.previousElementSibling; if (pr && pr.textContent.trim().length <= 24 && parseFloat(getComputedStyle(pr).fontSize) < parseFloat(getComputedStyle(h).fontSize) * 0.6) eyebrow++; }
-  let cards = 0, bands = 0, ctas = 0, photo = 0; const btnCols = {};
+  let cards = 0, bands = 0, pale = 0, ctas = 0, photo = 0; const btnCols = {};
   for (const el of document.querySelectorAll("body *")) {
     if (!vis(el)) continue;
     const r = el.getBoundingClientRect(), top = r.top + scrollY; if (top > PH || !r.width) continue;
@@ -54,6 +56,8 @@ const PROBE = `(() => {
     const radius = parseFloat(cs.borderTopLeftRadius) || 0, framed = parseFloat(cs.borderTopWidth) > 0;
     if ((filled || framed) && radius >= ${CARD_RADIUS} && r.width * r.height >= ${CARD_AREA} && r.width < W * 0.95) cards++;
     if (filled && lum(bg) < 0.32 && r.width >= W * 0.95 && r.height >= ${BAND_MIN_H}) bands++;
+    // 옅은 띠: 폭 가득, 밝지만 페이지 바탕과 다른 색 판(22차 가격 구역 뒤 민트)
+    if (filled && lum(bg) > 0.85 && Math.hypot(...bg.slice(0, 3).map((v, i) => v - pageBg[i])) > 12 && r.width >= W * 0.95 && r.height >= ${BAND_MIN_H}) pale++;
     if ((el.tagName === "A" || el.tagName === "BUTTON") && filled && Math.hypot(...bg.slice(0, 3).map((v, i) => v - pageBg[i])) > 40 && r.height >= 32 && r.height <= 80) { ctas++; const k = bg.slice(0, 3).map((v) => Math.round(v / 8) * 8).join(","); btnCols[k] = (btnCols[k] || 0) + 1; }
   }
   // 첫 화면: 가장 큰 글이 가운데 정렬이고 사진 위에 있나
@@ -73,9 +77,9 @@ const PROBE = `(() => {
     return [getComputedStyle(h).textAlign === "center" ? "가운데" : "왼쪽", n && n.tagName === "P" && n.textContent.trim().length <= ${LEAD_MAX} ? "한줄" : "",
       b.querySelector("a[class*=btn],button") ? "단추" : "", body ? body.tagName : "", imgs > 2 ? "사진여럿" : imgs ? "사진" : ""].join("·"); });
   let run = 1, best = 1; for (let i = 1; i < sig.length; i++) { if (sig[i] !== "-" && sig[i] === sig[i - 1]) { run++; best = Math.max(best, run); } else run = 1; }
-  return { 제목가운데: h2.length ? centred / h2.length : 0, 회색한줄: lead, 제목글꼴수: fonts.size, 제목본문같은글꼴: fonts.size === 1 && fonts.has(bodyFont) ? 1 : 0,
+  return { 제목수: h2.length, 제목가운데: h2.length ? centred / h2.length : 0, 회색한줄: lead, 제목글꼴수: fonts.size, 제목본문같은글꼴: fonts.size === 1 && fonts.has(bodyFont) ? 1 : 0,
     펼침질문: acc, 둥근카드: cards, 진한띠: bands, 단추: ctas, 사진비율: photo / (W * PH), 첫화면가운데사진위: heroCentredOnPhoto ? 1 : 0,
-    같은짜임잇달음: best, 제목위윗줄: eyebrow,
+    같은짜임잇달음: best, 제목위윗줄: eyebrow, 옅은띠: pale,
     바탕색: pageBg.slice(0, 3), 단추색: (Object.entries(btnCols).sort((a, b) => b[1] - a[1])[0]?.[0] || "255,255,255").split(",").map(Number) };
 })()`;
 
@@ -102,7 +106,7 @@ async function measure(port, width, url) {
 }
 
 // 우리 값이 바탕(정답지)보다 오답지에 가까우면 「오답지 쪽」. 바탕과 오답지가 비슷하면 판단하지 않는다(가르는 잣대가 아님)
-export function side(base, ours, ai) {
+export function side(base, ours, ai, noisy = true) {
   if (Array.isArray(base)) {  // 색: RGB 거리 — 우리 색이 오답지 색에 더 가까우면 오답지 쪽
     const d = (a, b) => Math.hypot(...a.map((v, i) => v - b[i]));
     if (d(base, ai) < 30) return "가르지 못함";
@@ -111,8 +115,9 @@ export function side(base, ours, ai) {
   const span = Math.max(Math.abs(base), Math.abs(ai), 1e-9);
   const all = Math.max(span, Math.abs(ours));
   // 잡음 거르기: 세 값이 모두 이 폭 안이면 다르다고 보지 않는다 — 단추 3·2·2, 제목 가운데 0.14·0·0 을 판정에 넣었다(애견미용 21차)
-  const tiny = Number.isInteger(base) && Number.isInteger(ours) && Number.isInteger(ai) ? 1 : 0.15;
-  if (Math.max(base, ours, ai) - Math.min(base, ours, ai) <= tiny) return "가르지 못함";
+  // 띠·윗줄처럼 하나만 있어도 티가 나는 것은 거르지 않는다(22차 옅은 띠 0·1·1 을 놓쳤다)
+  const tiny = !noisy ? 0 : Number.isInteger(base) && Number.isInteger(ours) && Number.isInteger(ai) ? 1 : 0.15;
+  if (tiny && Math.max(base, ours, ai) - Math.min(base, ours, ai) <= tiny) return "가르지 못함";
   // 바탕·오답지 둘 다 없는데 우리만 많은 것 — 스킬 규칙이 덧붙인 것(애견미용 19차의 「회색 한 줄」 4번)
   if (Math.abs(base - ai) / all < NEAR) return Math.abs(ours - base) / all >= 0.5 ? "우리만 다름" : "가르지 못함";
   return Math.abs(ours - ai) < Math.abs(ours - base) ? "오답지 쪽" : "정답지 쪽";
@@ -133,8 +138,11 @@ async function main() {
       lines.push(`## ${w}px`, "", "| 항목 | 정답지 | 우리 것 | 오답지 | 판정 |", "|---|---|---|---|---|");
       const rows = [];
       for (const key of Object.keys(v.base)) {
+        // 바탕에 채운 단추가 없으면 단추색은 견줄 것이 없다(22차 준오헤어)
+        if (key === "단추색" && !v.base.단추) { lines.push(`| ${key} | 없음 | - | - | 가르지 못함 |`); rows.push({ key, verdict: "가르지 못함" }); continue; }
         const f = (x) => (Array.isArray(x) ? "#" + x.map((n) => Math.min(255, n).toString(16).padStart(2, "0")).join("") : Number.isInteger(x) ? String(x) : x.toFixed(2));
-        const verdict = side(v.base[key], v.ours[key], v.ai[key]);
+        // 바탕에 제목(h2)이 없으면 제목 정렬은 견줄 것이 없다(22차 준오헤어)
+        const verdict = key === "제목가운데" && !v.base.제목수 ? "가르지 못함" : side(v.base[key], v.ours[key], v.ai[key], !EXACT.has(key));
         rows.push({ key, verdict });
         lines.push(`| ${key} | ${f(v.base[key])} | ${f(v.ours[key])} | ${f(v.ai[key])} | ${verdict} |`);
       }

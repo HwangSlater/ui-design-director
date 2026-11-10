@@ -27,7 +27,7 @@ import re
 import sys
 from pathlib import Path
 
-from common import read, utf8_console  # 콘솔 한글 깨짐 막기·파일 읽기는 common 하나로
+from common import base_marks, read, save_base_marks, utf8_console  # 콘솔 한글 깨짐 막기·파일 읽기는 common 하나로
 
 from PIL import Image, ImageFilter
 
@@ -270,21 +270,28 @@ def strong_stack(path: Path, width: int) -> list[tuple[int, int, int]]:
     return list(best)
 
 
-def stacked_bands(base: Path, bw: int, ours: Path, ow: int) -> tuple[list[str], int]:
-    """우리 페이지에 진한 띠가 STACK_MIN 개 이상 잇달고 바탕보다 많으면 (#색들, 바탕 묶음 수). 아니면 ([], 0)."""
-    ours_stack, base_n = strong_stack(ours, ow), len(strong_stack(base, bw))
+def band_facts(base: Path, bw: int) -> dict:
+    """바탕 캡처에서 띠 판정에 쓰는 사실만 — 캡처를 지운 뒤에도 바탕-표지.json 으로 남긴다(애견미용 22차: 지운 뒤 옅은 띠·띠 쌓기를 못 봄)."""
+    return {"pale": [list(c) for c, _, h in colour_runs(base, bw) if h >= BAND_MIN_CSS], "strong": len(strong_stack(base, bw))}
+
+
+def stacked_bands(base: Path | dict, bw: int, ours: Path, ow: int) -> tuple[list[str], int]:
+    """우리 페이지에 진한 띠가 STACK_MIN 개 이상 잇달고 바탕보다 많으면 (#색들, 바탕 묶음 수). 아니면 ([], 0).
+    base 는 캡처 또는 band_facts 사실."""
+    facts = base if isinstance(base, dict) else band_facts(base, bw)
+    ours_stack, base_n = strong_stack(ours, ow), facts["strong"]
     if len(ours_stack) < STACK_MIN or len(ours_stack) <= base_n:
         return [], 0
     return ["#%02x%02x%02x" % c for c in ours_stack], base_n
 
 
-def pale_bands(base: Path, bw: int, ours: Path, ow: int) -> list[tuple[str, int]]:
+def pale_bands(base: Path | dict, bw: int, ours: Path, ow: int) -> list[tuple[str, int]]:
     """우리 페이지의 옅은 색 띠 가운데 바탕에 없는 색 — (#색, 띠 수)."""
     runs = colour_runs(ours, ow)
     if not runs:
         return []
     bg = page_bg(runs)
-    base_cols = [c for c, _, h in colour_runs(base, bw) if h >= BAND_MIN_CSS]
+    base_cols = [tuple(c) for c in (base if isinstance(base, dict) else band_facts(base, bw))["pale"]]
     found: list[list] = []
     for c, _, h in runs:
         light = lightness(c) > BAND_LIGHT
@@ -299,7 +306,7 @@ def pale_bands(base: Path, bw: int, ours: Path, ow: int) -> list[tuple[str, int]
     return [("#%02x%02x%02x" % c, n) for c, n in found]
 
 
-def band_lines(view: str, base: Path, bw: int, ours: Path, ow: int) -> list[str]:
+def band_lines(view: str, base: Path | dict, bw: int, ours: Path, ow: int) -> list[str]:
     out = [f"옅은 띠({view}): {hex_} 줄 {n}개 — 바탕에 없음. 바탕에 없는 색 띠는 생성 티, 구역은 페이지 바탕 위에(build-rules.md § What reads as generated)"
            for hex_, n in pale_bands(base, bw, ours, ow)]
     stack, base_n = stacked_bands(base, bw, ours, ow)
@@ -309,10 +316,25 @@ def band_lines(view: str, base: Path, bw: int, ours: Path, ow: int) -> list[str]
     return out
 
 
+def cached_bands(root: Path) -> dict:
+    """바탕 캡처가 있으면 띠 사실을 재서 바탕-표지.json 에 남기고(폭별), 지워졌으면 남긴 것을 돌려준다."""
+    marks = base_marks(root)
+    bands = dict(marks.get("bands") or {})
+    for view, base, bw, _, _ in pairs(root):
+        if base:
+            bands[view] = {**band_facts(base, bw), "width": bw}
+    if bands and bands != marks.get("bands") and (root / "formats").is_dir():
+        save_base_marks(root, {**marks, "bands": bands})
+    return bands
+
+
 def check_project(root: Path) -> list[str]:
     """preflight.py 도 부른다 — 바탕 그대로인 팔레트 후보, 우리 것 마감 수, 베낀 티·옅은 띠가 있는 폭마다 한 줄."""
     out = palette_copies(root) + own_finish(root)
+    cache = cached_bands(root)
     for view, base, bw, ours, ow in pairs(root):
+        if ours and not base and view in cache:  # 승인 뒤 캡처를 지웠어도 띠 점검은 남긴 사실로
+            out += band_lines(view, cache[view], cache[view]["width"], ours, ow)
         if not base or not ours:
             continue
         out += band_lines(view, base, bw, ours, ow)
