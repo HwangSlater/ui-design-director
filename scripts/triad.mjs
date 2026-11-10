@@ -72,15 +72,22 @@ const PROBE = `(() => {
       return t && t.length <= 8 && /[0-9]/.test(t) && parseFloat(getComputedStyle(e).fontSize) >= bodyPx * 2; }));
     if (big.length >= 3 && big.length >= kids.length - 1) { stats = Math.max(stats, big.length); }
   }
-  // 끝 단추 띠: 바닥글 바로 위, 폭 넓은 채운 칸 안에 제목과 단추 — 오답지의 마무리 꼴
+  // 끝 단추 띠: 바닥글(없으면 페이지 끝) 바로 위 400px 안에서 끝나는, 폭 절반 넘는 색 칸에 글과 단추 — 오답지의 마무리 꼴.
+  // DOM 형제로 찾으면 바탕 RSM 의 안쪽으로 들인 초록 띠를 놓쳤다(수학학원 29차) — 화면 위치로 찾는다
   let closing = 0;
-  const foot = document.querySelector("footer");
-  const prev = foot ? (() => { let e = foot.previousElementSibling; while (e && !vis(e)) e = e.previousElementSibling; return e; })() : null;
-  const lastBlock = prev && prev.tagName === "MAIN" ? [...prev.children].filter(vis).pop() : prev;
-  if (lastBlock) {
-    const cand = [lastBlock, ...lastBlock.querySelectorAll("div,section,aside")].find((e) => { const c = rgb(getComputedStyle(e).backgroundColor);
-      return c && (c[3] ?? 1) > 0.5 && Math.hypot(...c.slice(0, 3).map((v, i) => v - pageBg[i])) > 30 && e.getBoundingClientRect().width >= W * 0.7; });
-    if (cand && cand.querySelector("h2,h3,p") && cand.querySelector("a,button")) closing = 1;
+  const footEl = [...document.querySelectorAll("footer")].filter(vis).pop();
+  const footTop = footEl ? footEl.getBoundingClientRect().top + scrollY : document.documentElement.scrollHeight;
+  for (const e of document.querySelectorAll("section, div, aside")) {
+    // 바닥글 안 맨 위에 둔 띠(RSM 「Learn more about our program.」)도 센다 — 링크 목록 덩어리(바닥 메뉴)는 아니다
+    if (!vis(e) || e === footEl || e.querySelectorAll("a").length > 4) continue;
+    const r = e.getBoundingClientRect(), bottom = r.bottom + scrollY, c = rgb(getComputedStyle(e).backgroundColor);
+    if (!c || (c[3] ?? 1) <= 0.5 || Math.hypot(...c.slice(0, 3).map((v, i) => v - pageBg[i])) <= 30 || r.width < W * 0.5 || r.height > 500) continue;
+    // 바닥글 태그가 없는 사이트(RSM)도 있어 「페이지 아래 30% 안, 바닥글보다 위」로 본다
+    const fullH = document.documentElement.scrollHeight;
+    if (r.top + scrollY < fullH * 0.7) continue;
+    // 제목 태그 없이 div 글만 둔 띠도(RSM 의 evaluationCTA) — 단추를 뺀 글이 8자 넘으면 글이 있는 칸
+    const btn = e.querySelector("a,button");
+    if (btn && e.textContent.replace(btn.textContent, "").trim().length > 8) { closing = 1; break; }
   }
   // 첫 화면: 가장 큰 글이 가운데 정렬이고 사진 위에 있나
   let big = null; for (const h of heads) { const r = h.getBoundingClientRect(); if (r.top < H && (!big || parseFloat(getComputedStyle(h).fontSize) > parseFloat(getComputedStyle(big).fontSize))) big = h; }
