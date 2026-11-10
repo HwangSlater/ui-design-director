@@ -14,6 +14,7 @@ decisions.json 이 깨져 있으면(JSON 이 아님) 알리고, --decide 는 덮
 from __future__ import annotations
 
 import json
+import re
 import sys
 from pathlib import Path
 
@@ -23,12 +24,13 @@ import knowledge  # noqa: E402  (단계마다 볼 규칙은 knowledge.py 하나�
 
 SKILL = Path(__file__).resolve().parent.parent
 S = (SKILL / "scripts").as_posix()  # 다음 명령에 실제 경로를 찍는다(${CLAUDE_SKILL_DIR} 를 글자로 찍으면 그대로 남았다)
-STAGES = ["brief", "board", "base", "material", "palette", "design", "main"]
+STAGES = ["brief", "board", "base", "material", "palette", "design", "facts", "main"]
 LABEL = {"brief": "맥락 정리", "board": "바탕 고르기 화면", "base": "바탕 확정", "material": "바탕 자료(스냅샷·움직임·구성)",
-         "palette": "색·글꼴 확정", "design": "DESIGN.md", "main": "메인 페이지 시안"}
+         "palette": "색·글꼴 확정", "design": "DESIGN.md", "facts": "페이지 사실(이름·가격·시간)", "main": "메인 페이지 시안"}
 SHARED_VIEWER = "board-data"  # make_board.py 공용 틀 표시
 PALETTE_VIEWER = "palette-switcher.js"
 TEMPLATE_MARK = "<!-- 채우기 전 -->"  # base_material.py 가 만든 빈 틀 표시 — 다 채우고 지우기 전에는 바탕 자료가 안 된 것으로 본다
+FACTS = re.compile(r"페이지\s*사실\s*[:：]")
 DECIDABLE = ("base", "palette", "main")  # --decide 로 남기는 확정 — 「board」로 남겨 바탕이 안 정해진 채 남았다. main 은 시안 승인(그 뒤 clear_copies.py)
 PROJECT_MARKS = ("concept-brief.md", "decisions.json", "formats/board-spec.json")  # 스킬 프로젝트 폴더 표시
 KIND_LINE = "사이트 꼴: 여러 쪽」 또는 「사이트 꼴: 한 쪽 홍보·모집"
@@ -98,6 +100,8 @@ def status(root: Path) -> tuple[dict, list[str]]:
         "material": all(p.is_file() for p in material) and snap and filled,
         "palette": "palette" in d,
         "design": "바탕에서 바꾼 곳" in design and "부품 출처" in design,
+        # 이름·가격·영업시간을 묻기 전에 견본 값부터 넣고 의뢰인이 바로잡는 일이 다섯 번 되풀이됐다(빵집 33~37차·자전거 38차)
+        "facts": bool(FACTS.search(brief)),
         "main": (root / "mockups" / "index.html").is_file(),
     }
     issues = [BROKEN] if saved(root) is None else []
@@ -171,6 +175,7 @@ NEXT = {
     "material": f"고른 바탕에 대해 먼저: python {S}/base_material.py . (바탕 주소는 확정과 board-spec.json 에서 읽어 「바탕 주소:」로 찍는다 — 그 주소를 아래 <바탕 주소> 에. jobs-base.json·바탕-구성.md 틀) → node {S}/snapshot.mjs formats/jobs-base.json formats/snapshot · node {S}/motion.mjs <바탕 주소> formats/바탕-움직임.md · node {S}/capture.mjs formats/jobs-base.json formats/base-cap · node {S}/extract_styles.mjs <바탕 주소> formats/추출-1280.json --width 1280 → formats/바탕-구성.md 를 채우고 맨 위 「채우기 전」 줄을 지운다",
     "palette": f"palette/index.html 을 palette-switcher.js 틀로(comparison-board.md § Palettes, 바탕의 4~6색 관계에 색상은 python {S}/palettes.py pick --tags <꼬리표> --project . 의 공개 팔레트에서, source 에 그 주소), 글꼴은 python {S}/fonts.py pick --style <고딕|명조|손글씨|제목용> 에서만(references/fonts.md) → python {S}/fonts.py check palette → wait_choice.mjs palette/index.html palette/decision.json",
     "design": "DESIGN.md 를 design-md-format.md 틀로 — § 바탕에서 바꾼 곳, § 부품 출처 포함",
+    "facts": "의뢰인에게 한 번에 묻는다 — 이름(임시라도)·가격·영업시간과 쉬는 날·예약/연락처·동네. 답을 concept-brief.md 에 「페이지 사실:」 줄 아래 적는다(모르는 것은 「견본」이라고). 그 전에는 견본 값을 시안에 넣지 않는다(guided-conversation.md § Ask for the page's facts)",
     "main": f"references/build-rules.md 를 따라 mockups/ 에 메인 페이지 — 완성 시안은 하위 에이전트 하나에 파일 경로와 build-rules.md 경로를 넘긴다 → python {S}/preflight.py .",
 }
 

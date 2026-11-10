@@ -37,6 +37,8 @@ Copy this checklist into your reply when you start and tick it as you go. Before
                 — never hues from memory or a 「바탕 그대로」 candidate (color-selection.md); wait_choice.mjs for 확정
 - [ ] design    node ${CLAUDE_SKILL_DIR}/scripts/skeleton.mjs … --base <base> (page-design.md § Skeleton from the base)
                 → 「바꿀 곳 n/N」; DESIGN.md (design-md-format.md, § 바탕에서 바꾼 곳 and § 부품 출처)
+- [ ] facts     ask the client once for the name, prices, hours and days off, booking/contact and area; write them in
+                concept-brief.md under 「페이지 사실:」 (unknown → 「견본」) — no sample facts before this
 - [ ] main      before each part: knowledge.py ask --part <part> (you and each mockup subagent; Korean names work)
                 mockups/ by build-rules.md → compose_metrics.mjs → side_by_side.py → plain-model test (once)
                 → preflight.py (includes check_site) after the LAST edit → send; never send an edit without it

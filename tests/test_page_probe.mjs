@@ -3,7 +3,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { driftLines } from "../skills/ui-design-director/scripts/page_probe.mjs";
 
-const base = { 회색한줄: 0, 제목위윗줄: 0, 옅은띠: 0, 진한띠: 0, 끝단추띠: 1, 큰숫자칸: 0, 둥근카드: 2, 펼침질문: 3, 단추: 3, 같은짜임잇달음: 1, 사진비율: 0.8, 바탕색: [255, 255, 255] };
+const base = { 제목수: 5, 회색한줄: 0, 제목위윗줄: 0, 옅은띠: 0, 진한띠: 0, 끝단추띠: 1, 큰숫자칸: 0, 둥근카드: 2, 펼침질문: 3, 단추: 3, 같은짜임잇달음: 1, 사진비율: 0.8, 바탕색: [255, 255, 255] };
 
 test("바탕과 같으면 걸리지 않는다", () => {
   assert.deepEqual(driftLines(1280, base, { ...base }), []);
@@ -17,4 +17,9 @@ test("회색 한 줄·옅은 띠·사진 부족·크림 바탕", () => {
   assert.match(lines, /사진비율/);
   assert.match(lines, /바탕색/);
   assert.doesNotMatch(lines, /단추 —/);  // 단추는 하나 차이까지 봐준다
+});
+
+test("바탕에 제목 태그가 없으면 제목 항목은 견주지 않는다(자전거 38차)", () => {
+  const b = { ...base, 제목수: 0 };
+  assert.doesNotMatch(driftLines(390, b, { ...b, 회색한줄: 3, 제목위윗줄: 1 }).join(" "), /회색한줄|제목위윗줄/);
 });

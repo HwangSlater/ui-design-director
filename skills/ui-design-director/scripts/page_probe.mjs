@@ -19,7 +19,7 @@ export const NEAR = 0.15;
 export const INFO_ONLY = new Set(["제목글꼴수", "제목본문같은글꼴", "제목수"]);
 export const EXACT = new Set(["옅은띠", "진한띠", "제목위윗줄", "첫화면가운데사진위", "큰숫자칸", "끝단추띠"]);
 // 방향: 상자·띠·되풀이는 바탕보다 많을 때만, 사진은 바탕보다 적을 때만 문제 — 23차에 바탕보다 적은 카드·질문을 「오답지 쪽」으로 셌다
-export const BAD_IF_MORE = new Set(["둥근카드", "펼침질문", "단추", "진한띠", "옅은띠", "회색한줄", "제목위윗줄", "같은짜임잇달음", "큰숫자칸", "끝단추띠"]);
+export const BAD_IF_MORE = new Set(["첫화면가운데사진위", "둥근카드", "펼침질문", "단추", "진한띠", "옅은띠", "회색한줄", "제목위윗줄", "같은짜임잇달음", "큰숫자칸", "끝단추띠"]);
 export const BAD_IF_LESS = new Set(["사진비율"]);  // 잡음 거르기 없이 견준다  // 표에는 싣되 통과 판정에는 넣지 않는다        // 세 값의 차가 이보다 작으면(상대) 「비슷」
 
 // 페이지 안에서 도는 측정 — 짜임 특징
@@ -167,6 +167,7 @@ export function side(base, ours, ai, noisy = true) {
   return Math.abs(ours - ai) < Math.abs(ours - base) ? "오답지 쪽" : "정답지 쪽";
 }
 
+const HEADING_KEYS = new Set(["회색한줄", "제목위윗줄"]);
 const MARKS = join("formats", "바탕-표지.json");
 const PHOTO_RATIO = 0.85;
 const LABEL = { 회색한줄: "제목 밑 회색 한 줄", 제목위윗줄: "제목 위 작은 윗줄", 옅은띠: "옅은 띠", 진한띠: "진한 띠", 끝단추띠: "끝 단추 띠",
@@ -178,6 +179,8 @@ function readJson(p) { try { return JSON.parse(readFileSync(p, "utf8")); } catch
 export function driftLines(width, base, ours) {
   const out = [];
   for (const key of BAD_IF_MORE) {
+    // 바탕이 제목 태그(h1·h2)를 안 쓰면 제목에 붙는 항목은 견줄 것이 없다 — 세탁특공대가 0개라 「바탕 0개」로 잘못 걸었다(자전거 38차)
+    if (HEADING_KEYS.has(key) && !base.제목수) continue;
     const tol = EXACT.has(key) || key === "회색한줄" ? 0 : 1;
     if (ours[key] > base[key] + tol) out.push(`DRIFT ${width}px ${key} — ${LABEL[key] || key} ${ours[key]}개(바탕 ${base[key]}개) — 바탕에 없는 만큼 걷어 낸다(build-rules.md § What reads as generated)`);
   }
@@ -205,6 +208,7 @@ async function check(root) {
   } finally { await close(); }
   if (existsSync(join(root, "formats"))) writeFileSync(join(root, MARKS), JSON.stringify({ ...marks, probe: cached }, null, 1), "utf8");
   for (const l of lines) console.log(l);
+  if (lines.length) console.log("고칠 곳: 위 줄은 바탕과 같은 화면을 같은 브라우저로 잰 값이에요. 넘겨 달라고 묻지 말고 페이지를 고친 뒤 preflight.py 를 다시 돌려요.");
   return lines.length ? 1 : 0;
 }
 

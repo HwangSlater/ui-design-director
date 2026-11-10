@@ -92,3 +92,11 @@ def test_template_is_not_a_base(tmp_path: Path) -> None:
     r = run(str(tmp_path), "--decide", "base", "6 Tutorwell")
     assert r.returncode == 1 and "템플릿은 바탕으로" in r.stderr
     assert run(str(tmp_path), "--decide", "base", "4 RSM").returncode == 0
+
+
+def test_facts_stage_before_main(tmp_path: Path) -> None:
+    """메인 시안은 「페이지 사실:」을 적은 뒤에만(자전거 38차까지 견본 가격부터 넣음)."""
+    (tmp_path / "concept-brief.md").write_text("사이트 꼴: 여러 쪽", encoding="utf-8")
+    assert "facts" in stage.missing_before(tmp_path, "main")
+    (tmp_path / "concept-brief.md").write_text("사이트 꼴: 여러 쪽 · 페이지 사실: 이름 송도 바퀴방", encoding="utf-8")
+    assert "facts" not in stage.missing_before(tmp_path, "main")

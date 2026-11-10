@@ -45,7 +45,7 @@ async function main() {
         if (key === "단추색" && !v.base.단추) { lines.push(`| ${key} | 없음 | - | - | 가르지 못함 |`); rows.push({ key, verdict: "가르지 못함" }); continue; }
         const f = (x) => (Array.isArray(x) ? "#" + x.map((n) => Math.min(255, n).toString(16).padStart(2, "0")).join("") : Number.isInteger(x) ? String(x) : x.toFixed(2));
         // 바탕에 제목(h2)이 없으면 제목 정렬은 견줄 것이 없다(22차 준오헤어)
-        let verdict = key === "제목가운데" && !v.base.제목수 ? "가르지 못함" : side(v.base[key], v.ours[key], v.ai[key], !EXACT.has(key));
+        let verdict = ["제목가운데", "회색한줄", "제목위윗줄"].includes(key) && !v.base.제목수 ? "가르지 못함" : side(v.base[key], v.ours[key], v.ai[key], !EXACT.has(key));
         if ((BAD_IF_MORE.has(key) && v.ours[key] <= v.base[key]) || (BAD_IF_LESS.has(key) && v.ours[key] >= v.base[key])) verdict = "정답지 쪽";
         // 사진은 바탕의 85% 아래면 바탕보다 오답지(사진 0)에 가깝지 않아도 모자람 — compose_metrics 와 같은 잣대(빵집 31차 0.41 대 0.78)
         if (BAD_IF_LESS.has(key) && v.ours[key] < v.base[key] * 0.85 && verdict !== "가르지 못함") verdict = "오답지 쪽";
