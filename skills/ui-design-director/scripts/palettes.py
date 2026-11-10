@@ -149,6 +149,27 @@ def problems(html: str) -> list[str]:
     return out
 
 
+def base_is_white(root: Path) -> bool:
+    """바탕 캡처(formats/base-cap)나 남긴 띠 사실로 본 바탕의 페이지 바탕이 흰색인가."""
+    import copy_check
+    bands = copy_check.cached_bands(root)
+    bgs = [tuple(v["bg"]) for v in bands.values() if v.get("bg")]
+    return bool(bgs) and all(copy_check.cdist(b, (255, 255, 255)) < copy_check.BAND_NOT_WHITE for b in bgs)
+
+
+def bg_problems(html: str, root: Path) -> list[str]:
+    """바탕이 흰 바탕인데 크림 페이지 바탕을 낸 후보 — 끝에 가서 걸리면 의뢰인이 이미 골라 버렸다(빵집 33차). 팔레트 단계에서 막는다."""
+    if not base_is_white(root):
+        return []
+    import copy_check
+    out = []
+    for cand in candidates(html):
+        bg = rgb(str((cand.get("roles") or {}).get("bg", "")))
+        if bg and copy_check.is_cream(tuple(round(v * 255) for v in bg)):
+            out.append(f"{cand.get('id', '?')} {cand.get('name', '')}: 바탕이 흰 바탕인데 페이지 바탕 {cand['roles']['bg']} 이 크림 — bg 는 흰색(또는 거의 흰 회색), 크림은 면·강조에")
+    return out
+
+
 def main(argv: list[str]) -> int:
     utf8_console()
     if not argv or argv[0] not in ("pick", "check"):

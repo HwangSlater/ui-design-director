@@ -50,3 +50,15 @@ def test_darkened_into_model_green_is_flagged() -> None:
     roles = {"bg": "#f1f3e0", "action": "#4e5b4b"}
     out = palettes.problems(page([{"id": "A", "source": "https://colorhunt.co/palette/f1f3e0d2dcb6a1bc98778873", "roles": roles}]))
     assert any("모델 단골 색" in line for line in out)
+
+
+def test_cream_page_blocked_when_base_is_white(tmp_path: Path) -> None:
+    """바탕 캡처가 흰 바탕이면 크림 bg 후보는 팔레트 단계에서 걸린다(빵집 33차)."""
+    from PIL import Image
+    cap = tmp_path / "formats" / "base-cap"
+    cap.mkdir(parents=True)
+    Image.new("RGB", (1280, 2400), "#ffffff").save(cap / "base-home-1280.png")
+    cream = page([{"id": "A", "name": "밀빛", "source": "x", "roles": {"bg": "#f4efe3", "action": "#b82132"}}])
+    assert any("크림" in line for line in palettes.bg_problems(cream, tmp_path))
+    white = page([{"id": "B", "name": "흰", "source": "x", "roles": {"bg": "#fbfbfa", "action": "#b82132"}}])
+    assert palettes.bg_problems(white, tmp_path) == []

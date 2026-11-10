@@ -85,7 +85,7 @@ def check(tool: str, inp: dict) -> str | None:
                         f"(python {stage.S}/fonts.py pick --style <성격>, CSS 이름은 그 아래 웹폰트 줄). "
                         "의뢰인이 이미 쓰는 글꼴이면 concept-brief.md 에 「의뢰인 글꼴: 이름」을 적으세요.")
             # 모델이 고른 색상 — 크림·숲초록·벽돌·버터로 쏠렸다(애견미용 19차)
-            bad = palettes.problems(body or "")
+            bad = palettes.problems(body or "") + palettes.bg_problems(body or "", root)
             if bad:
                 return (f"팔레트 출처가 맞지 않습니다: {bad[0]}{f' 외 {len(bad) - 1}건' if len(bad) > 1 else ''}. "
                         f"python {stage.S}/palettes.py pick --tags <꼬리표> 에서 고르고 source 에 그 주소를 적으세요"
