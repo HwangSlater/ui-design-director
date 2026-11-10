@@ -152,7 +152,7 @@ NEXT = {
     "board": f"후보 spec(formats/board-spec.json) → node {S}/live_proxy.mjs formats/board-spec.json (공용 틀 보기 화면을 만들고 OPEN 주소 하나를 찍는다 — 그 주소만 의뢰인에게. 「확정」은 DECISION 줄과 formats/decision.json 으로 온다). 의뢰인이 채팅으로 고르면: python {S}/stage.py . --decide base \"<번호 이름>\"",
     "base": f"의뢰인이 보기 화면에서 「확정」을 누르기를 기다린다(live_proxy.mjs 가 DECISION 줄을 찍고 formats/decision.json 을 쓴다). 채팅으로 답하면: python {S}/stage.py . --decide base \"<번호 이름>\"",
     "material": f"고른 바탕에 대해 먼저: python {S}/base_material.py . (바탕 주소는 확정과 board-spec.json 에서 읽어 「바탕 주소:」로 찍는다 — 그 주소를 아래 <바탕 주소> 에. jobs-base.json·바탕-구성.md 틀) → node {S}/snapshot.mjs formats/jobs-base.json formats/snapshot · node {S}/motion.mjs <바탕 주소> formats/바탕-움직임.md · node {S}/capture.mjs formats/jobs-base.json formats/base-cap · node {S}/extract_styles.mjs <바탕 주소> formats/추출-1280.json --width 1280 → formats/바탕-구성.md 를 채우고 맨 위 「채우기 전」 줄을 지운다",
-    "palette": f"palette/index.html 을 palette-switcher.js 틀로(comparison-board.md § Palettes, 바탕의 4~6색 조합에서 출발), 글꼴은 python {S}/fonts.py pick --style <고딕|명조|손글씨|제목용> 에서만(references/fonts.md) → python {S}/fonts.py check palette → wait_choice.mjs palette/index.html palette/decision.json",
+    "palette": f"palette/index.html 을 palette-switcher.js 틀로(comparison-board.md § Palettes, 바탕의 4~6색 관계에 색상은 python {S}/palettes.py pick --tags <꼬리표> --project . 의 공개 팔레트에서, source 에 그 주소), 글꼴은 python {S}/fonts.py pick --style <고딕|명조|손글씨|제목용> 에서만(references/fonts.md) → python {S}/fonts.py check palette → wait_choice.mjs palette/index.html palette/decision.json",
     "design": "DESIGN.md 를 design-md-format.md 틀로 — § 바탕에서 바꾼 곳, § 부품 출처 포함",
     "main": f"references/build-rules.md 를 따라 mockups/ 에 메인 페이지 — 완성 시안은 하위 에이전트 하나에 파일 경로와 build-rules.md 경로를 넘긴다 → python {S}/preflight.py .",
 }

@@ -47,3 +47,12 @@ def test_order_blocked_until_decided(tmp_path: Path) -> None:
     pal = hook("Write", file_path=str(tmp_path / "palette" / "index.html"), content="palette-switcher.js")
     assert pal.returncode == 2
     assert hook("Write", file_path=str(tmp_path / "concept-brief.md"), content="고침").returncode == 0
+
+
+def test_palette_without_published_source_blocked(tmp_path: Path) -> None:
+    """모델이 고른 색(출처 없음)은 팔레트 화면에 못 들어간다(애견미용 19차)."""
+    brief(tmp_path)
+    cands = [{"id": "A", "name": "숲초록과 민트", "source": "바탕 5색 관계", "roles": {"bg": "#f4f1ea", "action": "#1f4b3f"}}]
+    body = f'palette-switcher.js<script type="application/json" id="palettes">{json.dumps(cands, ensure_ascii=False)}</script>'
+    r = hook("Write", file_path=str(tmp_path / "palette" / "index.html"), content=body)
+    assert r.returncode == 2 and "palettes.py pick" in r.stderr.decode("utf-8")

@@ -47,10 +47,10 @@ Put the candidates in `<script type="application/json" id="palettes" data-step="
 ```html
 <link rel="stylesheet" href="dock.css"><link rel="stylesheet" href="palette-switcher.css">
 <script type="application/json" id="palettes" data-step="팔레트 고르기">
-[{"id": "A", "name": "바탕의 색 관계, 우리 색", "source": "<base url> 의 4~6색 관계",
-  "colors": ["#f6f1e9", "#ffffff", "#2b2622", "#8a4b2a", "#d9a441"],
-  "roles": {"bg": "#f6f1e9", "surface": "#ffffff", "text": "#2b2622", "action": "#8a4b2a", "on-action": "#ffffff", "accent": "#d9a441"},
-  "note": "면 색은 배경에 흰색 6%를 섞음"}]
+[{"id": "A", "name": "바탕의 색 관계, 우리 색", "source": "https://colorhunt.co/palette/5f6f52a9b388fefae0b99470 · <base url> 의 4~6색 관계",
+  "colors": ["#fefae0", "#ffffff", "#2a2f26", "#5f6f52", "#b99470"],
+  "roles": {"bg": "#fefae0", "surface": "#ffffff", "text": "#2a2f26", "action": "#5f6f52", "on-action": "#ffffff", "accent": "#b99470"},
+  "note": "팔레트 5f6f52a9b388fefae0b99470, 글자는 진한 쪽을 더 진하게"}]
 </script>
 <script type="application/json" id="fonts" data-sample="<a line from this project>">
 [{"id": "1", "name": "<pick name>", "heading": "\"<family>\", serif", "body": "\"<family>\", sans-serif",

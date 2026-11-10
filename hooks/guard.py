@@ -7,6 +7,7 @@ PreToolUse(Write·Edit·MultiEdit) 입력을 표준 입력으로 받아, ui-desi
   - 바탕-구성.md·바탕-움직임.md, palette/, DESIGN.md, layouts/·mockups/: 앞 단계가 확정되지 않았으면 막는다
   - palette/·layouts/·mockups/·DESIGN.md·tokens.css 에 AI 글꼴(assets/fonts/ai-fonts.json)을 넣으면 막는다
   - palette/ HTML 의 글꼴 후보(heading·body)가 표(assets/fonts/fonts.json)에도 의뢰인 글꼴에도 없으면 막는다
+  - palette/ HTML 의 팔레트 후보가 공개 팔레트 표(assets/palettes/palettes.json)에서 오지 않았으면 막는다
 막을 때는 종료 코드 2와 이유(표준 오류)를 돌려준다. Claude Code 는 그 이유를 디자이너에게 보여 준다.
 SKILL.md 의 frontmatter 에 hooks 를 넣지 않은 까닭: claude.ai·API 에 올릴 때 모르는 항목이면 업로드가 실패한다.
 Bash 로 쓰는 파일(스크립트 출력)은 보지 않는다 — 바탕 자료 스크립트는 stage.py --guard 로 스스로 멈춘다.
@@ -19,6 +20,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "skills" / "ui-design-director" / "scripts"))
 import fonts  # noqa: E402  (AI 글꼴 판단은 fonts.py 하나로)
+import palettes  # noqa: E402  (팔레트 출처 판단은 palettes.py 하나로)
 import stage  # noqa: E402  (단계 판단은 stage.py 하나로)
 
 MATERIAL = {"바탕-구성.md", "바탕-움직임.md"}
@@ -82,6 +84,12 @@ def check(tool: str, inp: dict) -> str | None:
                 return (f"표에 없는 글꼴: {', '.join(unknown)} — fonts.py pick 에서 고르세요"
                         f"(python {stage.S}/fonts.py pick --style <성격>, CSS 이름은 그 아래 웹폰트 줄). "
                         "의뢰인이 이미 쓰는 글꼴이면 concept-brief.md 에 「의뢰인 글꼴: 이름」을 적으세요.")
+            # 모델이 고른 색상 — 크림·숲초록·벽돌·버터로 쏠렸다(애견미용 19차)
+            bad = palettes.problems(body or "")
+            if bad:
+                return (f"팔레트 출처가 맞지 않습니다: {bad[0]}{f' 외 {len(bad) - 1}건' if len(bad) > 1 else ''}. "
+                        f"python {stage.S}/palettes.py pick --tags <꼬리표> 에서 고르고 source 에 그 주소를 적으세요"
+                        "(color-selection.md). 의뢰인이 정한 색이면 source 를 「의뢰인 색」으로.")
     elif rel == ("DESIGN.md",):
         need = "design"
     elif top in ("layouts", "mockups"):

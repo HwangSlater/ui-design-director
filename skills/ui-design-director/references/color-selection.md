@@ -4,6 +4,8 @@
 
 Measure the base's colours by area (computed styles plus the capture): background, second surface, text, muted text, accent, any dark field — usually 4–6 tones. A palette is that combination and the relationships between the tones (warm or cool, value steps, which tone carries which part), not a white page with one accent: a Pilates studio built on white, ink and a touch of green read as 「단색」 next to its base's dark brown, oat, taupe and sand. Every candidate keeps the base's number of tones and their relationships (value steps, warm or cool, which tone carries which part) but moves the hues to the client's own: never offer the base's exact colours as a candidate (「바탕 그대로」) — the client picked it every time and the page then read as the base's own site (NBA round: theScore in Korean). The only exception is a client whose existing brand colours already match the base; record that in `concept-brief.md`. `copy_check.py` flags a palette candidate or a mockup whose colours equal the base's.
 
+**Hues come from a published palette, never from memory.** Run `python ${CLAUDE_SKILL_DIR}/scripts/palettes.py pick --tags <tags> --project .` (tags: warm, cold, earth, nature, pastel, vintage, retro, cream, coffee, dark, light, sea, sky, spring, summer, fall, winter, food, kids, wedding, night, sunset, skin, gold, happy) and build each candidate from one printed palette: its colours take the base's roles (lightest → background and surface, darkest → text or dark field, the strongest → action or accent); white, near-black and pale grey may be added, and a palette colour may be darkened or lightened in the same hue for contrast. Put the printed `colorhunt.co/palette/…` address in `source`. Models picked cream with forest green, brick and butter yellow again and again (62 earlier candidates: forest green 12, brick 12, butter 10; dog groomer 19th), so `pick` leaves those families out and the hook refuses a palette page whose candidates have no published source. Colours the client already uses (sign, logo) go in with `source` 「의뢰인 색 …」.
+
 ## Curate for the product
 
 Present 3–4 palettes, each with the base's 4–6 tones; no near-duplicates. Candidates must differ in the colours that carry the page — the base's own colour fields and the accent — not only in the button; never add pale tinted bands or surfaces the base does not have. When the brief says “warm”, offer more than one reading of warmth (cream and brown; pale sky and tangerine; off-white and deep green; butter and brick) (`design-selection.md` § 3).
@@ -18,7 +20,7 @@ Derive neutral ramps and state colours faithful to the tones; do not pretend eve
 
 ## Fallback: the base has no usable palette
 
-Only when the base's colours cannot be used (a monochrome template, a brand colour the client rejects): take palettes from Coolors, Color Hunt, Adobe Color, Huemint or the ui-ux-pro-max colour database when installed (labelled as a database suggestion), and extend each to 4–6 tones in the base's relationships. Link individual palettes, verify links and exact hex values, and never cite a generated combination as a published palette.
+Only when the base's colours cannot be used (a monochrome template, a brand colour the client rejects): take the tone relationships from the other well-known candidates instead, and the hues still from `palettes.py pick`. Never Huemint or other generated palettes.
 
 ## Let the user choose freely
 

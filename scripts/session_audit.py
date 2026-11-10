@@ -32,6 +32,7 @@ STEPS = [
     ("material", "바탕 글자·색 재기", "run:extract_styles\\.mjs"),
     ("material", "바탕 구성 표", "write:^formats/바탕-구성\\.md$"),
     ("palette", "글꼴은 표에서", "run:fonts\\.py\\b.*\\bpick"),
+    ("palette", "색상은 공개 팔레트에서", "run:palettes\\.py\\b.*\\bpick"),
     ("palette", "색·글꼴 확정 기록", "run:stage\\.py\\b.*--decide palette|file:palette/decision\\.json"),
     ("design", "바꿀 곳 재기(n/N)", "run:skeleton\\.mjs.*--base"),
     ("design", "DESIGN.md", "write:^DESIGN\\.md$"),

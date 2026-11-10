@@ -126,6 +126,7 @@ AI에게 「서점 홈페이지 만들어 줘」라고 하면 대개 비슷한 �
 - `palette/` 에 palette-switcher 틀이 아닌 화면을 쓸 때
 - 앞 단계가 확정되기 전에 바탕 자료·팔레트·`DESIGN.md`·`layouts/`·`mockups/` 를 쓸 때
 - 팔레트 화면·시안·`DESIGN.md` 에 AI가 늘 고르는 글꼴(`assets/fonts/ai-fonts.json`)을 넣을 때 → `fonts.py pick` 으로 고르라고 알려 줘요. 의뢰인이 이미 쓰는 글꼴은 `concept-brief.md` 에 「의뢰인 글꼴: 이름」으로 풀어요
+- 팔레트 화면의 색 후보가 공개 팔레트 표(`assets/palettes/palettes.json`, Color Hunt 인기 팔레트 1,639개)에서 오지 않았을 때 → `palettes.py pick` 으로 고르라고 알려 줘요. 모델이 직접 고르면 크림 바탕에 숲초록·벽돌 단추, 버터 강조로 쏠렸어요(`assets/palettes/ai-palettes.json`). 의뢰인이 이미 쓰는 색은 source 를 「의뢰인 색」으로 풀어요
 
 답이 끝날 때마다, 세션을 닫을 때 한 번 더, 측정 도구가 남긴 headless 브라우저와 임시 폴더도 치워요(이 훅이 없을 때 하루에 브라우저 75벌, 임시 폴더 51GB가 쌓였어요).
 
