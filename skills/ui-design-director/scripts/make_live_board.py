@@ -13,6 +13,7 @@ spec: make_board.py 의 spec(id·title·urls·pages)을 그대로 쓰거나, 예
 from __future__ import annotations
 
 import json
+import re
 import sys
 from pathlib import Path
 
@@ -45,6 +46,7 @@ def normalise(spec: dict) -> dict:
 # 이름난 근거 없이 동네 가게·작은 해외 가게만 후보로 올리면 바탕부터 처진다(애견미용 18차: 일본 동네 미용실 둘·관악구 미용실·템플릿 —
 # 사용자 「디자인 구리다, 바탕부터 일본 특유의 디자인」). 후보마다 kind·known·region 을 적게 하고 빠지면 알린다
 REAL = ("real", "neighbour")
+CHANNEL_URL = re.compile(r"(map|place|m\.place|booking)\.naver\.com|naver\.me|instagram\.com|pf\.kakao\.com")
 MIN_KNOWN = 3
 
 
@@ -55,11 +57,15 @@ def candidate_issues(spec: dict) -> list[str]:
     out = []
     no_kind = [c.get("title", "?") for c in cands if not c.get("kind")]
     if no_kind:
-        out.append(f"종류(kind: real·neighbour·award·template·channel)가 없음: {', '.join(no_kind)}")
+        out.append(f"종류(kind: real·neighbour·award·template)가 없음: {', '.join(no_kind)}")
     weak = [c.get("title", "?") for c in cands if c.get("kind") in REAL and not c.get("known")]
     if weak:
         out.append(f"이름난 근거(known: 방문 규모·이름난 브랜드·수상)가 없는 실제 사이트: {', '.join(weak)} — 동네 가게 사이트는 바탕 후보가 아니다. "
                    "같은 일을 하는 이웃 분야 선두로 바꾼다(design-selection.md § 2)")
+    channels = [c.get("title", "?") for c in cands if c.get("kind") == "channel" or any(
+        CHANNEL_URL.search(u) for u in (c.get("urls") or {}).values())]
+    if channels:
+        out.append(f"플랫폼 화면은 후보가 아님: {', '.join(channels)} — 네이버 지도·플레이스·예약, 인스타, 카카오 채널은 빼고 시안에서 그리로 보내는 연결만 둔다(design-selection.md § 3)")
     known = [c for c in cands if c.get("known")]
     if cands and len(known) < MIN_KNOWN:
         out.append(f"이름난 후보가 {len(known)}개 — {MIN_KNOWN}개 이상으로(이웃 분야 선두를 더한다)")

@@ -42,9 +42,10 @@ class Channels(unittest.TestCase):
         self.assertFalse(found(root, "「인스타」"))
         self.assertFalse(found(root, "「네이버」"))
 
-    def test_named_channel_missing_from_references(self):
+    def test_named_channel_is_not_asked_as_reference(self):
+        # 채널은 후보·참고가 아니다(애견미용 18차) — 참고에 없어도 걸지 않는다
         root = project({"concept-brief.md": "카카오톡 채널로 주문 받아요", "formats/jobs.json": "[]", "formats/a.jpg": ""})
-        self.assertTrue(found(root, "참고 빠짐: 의뢰인이 「카카오」"))
+        self.assertFalse(found(root, "참고 빠짐"))
 
     def test_daangn_link_in_mockup_folder_is_found(self):
         # 깡통구제: 시안에 daangn.com 링크가 있는데 「당근 연결 없음」 — 점 없는 낱말이 걸러졌고, mockup/ 폴더는 아예 안 읽었다

@@ -48,7 +48,7 @@ Mark each candidate as a running site in the field, a neighbouring-field leader,
 
 A reference from another field can be the right source for one trait (a train departure board for "the next match in three seconds"); show that trait applied to one row of the user's own data in the same step.
 
-Two candidates are not optional: every site or channel the client named (Naver Place, Instagram, Kakao, a competitor — customers see those first), and at least one site that shows what the client called most important (before-and-after photos for a renovation firm). If a named site cannot be captured cleanly, include it anyway with a note.
+Not optional: at least one site that shows what the client called most important (before-and-after photos for a renovation firm), and a competitor's own site the client named, if it passes the quality bar. **Channels are not candidates**: Naver Place or map listings, Naver booking, Instagram profiles and Kakao channels are platform screens every shop gets, not a design to build on — the user rejected a Naver Place listing on the board (dog groomer 18th). The client's channels are where our page sends people: put the link (button, footer) on the page, and use the channel only for the client's facts (hours, prices, photos).
 
 Before sending, read the words inside every screenshot — badges (「Made in Framer」), founding years (「SINCE 1952」), certification claims, promo bands — against the brief's dislikes and the client's facts, and say that none of it carries over. Show, next to the recommended candidate's home page, its screen for the client's main job.
 

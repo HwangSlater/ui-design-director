@@ -55,3 +55,11 @@ def test_candidate_issues_flag_unknown_local_sites() -> None:
         {"title": "Rover", "kind": "neighbour", "known": "미국 반려 돌봄 선두", "region": "미국"},
         {"title": "Groomora", "kind": "template"}]}
     assert mlb.candidate_issues(good) == []
+
+
+def test_platform_screens_are_not_candidates() -> None:
+    """네이버 지도·플레이스 화면은 후보에서 뺀다(애견미용 18차)."""
+    import make_live_board as mlb
+    spec = {"candidates": [{"title": "베이글버트그루밍 네이버 플레이스", "kind": "real", "known": "x",
+                            "urls": {"home": "https://m.place.naver.com/place/123"}}]}
+    assert any("플랫폼 화면은 후보가 아님" in line for line in mlb.candidate_issues(spec))

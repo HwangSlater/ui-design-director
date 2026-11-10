@@ -97,14 +97,10 @@ def check(root: Path) -> list[str]:
     if not any((root / k).exists() for k in known):
         return [f"폴더 구조 다름: {', '.join(known)} 중 아무것도 없음 — SKILL.md § Project folder 의 이름으로 두어야 이 점검이 돈다(지금은 아무것도 보지 못함)"]
 
-    # 1. 의뢰인이 말한 채널이 참고에 있는가
+    # 의뢰인이 말한 채널(네이버 플레이스·인스타)은 참고·후보가 아니다 — 시안에서 그리로 보내는 연결만 본다(아래 「연결 빠짐」).
+    # 예전엔 참고에 넣으라고 했다가 보기 화면에 네이버 지도 화면이 후보로 올라왔다(애견미용 18차, 사용자 「빼야 하지 않을까」)
     if formats.is_dir():
-        ref_text = " ".join(str(p.name) for p in files(formats, "*")) + " ".join(read(p) for p in files(formats, "jobs*.json"))
-        for name in client_channels(said):
-            if not any(s in ref_text for s in CHANNELS[name][1]):
-                out.append(f"참고 빠짐: 의뢰인이 「{name}」를 말했는데 참고 캡처·jobs 에 {CHANNELS[name][0]} 화면이 없음 — 손님이 실제로 보는 그 화면을 참고에 넣을 것")
-
-        # 2. 공통점 — 뼈대 표(폰·컴퓨터)와 n/N곳 기록
+        # 공통점 — 뼈대 표(폰·컴퓨터)와 n/N곳 기록
         widths = {m.group(1) for p in files(formats, "*.md") for m in [SKELETON_HEAD.search(read(p))] if m}
         if files(formats, "*.jpg") or files(formats, "*.png"):
             for w, label in (("390", "폰"), ("1280", "컴퓨터")):

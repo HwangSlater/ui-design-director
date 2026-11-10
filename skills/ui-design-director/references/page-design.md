@@ -26,7 +26,7 @@ The base the client picked (`design-selection.md` § 4) gives the look — type 
 6. Before showing, rerun with `--ours <option>`. 「바탕과 다름」, 「바탕의 짜임을 버림」, 「상자 위에 상자」 or 「칸 속 칸」 means redraw, or say in one line why.
 7. Compose each width from the base's own phone and desktop pages (build-rules.md § Follow the base 5).
 
-One platform's pages (Naver Place, Instagram) count as one reference.
+Platform pages (Naver Place, Instagram) are never references (design-selection.md § 3).
 
 ### Measure the reference pages
 
