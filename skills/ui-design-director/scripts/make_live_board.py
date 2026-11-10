@@ -69,7 +69,10 @@ def candidate_issues(spec: dict) -> list[str]:
     known = [c for c in cands if c.get("known")]
     if cands and len(known) < MIN_KNOWN:
         out.append(f"이름난 후보가 {len(known)}개 — {MIN_KNOWN}개 이상으로(이웃 분야 선두를 더한다)")
-    rec = next((c for c in cands if c.get("recommended")), None)
+    recs = [c for c in cands if c.get("recommended")]
+    if cands and len(recs) != 1:  # 추천 표시를 지워 점검을 비켜 가고 채팅에서 템플릿을 추천했다(수학학원 27차)
+        out.append(f"추천 후보가 {len(recs)}개 — board-spec 에 recommended 를 하나만, 이름난 실제 사이트에")
+    rec = recs[0] if recs else None
     if rec and (rec.get("kind") in ("template", "channel") or not rec.get("known")):
         out.append(f"추천 후보 「{rec.get('title', '?')}」에 이름난 근거가 없음 — 추천은 이름난 후보 가운데서")
     if rec and market and rec.get("region") and rec["region"] != market and not rec.get("fit"):

@@ -77,3 +77,12 @@ def test_board_not_built_with_bad_candidates(tmp_path: Path) -> None:
                                                                   "urls": {"home": "https://groomie.framer.website/"}}]}), encoding="utf-8")
     assert mlb.main([str(spec), str(tmp_path / "보기.html")]) == 1
     assert not (tmp_path / "보기.html").exists()
+
+
+def test_exactly_one_recommendation() -> None:
+    """추천 표시를 지우면 걸린다(수학학원 27차)."""
+    import make_live_board as mlb
+    spec = {"market": "한국", "candidates": [{"title": "RSM", "kind": "real", "known": "x", "region": "미국"},
+                                             {"title": "CMS", "kind": "real", "known": "x", "region": "한국"},
+                                             {"title": "눈높이", "kind": "neighbour", "known": "x", "region": "한국"}]}
+    assert any("추천 후보가 0개" in line for line in mlb.candidate_issues(spec))

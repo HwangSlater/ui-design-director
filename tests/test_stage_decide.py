@@ -81,3 +81,14 @@ def test_guard_ignores_folders_outside_projects(tmp_path: Path) -> None:
     (tmp_path / "formats").mkdir()  # 표시 파일(concept-brief.md·decisions.json·board-spec.json)이 없으면 스킬 프로젝트가 아니다
     assert stage.output_block(tmp_path / "formats" / "snapshot", "material") is None
     assert run("--guard", "material", str(tmp_path / "formats" / "a.md")).returncode == 0
+
+
+def test_template_is_not_a_base(tmp_path: Path) -> None:
+    """템플릿은 바탕으로 확정하지 않는다(애견미용 23차·수학학원 27차)."""
+    import json
+    (tmp_path / "formats").mkdir()
+    (tmp_path / "formats" / "board-spec.json").write_text(json.dumps({"candidates": [
+        {"id": "4", "title": "RSM", "kind": "real"}, {"id": "6", "title": "Tutorwell", "kind": "template"}]}), encoding="utf-8")
+    r = run(str(tmp_path), "--decide", "base", "6 Tutorwell")
+    assert r.returncode == 1 and "템플릿은 바탕으로" in r.stderr
+    assert run(str(tmp_path), "--decide", "base", "4 RSM").returncode == 0

@@ -94,13 +94,15 @@ def status(root: Path) -> tuple[dict, list[str]]:
         # 사이트 꼴(여러 쪽·한 쪽)이 없으면 맥락 정리가 덜 됨 — 여러 쪽 사이트를 한 쪽 랜딩으로 짰다(꽃집 13차·건축사무소 10차)
         "brief": bool(brief.strip()) and bool(SITE_KIND.search(brief)),
         "board": bool(boards),
-        "base": "base" in d,
+        "base": "base" in d and candidate_kind(root, str(d["base"])) != "template",
         "material": all(p.is_file() for p in material) and snap and filled,
         "palette": "palette" in d,
         "design": "바탕에서 바꾼 곳" in design and "부품 출처" in design,
         "main": (root / "mockups" / "index.html").is_file(),
     }
     issues = [BROKEN] if saved(root) is None else []
+    if "base" in d and candidate_kind(root, str(d["base"])) == "template":  # 보기 화면 「확정」으로 템플릿이 골라졌을 때도
+        issues.append(f"바탕이 템플릿({d['base']}) — 이름난 실제 사이트로 다시 고른다(design-selection.md § 3)")
     if brief.strip() and not SITE_KIND.search(brief):
         issues.append(f"맥락 정리에 사이트 꼴이 없음 — concept-brief.md 에 「{KIND_LINE}」 줄(guided-conversation.md § Site type)")
     issues += [f"공용 틀이 아님: {p.relative_to(root)} — 보기 화면은 make_live_board.py 로만 만든다" for p in own_boards]
@@ -118,6 +120,21 @@ def status(root: Path) -> tuple[dict, list[str]]:
 
 def _missing(done: dict, stage: str) -> list[str]:
     return [s for s in STAGES[:STAGES.index(stage)] if not done[s]]
+
+
+def candidate_kind(root: Path, chosen: str) -> str | None:
+    """「6 Tutorwell」 같은 확정 글에서 후보를 찾아 그 kind. 의뢰인이 정한 템플릿(맥락 정리 「의뢰인 템플릿:」)이면 None."""
+    if "의뢰인 템플릿" in read(root / "concept-brief.md"):
+        return None
+    try:
+        cands = json.loads(read(root / "formats" / "board-spec.json") or "{}").get("candidates") or []
+    except ValueError:
+        return None
+    first = chosen.strip().split()[0] if chosen.strip() else ""
+    for c in cands:
+        if str(c.get("id")) == first or (c.get("title") and c["title"] in chosen):
+            return c.get("kind")
+    return None
 
 
 def missing_before(root: Path, stage: str) -> list[str]:
@@ -180,6 +197,12 @@ def main(argv: list[str]) -> int:
         if saved(root) is None:
             print(f"! {BROKEN}: {root / 'decisions.json'}", file=sys.stderr)
             return 1
+        if argv[2] == "base":  # 템플릿은 바탕이 아니다 — 23·27차 템플릿 바탕은 둘 다 키트 꼴로 끝났다. 부분(한 화면·한 꼴)만 빌린다
+            kind = candidate_kind(root, argv[3])
+            if kind == "template":
+                print("템플릿은 바탕으로 확정하지 않아요 — 이름난 실제 사이트 가운데서 고르고, 템플릿은 필요한 화면 하나만 빌려 와요"
+                      "(design-selection.md § 3). 의뢰인이 꼭 그 템플릿을 원하면 concept-brief.md 에 「의뢰인 템플릿: 이름」을 적으세요.", file=sys.stderr)
+                return 1
         if argv[2] == "main":  # 걸림이 남은 채 승인을 받고 넘겼다(애견미용 24차: 사진 위 글상자·단추 한 쌍) — 점검이 깨끗해야 승인을 남긴다
             import preflight
             left = preflight.check(root)
