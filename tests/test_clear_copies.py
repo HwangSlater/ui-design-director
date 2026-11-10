@@ -16,6 +16,8 @@ def project(root: Path) -> Path:
     (fm / "snapshot" / "base-1280").mkdir(parents=True)
     (fm / "snapshot" / "base-1280" / "index.html").write_text("<p>01</p><p>02</p><p>03</p>", encoding="utf-8")
     (fm / "base-cap").mkdir()
+    (fm / "shots").mkdir()
+    (fm / "check-sheet.jpg").write_bytes(b"x")
     (fm / "바탕-구성.md").write_text("# 구성", encoding="utf-8")
     (fm / "바탕-움직임.md").write_text("움직임", encoding="utf-8")
     return root
@@ -31,7 +33,7 @@ def test_facts_survive_deletion(tmp_path: Path) -> None:
     root = project(tmp_path)
     (root / "decisions.json").write_text(json.dumps({"main": "좋아요"}), encoding="utf-8")
     assert clear_copies.main([str(root)]) == 0
-    assert not (root / "formats" / "snapshot").exists() and not (root / "formats" / "base-cap").exists()
+    assert not any((root / "formats" / n).exists() for n in ("snapshot", "base-cap", "shots", "check-sheet.jpg"))
     assert (root / "formats" / "바탕-구성.md").is_file()  # 우리 것은 남긴다
     assert site_shape.base_numbered(root) is True
     assert stage.status(root)[0]["material"] is True

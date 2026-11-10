@@ -14,6 +14,7 @@ from __future__ import annotations
 import datetime as dt
 import json
 import re
+import subprocess
 import sys
 from pathlib import Path
 
@@ -151,7 +152,7 @@ def memo_values(memo: str) -> list[str]:
 
 def in_page(value: str, flat: str) -> bool:
     """값이 시안 글에 있나 — 「9시」는 09:00·9:00 도, 「40개」는 40 이 다른 단위로 붙어도(40자리·40팀) 있는 것으로."""
-    if value in flat:
+    if re.sub(r"\s+", "", value) in flat:  # 시안 글은 띄어쓰기를 지우고 견준다 — 「털손질 소소」를 못 찾았다
         return True
     m = re.fullmatch(r"(\d+)(만원|원|개|마리|시|명|팀|주)", value)
     if not m:
@@ -232,6 +233,12 @@ def report(folder: Path, main: Path, memo: Path | None) -> int:
         vals = memo_values(memo.read_text(encoding="utf-8"))
         lost = [v for v in vals if not in_page(v, flat)]
         print(f"\n의뢰인 메모 값이 시안에 있나: {len(vals) - len(lost)}/{len(vals)}" + (f" — 없음: {', '.join(lost)}" if lost else ""))
+    if last_page:  # 넘길 때 남은 걸림 — 디자이너가 걸린 채로 넘겼는지(애견미용 18차: 미달 뒤 비교 사이트를 바꿈)
+        pre = Path(__file__).resolve().parent.parent / "skills" / "ui-design-director" / "scripts" / "preflight.py"
+        r = subprocess.run([sys.executable, "-X", "utf8", str(pre), str(folder)], capture_output=True, text=True, encoding="utf-8", errors="replace")
+        left = [line for line in r.stdout.splitlines() if line.startswith("- ")]
+        bad += bool(left)
+        print(f"\n지금 preflight 에 남은 걸림 {len(left)}개" + "".join(f"\n  {line[:150]}" for line in left[:5]))
     print(f"\n빠진 일 {len(missing)} · 어긴 일 {bad}")
     return 1 if missing or bad else 0
 
@@ -242,9 +249,11 @@ def main(argv: list[str]) -> int:
     if not args:
         print(__doc__.strip(), file=sys.stderr)
         return 2
-    folder = Path(args[0])
+    # Git Bash 꼴(/c/Users/…)을 윈도 경로로 — 그대로 두면 C:/c/Users 가 되어 기록의 C:\Users\… 쓰기를 하나도 못 맞췄다(애견미용 18차)
+    folder = Path(re.sub(r"^/([a-zA-Z])/", r"\1:/", args[0]))
     opt = lambda k: argv[argv.index(k) + 1] if k in argv and argv.index(k) + 1 < len(argv) else None  # noqa: E731
     sid, memo = opt("--session"), opt("--memo")
+    memo = re.sub(r"^/([a-zA-Z])/", r"\1:/", memo) if memo else None
     main_file = next(PROJECTS.glob(f"*/{sid}.jsonl"), None) if sid else find_session(folder)
     if not main_file:
         print(f"이 폴더의 대화 기록을 못 찾음: {folder.name} — --session <ID> 로 주세요", file=sys.stderr)

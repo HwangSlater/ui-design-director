@@ -19,12 +19,16 @@ from site_shape import base_facts  # noqa: E402
 from stage import decisions  # noqa: E402
 
 # formats/ 안의 사본 폴더 — 바탕 저장본, 바탕·팔레트 캡처, 움직임 그림, 보기 화면 썸네일. 우리 것(구성 표·기록)은 남긴다
-COPIES = ("snapshot", "base-cap", "pal-cap", "바탕-움직임-움직임", "thumbs")
+# 후보를 고를 때 따로 찍은 캡처 폴더(check·shots)와 formats/ 바로 아래 그림도 사본이다 — 남아서 손으로 지울 뻔했다(애견미용 18차)
+COPIES = ("snapshot", "base-cap", "pal-cap", "바탕-움직임-움직임", "thumbs", "check", "shots")
+PICTURES = (".jpg", ".jpeg", ".png", ".webp")
 
 
 def copies(root: Path) -> list[Path]:
     fm = root / "formats"
-    return [fm / name for name in COPIES if (fm / name).is_dir()]
+    if not fm.is_dir():
+        return []
+    return [fm / name for name in COPIES if (fm / name).is_dir()] + sorted(p for p in fm.iterdir() if p.is_file() and p.suffix.lower() in PICTURES)
 
 
 def main(argv: list[str]) -> int:
@@ -44,7 +48,7 @@ def main(argv: list[str]) -> int:
     for p in found:
         print(f"{'지울 것' if dry else '지움'}: {p.relative_to(root)}")
         if not dry:
-            shutil.rmtree(p)
+            shutil.rmtree(p) if p.is_dir() else p.unlink()
     print(f"바탕 표지 남김: formats/바탕-표지.json (번호 줄 {'있음' if marks.get('numbered') else '없음'}, 아이콘 줄 {'있음' if marks.get('icon_row') else '없음'})")
     return 0
 
