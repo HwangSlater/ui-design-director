@@ -205,7 +205,9 @@ function report(rows) {
       const m = FOLLOW_BASE.has(k) && b ? Math.max(median(refs.map((r) => r[k])), b[k]) : median(refs.map((r) => r[k]));
       // 사진은 바탕의 85% 아래면 미달 — 70% 로는 바탕 37% 에 우리 26% 가 통과했다(애견미용 24차)
       const ratio = FOLLOW_BASE.has(k) && b && b[k] >= m ? BASE_PHOTO_RATIO : SHORT_RATIO;
-      const bad = LOWER_IS_BETTER.has(k) ? me[k] > m / SHORT_RATIO && me[k] - m > 0.1 : me[k] < m * ratio;
+      // 기준 값이 아주 작으면(2% 아래 — 색 판이 거의 없는 사이트들) 비율로 견주지 않는다 — 0%·0% 를 미달로 냈다(빵집 37차)
+      const tiny = !LOWER_IS_BETTER.has(k) && k !== "maxFirstPx" && k !== "strongColours" && m < 0.02;
+      const bad = tiny ? false : LOWER_IS_BETTER.has(k) ? me[k] > m / SHORT_RATIO && me[k] - m > 0.1 : me[k] < m * ratio;
       if (bad) short++;
       verdict = ` ${bad ? "미달" : "통과"} (기준 ${FOLLOW_BASE.has(k) && b && b[k] >= m ? "바탕" : "가운데"} ${fmt(m)}) |`;
     }
