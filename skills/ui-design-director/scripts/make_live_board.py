@@ -42,6 +42,35 @@ def normalise(spec: dict) -> dict:
     return spec
 
 
+# 이름난 근거 없이 동네 가게·작은 해외 가게만 후보로 올리면 바탕부터 처진다(애견미용 18차: 일본 동네 미용실 둘·관악구 미용실·템플릿 —
+# 사용자 「디자인 구리다, 바탕부터 일본 특유의 디자인」). 후보마다 kind·known·region 을 적게 하고 빠지면 알린다
+REAL = ("real", "neighbour")
+MIN_KNOWN = 3
+
+
+def candidate_issues(spec: dict) -> list[str]:
+    """후보 점검 — 이름난 근거(known), 종류(kind), 추천 후보가 손님 지역과 맞는지(region·fit)."""
+    cands = spec.get("candidates") or []
+    market = spec.get("market", "")
+    out = []
+    no_kind = [c.get("title", "?") for c in cands if not c.get("kind")]
+    if no_kind:
+        out.append(f"종류(kind: real·neighbour·award·template·channel)가 없음: {', '.join(no_kind)}")
+    weak = [c.get("title", "?") for c in cands if c.get("kind") in REAL and not c.get("known")]
+    if weak:
+        out.append(f"이름난 근거(known: 방문 규모·이름난 브랜드·수상)가 없는 실제 사이트: {', '.join(weak)} — 동네 가게 사이트는 바탕 후보가 아니다. "
+                   "같은 일을 하는 이웃 분야 선두로 바꾼다(design-selection.md § 2)")
+    known = [c for c in cands if c.get("known")]
+    if cands and len(known) < MIN_KNOWN:
+        out.append(f"이름난 후보가 {len(known)}개 — {MIN_KNOWN}개 이상으로(이웃 분야 선두를 더한다)")
+    rec = next((c for c in cands if c.get("recommended")), None)
+    if rec and (rec.get("kind") in ("template", "channel") or not rec.get("known")):
+        out.append(f"추천 후보 「{rec.get('title', '?')}」에 이름난 근거가 없음 — 추천은 이름난 후보 가운데서")
+    if rec and market and rec.get("region") and rec["region"] != market and not rec.get("fit"):
+        out.append(f"추천 후보 「{rec.get('title', '?')}」는 {rec['region']} 사이트인데 손님은 {market} — 그 나라 특유의 꼴이 손님에게 맞는 까닭(fit)을 적거나 다른 후보를 추천")
+    return out
+
+
 def main(argv: list[str]) -> int:
     utf8_console()
     if len(argv) != 2:
@@ -53,6 +82,8 @@ def main(argv: list[str]) -> int:
     live_spec = spec_path.with_name(spec_path.stem + "-live.json")
     live_spec.write_text(json.dumps(spec, ensure_ascii=False, indent=1), encoding="utf-8")
     code = make_board.main([str(live_spec), argv[1]])
+    for line in candidate_issues(spec):
+        print(f"후보 점검: {line}")
     return code
 
 

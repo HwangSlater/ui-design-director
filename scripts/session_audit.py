@@ -233,6 +233,16 @@ def report(folder: Path, main: Path, memo: Path | None) -> int:
         vals = memo_values(memo.read_text(encoding="utf-8"))
         lost = [v for v in vals if not in_page(v, flat)]
         print(f"\n의뢰인 메모 값이 시안에 있나: {len(vals) - len(lost)}/{len(vals)}" + (f" — 없음: {', '.join(lost)}" if lost else ""))
+    spec = folder / "formats" / "board-spec.json"
+    if spec.is_file():  # 바탕 후보가 이름난 사이트였나(애견미용 18차: 일본 동네 미용실이 바탕이 됨)
+        sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "skills" / "ui-design-director" / "scripts"))
+        import make_live_board
+        try:
+            issues = make_live_board.candidate_issues(json.loads(spec.read_text(encoding="utf-8")))
+        except ValueError:
+            issues = ["board-spec.json 을 읽을 수 없음"]
+        bad += bool(issues)
+        print(f"\n바탕 후보 점검 {len(issues)}개" + "".join(f"\n  {line[:150]}" for line in issues))
     if last_page:  # 넘길 때 남은 걸림 — 디자이너가 걸린 채로 넘겼는지(애견미용 18차: 미달 뒤 비교 사이트를 바꿈)
         pre = Path(__file__).resolve().parent.parent / "skills" / "ui-design-director" / "scripts" / "preflight.py"
         r = subprocess.run([sys.executable, "-X", "utf8", str(pre), str(folder)], capture_output=True, text=True, encoding="utf-8", errors="replace")

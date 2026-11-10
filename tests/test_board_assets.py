@@ -38,3 +38,20 @@ def test_board_live_thumbs_and_resize() -> None:
     assert "THUMB_RETRY_MS" in js, "썸네일이 생길 때까지 다시 불러 보지 않음"
     assert "new ResizeObserver" in js, "칸 크기가 바뀌어도 틀을 다시 맞추지 않음"
     assert 'matchMedia(NARROW)' in js, "좁은 창에서 휴대폰 보기로 시작하지 않음"
+
+
+def test_candidate_issues_flag_unknown_local_sites() -> None:
+    """이름난 근거 없는 동네 사이트·해외 추천을 알린다(애견미용 18차)."""
+    import make_live_board as mlb
+    weak = {"market": "한국", "candidates": [
+        {"title": "Dog Salon V.I.D.", "kind": "real", "region": "일본", "recommended": True},
+        {"title": "도그넷", "kind": "real", "region": "한국"},
+        {"title": "Groomora", "kind": "template"}]}
+    lines = " ".join(mlb.candidate_issues(weak))
+    assert "이름난 근거" in lines and "이름난 후보가 0개" in lines and "추천 후보 「Dog Salon V.I.D.」" in lines
+    good = {"market": "한국", "candidates": [
+        {"title": "카카오헤어샵", "kind": "neighbour", "known": "예약 앱 선두", "region": "한국", "recommended": True},
+        {"title": "핏펫", "kind": "neighbour", "known": "반려 브랜드", "region": "한국"},
+        {"title": "Rover", "kind": "neighbour", "known": "미국 반려 돌봄 선두", "region": "미국"},
+        {"title": "Groomora", "kind": "template"}]}
+    assert mlb.candidate_issues(good) == []

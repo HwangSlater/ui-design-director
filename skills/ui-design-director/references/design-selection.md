@@ -34,6 +34,10 @@ Real sites, best first:
 
 Templates: search each marketplace's category and keyword for the field and the main job, open the live preview, and judge it like a real site — its visual layers, phone layout, and coverage of the product's core screens. Prefer previews with several real pages over single landing pages.
 
+**Quality bar.** A candidate is a site a working designer would show as a good example: many real users, a known brand, or an award. A small local shop's own site is not a base candidate even when it is in the same field — it sets the ceiling of the result (dog groomer 18th: two small Japanese salons, a local salon and a template; the client found the result poor before judging anything else). When the field has few such sites (a neighbourhood trade), take leaders with the same main job from neighbouring fields — booking a service (hair and nail booking, clinics), a pet brand or pet-care app — and keep local shops only for the client's named channels.
+
+**Fits the customers.** A foreign site brings its country's web style (dense small text and centred thin titles on many Japanese local sites). Recommend one only when that style suits the client's customers, and say why; otherwise recommend a site their customers already use or a global brand.
+
 Aim for about five well-known running sites and one or two templates, and say which is which. Record for each what it is known for (real site) or covers (template), and which visual layers it carries (`build-rules.md` § Follow the base 6). Use a template's code or assets only within its licence, and tell the user a real site is a motif, not something to copy or buy.
 
 ## 3. Curate candidates
@@ -48,7 +52,7 @@ Two candidates are not optional: every site or channel the client named (Naver P
 
 Before sending, read the words inside every screenshot — badges (「Made in Framer」), founding years (「SINCE 1952」), certification claims, promo bands — against the brief's dislikes and the client's facts, and say that none of it carries over. Show, next to the recommended candidate's home page, its screen for the client's main job.
 
-A beautiful hero with no evidence for the product's core screens is a trait-only reference, not a whole-system candidate. Record for each candidate in `formats/` (not in chat): link, kind, licence status when known, one transferable trait, and scope — **whole-system**, **marketing-only**, **product-UI-only**, or **trait-only**.
+A beautiful hero with no evidence for the product's core screens is a trait-only reference, not a whole-system candidate. The recommendation names a visual reason (photos, type, finish), not only functions on the first screen. Record for each candidate in `formats/` (not in chat): link, kind, why it is well known, its country, licence status when known, one transferable trait, and scope — **whole-system**, **marketing-only**, **product-UI-only**, or **trait-only**.
 
 ## 4. Make comparison easy
 
