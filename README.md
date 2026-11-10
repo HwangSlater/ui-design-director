@@ -231,7 +231,7 @@ python -m pytest -q tests          # 파이썬 도구 시험
 node --test "tests/*.mjs"          # 브라우저·프록시 도구 시험
 ```
 
-시험은 실제 역할극에서 잘못 걸리거나 놓친 경우를 옮긴 거예요. 스킬을 고친 근거(역할극 결과·토큰)는 [docs/역할극-기록.md](docs/역할극-기록.md), 구간별 토큰은 `python -X utf8 scripts/roleplay_tokens.py <세션 ID> <구간 파일>`.
+시험은 실제 역할극에서 잘못 걸리거나 놓친 경우를 옮긴 거예요. 스킬을 고친 근거(역할극 결과·토큰)는 [docs/역할극-기록.md](docs/역할극-기록.md), 구간별 토큰은 `python -X utf8 scripts/roleplay_tokens.py <세션 ID> <구간 파일>`, 디자이너가 단계마다 도구를 제때 썼는지는 `python -X utf8 scripts/session_audit.py <프로젝트 폴더> --memo <의뢰인 메모>`.
 
 ## 화면 문구 검토 — `/ui-wording`
 
