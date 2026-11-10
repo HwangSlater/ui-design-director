@@ -25,6 +25,28 @@ def mock_dir(root: Path) -> Path:
     return root / "mockups" if (root / "mockups").is_dir() else root / "mockup"
 
 
+# 바탕 사본(남의 사이트 저장본·캡처)을 지운 뒤에도 남기는 사실 — 「바탕에도 1·2·3 이 있었다」 같은 예외와 「바탕 자료를 모았다」.
+# 승인 뒤 사본을 지우자 예외 근거가 사라져 바탕에 있던 01–04 가 다시 걸렸고 단계 표가 「순서 어김」으로 돌아갔다(치과 17차)
+BASE_MARKS = Path("formats") / "바탕-표지.json"
+
+
+def base_marks(root: Path) -> dict:
+    """저장해 둔 바탕 표지. 없거나 깨졌으면 빈 dict."""
+    import json
+    try:
+        d = json.loads(read(root / BASE_MARKS) or "{}")
+    except ValueError:
+        return {}
+    return d if isinstance(d, dict) else {}
+
+
+def save_base_marks(root: Path, marks: dict) -> None:
+    import json
+    p = root / BASE_MARKS
+    if p.parent.is_dir() and base_marks(root) != marks:
+        p.write_text(json.dumps(marks, ensure_ascii=False, indent=1), encoding="utf-8")
+
+
 def base_snapshots(root: Path) -> list[Path]:
     """바탕 사이트를 통째로 저장한 페이지(formats/snapshot/**/index.html) — 「바탕에도 있나」를 HTML 로 볼 때."""
     snap = root / "formats" / "snapshot"

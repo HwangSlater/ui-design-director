@@ -1,9 +1,9 @@
 // 캡처·스냅샷이 함께 쓰는 브라우저 띄우기와 DevTools 프로토콜 연결(외부 패키지 없음)
 import { spawn, spawnSync } from "node:child_process";
-import { existsSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { existsSync, mkdtempSync, readdirSync, readFileSync, realpathSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
-import { fileURLToPath, pathToFileURL } from "node:url";
+import { fileURLToPath } from "node:url";
 import { createServer } from "node:net";
 
 // 설치 위치는 운영체제가 알려 주는 폴더에서 찾는다
@@ -313,7 +313,14 @@ export const HIDE_OVERLAYS = hideOverlaysExpr(OVERLAY_SELECTORS, OVERLAY_WORDS);
 
 // 플러그인 훅이 답이 끝날 때·세션을 닫을 때 부른다: node browser.mjs --sweep
 // 주인 도구가 끝났는데 남은 headless 브라우저와 임시 프로필을 치운다(남은 것이 있을 때만 한 줄 알림)
-if (process.argv[2] === "--sweep" && process.argv[1] && import.meta.url === pathToFileURL(resolve(process.argv[1])).href) {
+/** 이 파일을 직접 실행했는지. 정션·심볼릭 링크(~/.claude/skills/… → 저장소)로 불러도 맞게 실제 경로로 견준다 — 주소 문자열로 견주면 아무 일 없이 exit 0 으로 끝났다(치과 17차). */
+export function isMain(metaUrl) {
+  if (!process.argv[1]) return false;
+  const real = (p) => { try { return realpathSync(p); } catch { return resolve(p); } };
+  return real(process.argv[1]) === real(fileURLToPath(metaUrl));
+}
+
+if (process.argv[2] === "--sweep" && isMain(import.meta.url)) {
   const n = sweepOrphans();
   if (n) console.log(JSON.stringify({ systemMessage: `남아 있던 측정용 브라우저 ${n}벌을 끄고 임시 폴더를 지웠습니다(ui-design-director).` }));
 }

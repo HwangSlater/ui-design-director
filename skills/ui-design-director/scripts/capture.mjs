@@ -17,9 +17,9 @@
 
 import { existsSync, mkdirSync, readdirSync, readFileSync, statSync, writeFileSync } from "node:fs";
 import { basename, dirname, join, resolve, sep } from "node:path";
-import { fileURLToPath, pathToFileURL } from "node:url";
+import { fileURLToPath } from "node:url";
 import { judgeFillExpr } from "./judge_fill.mjs";
-import { goto, launch, openPage, scrollWakeExpr, sleep, HIDE_OVERLAYS } from "./browser.mjs";
+import { goto, launch, openPage, scrollWakeExpr, sleep, HIDE_OVERLAYS, isMain } from "./browser.mjs";
 import { requireStage } from "./stage_guard.mjs";
 
 const SCREEN_SLICES = 16; // 맨 위부터 한 화면씩 잘라 따로 저장할 최대 수(screens/ 폴더). 4장만 자르면 페이지 아래쪽(시간표·질문·오시는 길)을 못 봤다
@@ -217,7 +217,7 @@ async function main() {
   }
 }
 
-if (process.argv[1] && import.meta.url === pathToFileURL(resolve(process.argv[1])).href) {
+if (isMain(import.meta.url)) {
   main().catch((err) => {
     console.error(`ERROR: ${err.message}`);
     process.exit(1);

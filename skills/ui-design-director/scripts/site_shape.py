@@ -29,7 +29,7 @@ from html.parser import HTMLParser
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from common import ONE_PAGE, base_snapshots, mock_dir, read, site_kind, utf8_console  # noqa: E402
+from common import ONE_PAGE, base_marks, base_snapshots, mock_dir, read, save_base_marks, site_kind, utf8_console  # noqa: E402
 
 VOID = {"area", "base", "br", "col", "embed", "hr", "img", "input", "link", "meta", "source", "track", "wbr"}
 SKIP_TARGETS = {"#", "#main", "#top", "#content", "#home", "#body"}
@@ -228,7 +228,24 @@ def step_rows(tree: Tree) -> Node | None:
     return None
 
 
+def base_facts(root: Path) -> dict:
+    """바탕 저장본이 있으면 재서 formats/바탕-표지.json 에 남기고, 지워졌으면 남긴 것을 읽는다."""
+    if not base_snapshots(root):
+        return base_marks(root)
+    marks = {"snapshot": True, "numbered": _numbered(root), "icon_row": _icon_row(root)}
+    save_base_marks(root, marks)
+    return marks
+
+
 def base_numbered(root: Path) -> bool:
+    return bool(base_facts(root).get("numbered"))
+
+
+def base_icon_row(root: Path) -> bool:
+    return bool(base_facts(root).get("icon_row"))
+
+
+def _numbered(root: Path) -> bool:
     """바탕 저장본에 1·2·3 이 잇달아 나오는가 — 같은 숫자가 겹쳐 적힌 것(같은 CSS 두 벌)은 하나로 본다."""
     for page in base_snapshots(root):
         html = re.sub(r"<script\b.*?</script>", "", read(page), flags=re.S | re.I)
@@ -293,7 +310,7 @@ def icon_row(tree: Tree) -> Node | None:
     return None
 
 
-def base_icon_row(root: Path) -> bool:
+def _icon_row(root: Path) -> bool:
     """바탕 저장본에 같은 짜임(아이콘·제목·짧은 글 3~4칸)의 줄이 있는가."""
     for page in base_snapshots(root):
         t = Tree()
@@ -302,6 +319,17 @@ def base_icon_row(root: Path) -> bool:
         if icon_row(t):
             return True
     return False
+
+
+def sample_marks(tree: Tree) -> list[Node]:
+    """페이지 끝 「견본」 한 줄 밖에서 글로 「견본」을 단 곳(사진 밑 「진료실 — 견본 사진」, 「…(견본)」).
+    바닥글 안과 맨 마지막 「견본」 글(바닥글 태그가 없는 쪽의 끝 줄)은 그 한 줄로 본다. alt·aria 글은 보이지 않으니 세지 않는다."""
+    found = []
+    for n in tree.root.walk():
+        own = " ".join(i for i in n.items if isinstance(i, str))
+        if "견본" in own and n.tag not in ("script", "style", "title") and not n.inside("script", "style", "title"):
+            found.append(n)
+    return [n for n in found[:-1] if n.tag != "footer" and not n.inside("footer")]
 
 
 def overlaps(s: dict[str, str]) -> bool:
@@ -369,6 +397,10 @@ def check_project(root: Path) -> list[str]:
     if row and not base_icon_row(root):
         out.append(f"DRIFT {where}:{row.line} icon-row — 아이콘·제목·짧은 글 칸 3~4개 줄은 생성 티, 바탕에 없으면 "
                    "바탕의 같은 자리 짜임으로(build-rules.md § What reads as generated)")
+    marks = sample_marks(tree)
+    if marks:
+        out.append(f"DRIFT {where}:{marks[0].line} sample-mark — 페이지 안에 「견본」 표시 {len(marks)}곳 — 견본은 바닥글 「견본」 한 줄에만 "
+                   "(build-rules.md § Content and samples)")
     return out
 
 

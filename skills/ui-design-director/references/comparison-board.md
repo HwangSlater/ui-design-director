@@ -30,7 +30,7 @@ Every candidate screen uses the one shared viewer; never write another viewer pa
 
 Login-walled apps (Instagram) show only a splash screen: capture those (last section).
 
-**Snapshots and captures** of other sites stay in the project folder's `formats/`, are never committed, and are deleted once the mockup is approved.
+**Snapshots and captures** of other sites stay in the project folder's `formats/`, are never committed, and are deleted with `clear_copies.py` once the mockup is approved (SKILL.md).
 
 After the client chooses, show the revision on its own: only the chosen option as revised, earlier options removed or moved to an `earlier/` folder. Use the same viewer for layout options (`page-design.md`): list each option as a candidate.
 

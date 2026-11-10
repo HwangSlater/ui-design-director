@@ -133,3 +133,12 @@ def test_numbered_steps_the_base_snapshot_has_pass(tmp_path: Path) -> None:
     root = project(tmp_path / "b", STEPS)
     snapshot(root, "<body><p>1</p><p>전화 2,987건</p><p>3</p></body>")  # 1·2·3 이 잇달지 않음
     assert "numbered-steps" in rules(root)
+
+
+def test_sample_mark_outside_the_foot_line(tmp_path: Path) -> None:
+    """사진 밑 「견본 사진」 캡션은 걸리고, 바닥글의 「견본」 한 줄과 alt 글은 통과(치과 17차)."""
+    body = (HEAD + '<main><figure><img src="a.jpg" alt="진료실(견본 사진)"><figcaption>진료실 — 견본 사진</figcaption></figure></main>'
+            '<footer><p>견본: 사진과 소개 글</p></footer></body></html>')
+    assert "sample-mark" in rules(project(tmp_path / "a", body))
+    plain = HEAD + '<main><img src="a.jpg" alt="견본 사진"></main><p>사진은 견본이에요</p></body></html>'
+    assert "sample-mark" not in rules(project(tmp_path / "b", plain))

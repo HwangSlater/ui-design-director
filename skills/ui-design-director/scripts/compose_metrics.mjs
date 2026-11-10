@@ -10,8 +10,7 @@
 // 외부 패키지 없음. Edge/Chrome DevTools 프로토콜만 쓴다.
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { basename, dirname, join, resolve } from "node:path";
-import { pathToFileURL } from "node:url";
-import { evaluate, goto, launch, openPage, scrollWakeExpr, sleep, HIDE_OVERLAYS, VIEWPORT } from "./browser.mjs";
+import { evaluate, goto, launch, openPage, scrollWakeExpr, sleep, HIDE_OVERLAYS, VIEWPORT, isMain } from "./browser.mjs";
 
 const SETTLE_MS = 3000;
 const SCROLL_STEP_MS = 150;
@@ -211,7 +210,7 @@ function record(entry) {
   writeFileSync(historyFile(), JSON.stringify(trimHistory([...readHistory(), entry]), null, 1) + "\n");
 }
 
-if (process.argv[1] && import.meta.url === pathToFileURL(resolve(process.argv[1])).href) {
+if (isMain(import.meta.url)) {
   main().catch((err) => {
     console.error(`오류: ${err.message}`);
     process.exit(1);

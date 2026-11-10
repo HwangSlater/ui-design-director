@@ -10,8 +10,7 @@
 import { createHash } from "node:crypto";
 import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { join, resolve } from "node:path";
-import { pathToFileURL } from "node:url";
-import { goto, launch, openPage, scrollWakeExpr, sleep, HIDE_OVERLAYS } from "./browser.mjs";
+import { goto, launch, openPage, scrollWakeExpr, sleep, HIDE_OVERLAYS, isMain } from "./browser.mjs";
 import { requireStage } from "./stage_guard.mjs";
 
 const SETTLE_MS = 2500, SCROLL_STEP_MS = 300, MAX_SCROLL = 16000;
@@ -136,4 +135,4 @@ async function main() {
 }
 
 // 직접 실행할 때만 돈다(시험이 sanitize 만 불러 쓸 수 있게) — 이름 끝만 보면 test_snapshot.mjs 도 걸렸다
-if (process.argv[1] && import.meta.url === pathToFileURL(resolve(process.argv[1])).href) main().catch((e) => { console.error(`ERROR: ${e.message}`); process.exit(1); });
+if (isMain(import.meta.url)) main().catch((e) => { console.error(`ERROR: ${e.message}`); process.exit(1); });

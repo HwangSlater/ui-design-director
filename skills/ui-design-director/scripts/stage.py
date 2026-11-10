@@ -3,7 +3,7 @@
 
     python stage.py <project folder>            # 단계 표 + 다음 명령 (늘 종료 코드 0 — 스킬을 열 때 자동으로 돈다)
     python stage.py <project folder> --require <단계>   # 그 단계를 만들어도 되는지: 앞 단계가 다 됐으면 0, 아니면 1
-    python stage.py <project folder> --decide <base|palette> "<고른 것>"   # 채팅으로 받은 확정을 decisions.json 에 남긴다
+    python stage.py <project folder> --decide <base|palette|main> "<고른 것>"   # 채팅으로 받은 확정을 decisions.json 에 남긴다
     python stage.py --guard <단계> <쓸 곳>   # 스크립트(snapshot·motion·capture)가 프로젝트 formats/ 에 쓰기 전에: 되면 0, 아니면 1
 
 단계(메인 페이지만): brief → board → base → material → palette → design → main
@@ -18,7 +18,7 @@ import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from common import SITE_KIND, utf8_console  # noqa: E402  콘솔 한글 깨짐 막기·사이트 꼴 줄은 common 하나로
+from common import SITE_KIND, base_marks, utf8_console  # noqa: E402  콘솔 한글 깨짐 막기·사이트 꼴 줄은 common 하나로
 import knowledge  # noqa: E402  (단계마다 볼 규칙은 knowledge.py 하나로)
 
 SKILL = Path(__file__).resolve().parent.parent
@@ -29,7 +29,7 @@ LABEL = {"brief": "맥락 정리", "board": "바탕 고르기 화면", "base": "
 SHARED_VIEWER = "board-data"  # make_board.py 공용 틀 표시
 PALETTE_VIEWER = "palette-switcher.js"
 TEMPLATE_MARK = "<!-- 채우기 전 -->"  # base_material.py 가 만든 빈 틀 표시 — 다 채우고 지우기 전에는 바탕 자료가 안 된 것으로 본다
-DECIDABLE = ("base", "palette")  # --decide 로 남기는 확정은 이 둘뿐 — 「board」로 남겨 바탕이 안 정해진 채 남았다
+DECIDABLE = ("base", "palette", "main")  # --decide 로 남기는 확정 — 「board」로 남겨 바탕이 안 정해진 채 남았다. main 은 시안 승인(그 뒤 clear_copies.py)
 PROJECT_MARKS = ("concept-brief.md", "decisions.json", "formats/board-spec.json")  # 스킬 프로젝트 폴더 표시
 KIND_LINE = "사이트 꼴: 여러 쪽」 또는 「사이트 꼴: 한 쪽 홍보·모집"
 BROKEN = "decisions.json 을 읽을 수 없어요(JSON 형식이 깨짐) — 손으로 고치기 전에는 --decide 로 쓰지 않습니다"
@@ -86,7 +86,8 @@ def status(root: Path) -> tuple[dict, list[str]]:
     pals, own_pals = viewers(root / "palette", PALETTE_VIEWER)
     material = [fm / "바탕-구성.md", fm / "바탕-움직임.md"]
     filled = TEMPLATE_MARK not in read(material[0])
-    snap = any((fm / "snapshot").glob("*/index.html")) if (fm / "snapshot").is_dir() else False
+    # 승인 뒤 사본을 지워도(clear_copies.py) 바탕-표지.json 이 「모았었다」를 남긴다
+    snap = (any((fm / "snapshot").glob("*/index.html")) if (fm / "snapshot").is_dir() else False) or bool(base_marks(root).get("snapshot"))
     design = read(root / "DESIGN.md")
     brief = read(root / "concept-brief.md")
     done = {

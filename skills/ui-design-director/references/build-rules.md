@@ -46,7 +46,7 @@ Also generated unless the base has them (from unslop's signs list, Damir Sokolov
 ## Content and samples
 
 - Only facts the client gave; anything filled in is listed at handover. Where the client's words are missing (an intro, a price, an address) write short neutral sample text of the right length.
-- **One 「견본」 line.** Everything that is sample — text and photos — is listed in one 「견본」 line at the page foot (「사진과 소개 글은 견본이에요」), never marked on the page itself.
+- **One 「견본」 line.** Everything that is sample — text and photos — is listed in one 「견본」 line at the page foot (「사진과 소개 글은 견본이에요」), never marked on the page itself — no 「견본 사진」 caption under a photo, no 「(견본)」 after a value; `preflight.py` flags `sample-mark`.
 - **No empty boxes.** Never a hatched box, dashed slot or 「… 자리」 label: every photo slot gets a licence-checked sample photo of the right subject ([sample-photos.md](sample-photos.md)). When no fitting sample exists (before/after of the same room, a staff photo), drop the part and ask the client for the photo.
 - **No letters in circles for people.** When staff or doctor photos are missing, never put initials or name letters in circles (「정」「윤」) as portraits or icons — a generated tell the client flagged (dentist 15th). Keep that part as text in the base's arrangement — name, role and one line each, without picture boxes — or leave the part out and list it in the 「견본」 line. `preflight.py` flags `letter-circle`.
 - Never invented testimonials, reviews, logos, statistics or awards; leave those parts out until the client supplies real ones.

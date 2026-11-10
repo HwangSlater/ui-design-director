@@ -94,7 +94,7 @@ On entry, the stage table above shows the first open step; resume there and do n
 - Before showing, run the AI-tell checks when installed (hallmark `sloplint`, the impeccable detector) and always `ui-review.md` § Site check; report each as ran or why not.
 - Accessibility is a baseline: visible focus, contrast, non-colour cues, 44px targets, semantic controls, reflow and zoom, reduced motion.
 - Keep existing brand constraints unless the client approves changing them.
-- Snapshots and captures of other sites are copies of other people's work: keep them in the project folder's `formats/`, never commit them, and delete them once the mockup is approved.
+- Snapshots and captures of other sites are copies of other people's work: keep them in the project folder's `formats/`, never commit them. Once the client approves the mockup, record it (`stage.py . --decide main "<their words>"`) and delete them with `python ${CLAUDE_SKILL_DIR}/scripts/clear_copies.py .`, never by hand — it first keeps the base facts the checks need in `formats/바탕-표지.json`.
 - Spend the session on the design, not on tooling: use the bundled tools as they are; fix one only when it blocks the client.
 - **Companion skills** (ui-ux-pro-max, hallmark, emilkowalski/skills, impeccable, Vercel's Web Interface Guidelines) do parts of this work better; use them as designed, per [companion-skills.md](references/companion-skills.md). Install nothing without the machine owner's approval. Screen wording goes through the sister skill `ui-wording`.
 
