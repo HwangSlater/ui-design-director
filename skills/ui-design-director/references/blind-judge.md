@@ -7,7 +7,7 @@ Composition numbers run on every first screen and page type before the client se
 1. List each shortlisted home's sections top to bottom with their fill (photo, card grid, text, band, footer) at 390 and 1280.
 2. Build from the order and fill they share (`skeleton.mjs` 「위에서부터 배치」), customers' width first.
 3. Run `node ${CLAUDE_SKILL_DIR}/scripts/compose_metrics.mjs <out.md> --width 1280 --ours ours ours=<file url> ref1=<url> ref2=<url> …` and rework until no line reads 「미달」. Record the table next to the mockup.
-   Compare against pages that do the same job as ours (a scores page against scores pages, not their shop home), chosen once at the start; changing them later stops the script unless `--why "<reason>"` is given, and preflight shows that reason so you tell the client.
+   Compare against pages that do the same job as ours (a scores page against scores pages, not their shop home), chosen once at the start; changing them later stops the script unless `--why "<reason>"` is given (a site that would not load), and once a run has shown a shortfall they cannot be changed at all — fix the page instead (bakery 31st and dog groomer 23rd swapped sites to pass).
 4. Check list and menu pages against the references' page of the same type; text-first menu options measured 2–36% photo against 55–78%.
 5. Re-measure after adding any band or strip.
 

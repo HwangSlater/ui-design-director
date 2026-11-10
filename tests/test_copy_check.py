@@ -167,3 +167,19 @@ def test_band_checks_survive_capture_deletion(tmp_path: Path) -> None:
     shutil.rmtree(tmp_path / "formats" / "base-cap")
     after = [line for line in copy_check.check_project(tmp_path) if line.startswith("옅은 띠")]
     assert before and after == before
+
+
+def test_white_band_on_cream_page_is_pale(tmp_path: Path) -> None:
+    """크림 바탕 위 흰 띠도 바탕에 없는 띠(빵집 31차) — 흰 바탕 위 흰 띠는 띠가 아니다."""
+    def page(path: Path, bg: str, band: str | None) -> Path:
+        im = Image.new("RGB", (1280, 2400), bg)
+        d = ImageDraw.Draw(im)
+        if band:
+            d.rectangle((0, 1200, 1280, 1500), fill=band)
+        path.parent.mkdir(parents=True, exist_ok=True)
+        im.save(path)
+        return path
+    base = page(tmp_path / "b.png", "#faf4e6", None)
+    assert copy_check.pale_bands(base, 1280, page(tmp_path / "o.png", "#fef5e4", "#fffefc"), 1280)
+    white = page(tmp_path / "w.png", "#ffffff", None)
+    assert copy_check.pale_bands(white, 1280, page(tmp_path / "o2.png", "#ffffff", "#fefefe"), 1280) == []

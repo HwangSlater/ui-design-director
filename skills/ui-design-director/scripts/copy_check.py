@@ -282,7 +282,10 @@ def dark_bands(path: Path, width: int) -> list[tuple[int, int, int]]:
 
 def band_facts(base: Path, bw: int) -> dict:
     """바탕 캡처에서 띠 판정에 쓰는 사실만 — 캡처를 지운 뒤에도 바탕-표지.json 으로 남긴다(애견미용 22차: 지운 뒤 옅은 띠·띠 쌓기를 못 봄)."""
-    return {"pale": [list(c) for c, _, h in colour_runs(base, bw) if h >= BAND_MIN_CSS], "strong": len(strong_stack(base, bw)),
+    runs = colour_runs(base, bw)
+    bg = page_bg(runs) if runs else None
+    # 바탕의 페이지 바탕색은 「바탕에도 있는 띠 색」이 아니다 — 크림 바탕 위 다른 크림 띠를 봐줬다(빵집 31차)
+    return {"pale": [list(c) for c, _, h in runs if h >= BAND_MIN_CSS and (bg is None or cdist(c, bg) >= BAND_NOT_BG)], "strong": len(strong_stack(base, bw)),
             "dark": len(dark_bands(base, bw))}
 
 
@@ -306,7 +309,9 @@ def pale_bands(base: Path | dict, bw: int, ours: Path, ow: int) -> list[tuple[st
     found: list[list] = []
     for c, _, h in runs:
         light = lightness(c) > BAND_LIGHT
-        if (h < BAND_MIN_CSS or not light or cdist(c, (255, 255, 255)) < BAND_NOT_WHITE or cdist(c, bg) < BAND_NOT_BG
+        # 흰 띠는 페이지가 흰 바탕일 때만 띠가 아니다 — 크림 바탕 위 흰 띠를 놓쳤다(빵집 31차)
+        white_band = cdist(c, (255, 255, 255)) < BAND_NOT_WHITE and cdist(bg, (255, 255, 255)) < BAND_NOT_WHITE
+        if (h < BAND_MIN_CSS or not light or white_band or cdist(c, bg) < BAND_NOT_BG
                 or any(cdist(c, b) < BAND_IN_BASE for b in base_cols)):
             continue
         same = next((f for f in found if cdist(f[0], c) < BAND_IN_BASE), None)

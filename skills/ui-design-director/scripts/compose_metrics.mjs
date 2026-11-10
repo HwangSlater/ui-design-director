@@ -155,6 +155,12 @@ async function main() {
   if (!out || !targets.length) { console.error("사용: node compose_metrics.mjs <out.md> --width 1280 이름=주소 ... [--ours 이름] [--why \"<까닭>\"]"); process.exit(1); }
   // 재기 전에 본다 — 미달이 나온 뒤 기준을 바꿔 통과시키지 않게(브라우저를 띄우기 전에 멈춘다)
   const first = siteChange(readHistory(), width, targets.filter(([n]) => n !== ours).map(([name, url]) => ({ name, url })));
+  // 미달이 한 번이라도 나온 뒤에는 까닭을 적어도 바꾸지 못한다 — 바꿔서 통과시키는 일이 23·31차에 되풀이됐다. 페이지를 고친다
+  const hadShort = readHistory().some((r) => r.width === width && r.short > 0);
+  if (first && hadShort) {
+    console.error(`멈춤: ${width}px 에서 미달이 나온 뒤라 비교 사이트를 바꿀 수 없어요 — 첫 기록: ${first.sites.map((s) => s.name).join(", ")}. 같은 사이트로 다시 재고, 미달은 페이지를 고쳐서 없앤다.`);
+    process.exit(1);
+  }
   if (first && !why) {
     console.error(`멈춤: ${width}px 첫 기록(${first.at || "?"})의 비교 사이트와 다름 — 첫 기록: ${first.sites.map((s) => s.name).join(", ")}.\n` +
       `같은 사이트로 다시 돌리거나, 바꿔야 하면 --why "<까닭>" 을 붙인다(까닭은 기록에 남고 preflight 가 의뢰인에게 말하라고 알린다).`);

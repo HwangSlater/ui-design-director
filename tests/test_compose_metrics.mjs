@@ -41,7 +41,19 @@ test("까닭 없이 사이트를 바꾸면 재기 전에 멈춘다", () => {
     writeFileSync(join(dir, "구성-기록.json"), JSON.stringify([{ at: "t", width: 1280, sites: [{ name: "가", url: U("a") }], short: 2 }]));
     const r = spawnSync(process.execPath, [MOD, join(dir, "구성.md"), "--width", "1280", "나=" + U("b"), "우리=" + U("o"), "--ours", "우리"], { encoding: "utf8" });
     assert.equal(r.status, 1);
-    assert.match(r.stderr, /--why/);
+    assert.match(r.stderr, /미달이 나온 뒤라/);  // 미달(short 2) 뒤에는 까닭이 있어도 못 바꾼다(빵집 31차)
     assert.match(r.stderr, /가/);
+    const w = spawnSync(process.execPath, [MOD, join(dir, "구성.md"), "--width", "1280", "나=" + U("b"), "우리=" + U("o"), "--ours", "우리", "--why", "까닭"], { encoding: "utf8" });
+    assert.equal(w.status, 1);
+  } finally { rmSync(dir, { recursive: true }); }
+});
+
+test("미달 없이 바꿀 때는 까닭을 요구한다", () => {
+  const dir = mkdtempSync(join(tmpdir(), "compose-test-"));
+  try {
+    writeFileSync(join(dir, "구성-기록.json"), JSON.stringify([{ at: "t", width: 1280, sites: [{ name: "가", url: U("a") }], short: 0 }]));
+    const r = spawnSync(process.execPath, [MOD, join(dir, "구성.md"), "--width", "1280", "나=" + U("b"), "우리=" + U("o"), "--ours", "우리"], { encoding: "utf8" });
+    assert.equal(r.status, 1);
+    assert.match(r.stderr, /--why/);
   } finally { rmSync(dir, { recursive: true }); }
 });
