@@ -168,3 +168,11 @@ def test_faq_long_on_main(tmp_path: Path) -> None:
     qs = lambda n: "".join(f"<details><summary>질문{i}?</summary><p>답</p></details>" for i in range(n))  # noqa: E731
     assert "faq-long" in rules(project(tmp_path / "a", HEAD + f"<main>{qs(11)}</main></body></html>"))
     assert "faq-long" not in rules(project(tmp_path / "b", HEAD + f"<main>{qs(5)}</main></body></html>"))
+
+
+def test_made_up_reviews(tmp_path: Path) -> None:
+    """의뢰인이 준 후기 없이 후기 칸(애견미용 24차 「보호자 후기」 견본)."""
+    page = HEAD + "<main><section><h2>보호자 후기</h2><p>견본 후기</p></section></main></body></html>"
+    assert "made-up-reviews" in rules(project(tmp_path / "a", page))
+    root = project(tmp_path / "b", page, brief="사이트 꼴: 여러 쪽 · 실제 후기: 네이버 리뷰 3개 받음")
+    assert "made-up-reviews" not in rules(root)

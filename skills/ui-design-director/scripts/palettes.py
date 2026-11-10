@@ -136,6 +136,10 @@ def problems(html: str) -> list[str]:
             out.append(f"{name}: 표에 없는 팔레트 {m.group(1)} — palettes.py pick 이 내놓은 것만")
             continue
         own = [rgb(c) for c in pal["colors"]]
+        act = rgb(str((cand.get("roles") or {}).get("action", "")))
+        hit = [f["name"] for f in families() if f["role"] == "action" and act and in_family(act, f)]
+        if hit:  # 팔레트 색을 진하게 만들다 모델 단골 색이 됐다(24차 쑥색 → #4e5b4b)
+            out.append(f"{name}: 단추 {cand['roles']['action']} 이(가) 모델 단골 색({hit[0]}) — 같은 팔레트의 다른 색을 단추로")
         for role, value in (cand.get("roles") or {}).items():
             c = rgb(str(value))
             if role in SKIP_ROLES or c is None or neutral(c):

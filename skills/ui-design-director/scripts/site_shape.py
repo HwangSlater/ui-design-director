@@ -360,6 +360,17 @@ def faq_items(tree: Tree) -> int:
     return sum(1 for n in tree.root.walk() if n.tag == "details" or (n.tag == "button" and "aria-expanded" in n.attrs))
 
 
+REVIEW_HEAD = re.compile(r"후기|리뷰|review|testimonial|고객\s*(이야기|한마디)|보호자\s*이야기", re.I)
+REVIEW_GIVEN = re.compile(r"(실제|받은|보내 준|준)\s*후기|후기\s*[:：]|리뷰\s*[:：]")
+
+
+def made_up_reviews(tree: Tree, brief: str) -> Node | None:
+    """후기 제목이 있는데 맥락 정리에 의뢰인이 준 후기가 없으면 그 제목(애견미용 24차 「보호자 후기」 견본)."""
+    if REVIEW_GIVEN.search(brief):
+        return None
+    return next((n for n in tree.root.walk() if n.tag in ("h2", "h3") and REVIEW_HEAD.search(n.visible())), None)
+
+
 def placeholder_name(tree: Tree) -> str | None:
     """제목(title)·머리 로고 글에 이름 대신 빈칸 말(「가게 이름」)이 있으면 그 말."""
     for n in tree.root.walk():
@@ -465,6 +476,10 @@ def check_project(root: Path) -> list[str]:
     if row and not base_icon_row(root):
         out.append(f"DRIFT {where}:{row.line} icon-row — 아이콘·제목·짧은 글 칸 3~4개 줄은 생성 티, 바탕에 없으면 "
                    "바탕의 같은 자리 짜임으로(build-rules.md § What reads as generated)")
+    reviews = made_up_reviews(tree, read(root / "concept-brief.md"))
+    if reviews:
+        out.append(f"DRIFT {where}:{reviews.line} made-up-reviews — 「{reviews.visible()[:20]}」 — 의뢰인이 준 후기가 없으면 후기 칸은 빼고 「견본」으로도 지어 넣지 않는다"
+                   "(build-rules.md § Content and samples)")
     faq = faq_items(tree)
     if faq > max(FAQ_MAX, base_facts(root).get("faq", 0)):
         out.append(f"DRIFT {where}:1 faq-long — 메인 페이지에 펼침 질문 {faq}개 — 바탕 수만큼(많아도 {FAQ_MAX}개), 나머지는 자주 묻는 질문 쪽(링크)으로")

@@ -47,10 +47,10 @@ Put the candidates in `<script type="application/json" id="palettes" data-step="
 ```html
 <link rel="stylesheet" href="dock.css"><link rel="stylesheet" href="palette-switcher.css">
 <script type="application/json" id="palettes" data-step="팔레트 고르기">
-[{"id": "A", "name": "바탕의 색 관계, 우리 색", "source": "https://colorhunt.co/palette/5f6f52a9b388fefae0b99470 · <base url> 의 4~6색 관계",
-  "colors": ["#fefae0", "#ffffff", "#2a2f26", "#5f6f52", "#b99470"],
-  "roles": {"bg": "#fefae0", "surface": "#ffffff", "text": "#2a2f26", "action": "#5f6f52", "on-action": "#ffffff", "accent": "#b99470"},
-  "note": "팔레트 5f6f52a9b388fefae0b99470, 글자는 진한 쪽을 더 진하게"}]
+[{"id": "A", "name": "바탕의 색 관계, 우리 색", "source": "https://colorhunt.co/palette/b82132d2665af2b28cf6ded8 · <base url> 의 4~6색 관계",
+  "colors": ["#f6ded8", "#ffffff", "#1c1c1c", "#b82132", "#f2b28c"],
+  "roles": {"bg": "#f6ded8", "surface": "#ffffff", "text": "#1c1c1c", "action": "#b82132", "on-action": "#ffffff", "accent": "#f2b28c"},
+  "note": "팔레트 b82132d2665af2b28cf6ded8, 글자는 먹색을 더함"}]
 </script>
 <script type="application/json" id="fonts" data-sample="<a line from this project>">
 [{"id": "1", "name": "<pick name>", "heading": "\"<family>\", serif", "body": "\"<family>\", sans-serif",

@@ -212,6 +212,7 @@ BAND_LIGHT = 0.88      # 밝기가 이보다 높으면 옅은 색
 BAND_NOT_WHITE = 0.02  # 흰색과 이만큼 떨어져야 색 띠
 BAND_NOT_BG = 0.03     # 페이지 바탕색과 이만큼 떨어져야 따로 깐 띠
 BAND_IN_BASE = 0.04    # 바탕 띠와 이만큼 가까우면 바탕에 있는 색
+DARK_L = 0.35         # 이보다 어두우면 「진한 띠」(먹색·짙은 초록 바닥) — 바탕에 없으면 걸림
 BAND_STRONG_L = 0.75   # 밝기가 이보다 낮으면 진한 띠(색 띠 쌓기)
 STACK_MIN = 2          # 진한 띠가 이만큼 잇달고 바탕보다 많으면 색 띠 쌓기(플리마켓 14차: 갈색·벽돌, 바닥글 빼고) — 시안 16개 중 이것만 걸림
 
@@ -270,9 +271,19 @@ def strong_stack(path: Path, width: int) -> list[tuple[int, int, int]]:
     return list(best)
 
 
+def dark_bands(path: Path, width: int) -> list[tuple[int, int, int]]:
+    """바닥글까지 넣어 진한 폭 가득 띠의 색들 — 바탕에 하나도 없는데 우리만 진한 바닥·띠를 깔면 오답지와 같다(애견미용 24차)."""
+    runs = colour_runs(path, width)
+    if not runs:
+        return []
+    bg = page_bg(runs)
+    return [c for c, _, h in runs if h >= BAND_MIN_CSS and cdist(c, bg) >= BAND_NOT_BG and lightness(c) < DARK_L]
+
+
 def band_facts(base: Path, bw: int) -> dict:
     """바탕 캡처에서 띠 판정에 쓰는 사실만 — 캡처를 지운 뒤에도 바탕-표지.json 으로 남긴다(애견미용 22차: 지운 뒤 옅은 띠·띠 쌓기를 못 봄)."""
-    return {"pale": [list(c) for c, _, h in colour_runs(base, bw) if h >= BAND_MIN_CSS], "strong": len(strong_stack(base, bw))}
+    return {"pale": [list(c) for c, _, h in colour_runs(base, bw) if h >= BAND_MIN_CSS], "strong": len(strong_stack(base, bw)),
+            "dark": len(dark_bands(base, bw))}
 
 
 def stacked_bands(base: Path | dict, bw: int, ours: Path, ow: int) -> tuple[list[str], int]:
@@ -309,7 +320,12 @@ def pale_bands(base: Path | dict, bw: int, ours: Path, ow: int) -> list[tuple[st
 def band_lines(view: str, base: Path | dict, bw: int, ours: Path, ow: int) -> list[str]:
     out = [f"옅은 띠({view}): {hex_} 줄 {n}개 — 바탕에 없음. 바탕에 없는 색 띠는 생성 티, 구역은 페이지 바탕 위에(build-rules.md § What reads as generated)"
            for hex_, n in pale_bands(base, bw, ours, ow)]
-    stack, base_n = stacked_bands(base, bw, ours, ow)
+    facts = base if isinstance(base, dict) else band_facts(base, bw)
+    dark = dark_bands(ours, ow)
+    if dark and facts.get("dark", 1) == 0:
+        out.append(f"진한 띠({view}): {'·'.join('#%02x%02x%02x' % c for c in dark)} — 바탕에는 진한 띠·바닥이 없음. 바닥글도 바탕처럼 밝게"
+                   "(build-rules.md § What reads as generated)")
+    stack, base_n = stacked_bands(facts, bw, ours, ow)
     if stack:
         out.append(f"색 띠 쌓기({view}): 진한 띠 {len(stack)}개 잇달아({'·'.join(stack)}), 바탕은 {base_n}개 — 진한 색 판은 "
                    "바탕이 깐 자리에만, 나머지 구역은 페이지 바탕 위에(build-rules.md § What reads as generated)")

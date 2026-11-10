@@ -182,6 +182,7 @@ const METRICS = [
 const LOWER_IS_BETTER = new Set(["firstEmpty"]);
 // 사진 비율은 가운데 값이 아니라 바탕에도 못 미치면 미달 — 바탕 41% 에 우리 24% 가 가운데 34% 기준으로 통과했다(애견미용 21차)
 const FOLLOW_BASE = new Set(["firstImg", "pageImg"]);
+const BASE_PHOTO_RATIO = 0.85;
 const median = (a) => { const s = [...a].sort((x, y) => x - y); const m = Math.floor(s.length / 2); return s.length % 2 ? s[m] : (s[m - 1] + s[m]) / 2; };
 function report(rows) {
   const blankRefs = rows.filter((r) => r.name !== ours && r.firstEmpty > BLANK_REF);
@@ -196,7 +197,9 @@ function report(rows) {
     if (me && !tooFew) {
       const b = refs.find((r) => r.name === base);
       const m = FOLLOW_BASE.has(k) && b ? Math.max(median(refs.map((r) => r[k])), b[k]) : median(refs.map((r) => r[k]));
-      const bad = LOWER_IS_BETTER.has(k) ? me[k] > m / SHORT_RATIO && me[k] - m > 0.1 : me[k] < m * SHORT_RATIO;
+      // 사진은 바탕의 85% 아래면 미달 — 70% 로는 바탕 37% 에 우리 26% 가 통과했다(애견미용 24차)
+      const ratio = FOLLOW_BASE.has(k) && b && b[k] >= m ? BASE_PHOTO_RATIO : SHORT_RATIO;
+      const bad = LOWER_IS_BETTER.has(k) ? me[k] > m / SHORT_RATIO && me[k] - m > 0.1 : me[k] < m * ratio;
       if (bad) short++;
       verdict = ` ${bad ? "미달" : "통과"} (기준 ${FOLLOW_BASE.has(k) && b && b[k] >= m ? "바탕" : "가운데"} ${fmt(m)}) |`;
     }

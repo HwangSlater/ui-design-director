@@ -54,7 +54,9 @@ def test_decide_only_base_and_palette(tmp_path: Path) -> None:
     assert r.returncode == 2 and '--decide base "<번호 이름>"' in r.stderr
     assert not (tmp_path / "decisions.json").exists()
     assert run(str(tmp_path), "--decide", "palette", "B 숲").returncode == 0
-    assert run(str(tmp_path), "--decide", "main", "좋아요, 이대로").returncode == 0  # 시안 승인(그 뒤 clear_copies.py)
+    # 시안 승인은 보내기 전 점검이 깨끗할 때만 — 빈 폴더는 점검이 「폴더 구조 다름」을 내서 거절(애견미용 24차)
+    r = run(str(tmp_path), "--decide", "main", "좋아요, 이대로")
+    assert r.returncode == 1 and "승인을 남기지 않았어요" in r.stderr
 
 
 def project_with_board(root: Path) -> None:

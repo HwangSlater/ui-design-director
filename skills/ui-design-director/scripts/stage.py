@@ -180,6 +180,14 @@ def main(argv: list[str]) -> int:
         if saved(root) is None:
             print(f"! {BROKEN}: {root / 'decisions.json'}", file=sys.stderr)
             return 1
+        if argv[2] == "main":  # 걸림이 남은 채 승인을 받고 넘겼다(애견미용 24차: 사진 위 글상자·단추 한 쌍) — 점검이 깨끗해야 승인을 남긴다
+            import preflight
+            left = preflight.check(root)
+            if left:
+                print("보내기 전 점검에 걸린 것이 남아 승인을 남기지 않았어요 — 고친 뒤 다시 보여 드리고 승인을 받으세요:", file=sys.stderr)
+                for line in left[:8]:
+                    print(f"  {line}", file=sys.stderr)
+                return 1
         d = decisions(root)
         d[argv[2]] = argv[3]
         (root / "decisions.json").write_text(json.dumps(d, ensure_ascii=False, indent=1), encoding="utf-8")
