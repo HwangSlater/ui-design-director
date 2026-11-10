@@ -25,6 +25,12 @@ def mock_dir(root: Path) -> Path:
     return root / "mockups" if (root / "mockups").is_dir() else root / "mockup"
 
 
+def base_snapshots(root: Path) -> list[Path]:
+    """바탕 사이트를 통째로 저장한 페이지(formats/snapshot/**/index.html) — 「바탕에도 있나」를 HTML 로 볼 때."""
+    snap = root / "formats" / "snapshot"
+    return sorted(snap.glob("**/index.html")) if snap.is_dir() else []
+
+
 def read(p: Path) -> str:
     """없거나 못 읽는 파일(권한·폴더)은 빈 글로 — 점검 하나 때문에 전체가 멈추지 않게."""
     try:

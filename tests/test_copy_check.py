@@ -113,3 +113,46 @@ def test_white_and_dark_bands_are_not_pale(tmp_path: Path) -> None:
     base = long_page(tmp_path / "base.png", None)
     assert copy_check.pale_bands(base, 1280, long_page(tmp_path / "w.png", "#fcfcfc"), 1280) == []
     assert copy_check.pale_bands(base, 1280, long_page(tmp_path / "d.png", "#1f4a50"), 1280) == []
+
+
+
+def stacked_page(path: Path, bands: list[str], width: int = 1280) -> Path:
+    """흰 페이지에 폭 가득 띠를 차례로(띠 사이에 흰 구역 200px)."""
+    im = Image.new("RGB", (width, 600 + len(bands) * 500 + 200), "#ffffff")
+    d = ImageDraw.Draw(im)
+    for i, colour in enumerate(bands):
+        y = 600 + i * 500
+        d.rectangle((0, y, width, y + 300), fill=colour)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    im.save(path)
+    return path
+
+
+def test_stacked_strong_bands_flagged(tmp_path: Path) -> None:
+    """갈색·벽돌·짙은 갈색 띠가 잇달고 바탕은 하나뿐이면 색 띠 쌓기(플리마켓 14차). 맨 아래 흰 구역은 바닥글로 빠진다."""
+    stacked_page(tmp_path / "formats" / "base-cap" / "base-home-1280.png", ["#383838"])
+    stacked_page(tmp_path / "mockups" / "보낼-그림" / "main-1280.png", ["#6d5a54", "#7f3a2a", "#2b2225"])
+    assert any(line.startswith("색 띠 쌓기(PC): 진한 띠 3개") for line in copy_check.check_project(tmp_path))
+
+
+def test_stacked_bands_the_base_has_or_broken_pass(tmp_path: Path) -> None:
+    base = stacked_page(tmp_path / "base.png", ["#203040", "#304050", "#102030"])
+    ours = stacked_page(tmp_path / "ours.png", ["#6d5a54", "#7f3a2a", "#2b2225"])
+    assert copy_check.stacked_bands(base, 1280, ours, 1280) == ([], 0)
+    plain = stacked_page(tmp_path / "plain.png", [])
+    broken = stacked_page(tmp_path / "broken.png", ["#6d5a54", "#eef4f2", "#7f3a2a", "#eef4f2", "#2b2225"])  # 옅은 띠가 하나씩 끊음
+    assert copy_check.stacked_bands(plain, 1280, broken, 1280) == ([], 0)
+
+
+def test_captures_named_by_view(tmp_path: Path) -> None:
+    """「1-휴대폰.jpg」「2-PC.jpg」처럼 폭 없이 화면 종류로 적은 캡처도 찾고, 폭은 그림 너비로(치과 15차)."""
+    folder = tmp_path / "보낼-그림"
+    page(folder / "1-휴대폰.jpg", "#ffffff", "#eeeeee", "#000000", width=780)  # 2배 캡처
+    page(folder / "2-PC.jpg", "#ffffff", "#eeeeee", "#000000", width=1300)
+    page(folder / "3-spec.jpg", "#ffffff", "#eeeeee", "#000000", width=900)  # spec 안의 pc 는 PC 가 아니다
+    assert copy_check.find_view(folder, "휴대폰") == (folder / "1-휴대폰.jpg", 390)
+    assert copy_check.find_view(folder, "PC") == (folder / "2-PC.jpg", 1300)
+    (folder / "2-PC.jpg").unlink()
+    page(folder / "모바일-이어붙임.jpg", "#ffffff", "#eeeeee", "#000000", width=1210)
+    assert copy_check.find_view(folder, "PC") == (None, None)
+    assert copy_check.css_width(folder / "모바일-이어붙임.jpg", "휴대폰") == 390  # 이어 붙인 그림은 기본 폭

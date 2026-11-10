@@ -13,6 +13,9 @@
 옅은 띠: 같은 두 캡처의 페이지 전체에서 폭 가득한 옅은 색 띠(높이 120px 이상, 흰색·페이지 바탕색이 아님)를 찾아
 바탕 캡처에 같은 색 띠가 없으면 알린다 — 바탕에 없는 연한 청록 띠를 구역 뒤에 깐 것(꽃집 13차). 띠 안의 글·카드는
 가운데에 있으므로 양쪽 끝(각 20px 안팎)이 같은 색인 줄을 띠로 본다. 가운데만 칠한 상자 띠는 보지 않는다.
+색 띠 쌓기: 같은 방법으로 진한 색(밝기 0.75 아래, 흰색·페이지 바탕색 아님, 바닥글 빼고) 띠가 2개 이상 잇달아 바탕보다 많고(사이의 바탕·흰 구역은
+끊지 않음, 다른 옅은 띠는 끊음) 바탕 캡처는 그렇지 않으면 알린다 — 갈색·벽돌·짙은 갈색 판을 줄줄이 깐 것(플리마켓 14차).
+캡처 이름에 폭이 없으면 「휴대폰·모바일·폰·mobile·phone」「PC·데스크톱·컴퓨터·desktop」으로 찾고 폭은 그림 너비로 짐작한다.
 """
 from __future__ import annotations
 
@@ -32,6 +35,9 @@ FIRST_SCREEN = {390: 844, 1280: 900}  # 첫 화면 높이(CSS px) — capture.mj
 # 화면 종류마다 찾을 폭 — 디자이너가 PC 를 1440 으로 찍어 1280 만 찾던 검사가 PC 를 건너뛰었다(NBA 12차)
 VIEWS = {"휴대폰": (390, 375, 360, 414, 430), "PC": (1280, 1440, 1366, 1536, 1600, 1920)}
 VIEW_HEIGHT = {"휴대폰": 844, "PC": 900}
+VIEW_RANGE = {"휴대폰": (320, 480), "PC": (1024, 2000)}  # 그림 너비로 폭을 짐작할 때 한 화면으로 볼 CSS 폭
+VIEW_WORDS = {"휴대폰": re.compile(r"휴대폰|모바일|폰|mobile|phone", re.I),
+              "PC": re.compile(r"(^|[^a-z])pc([^a-z]|$)|데스크톱|컴퓨터|desktop", re.I)}
 GRID_W = 48                            # 짜임 비교 칸 수(가로)
 PALETTE_N = 6
 # NBA 11차(theScore 를 그대로 옮김)가 걸리고, 바탕을 따르되 우리 색·마감을 쓴 시안은 지나가게 잡은 값(2026-11-09 시안 8개로 맞춤)
@@ -101,12 +107,30 @@ def judge(base: Path, ours: Path, width: int, ours_width: int | None = None, hei
 
 
 def find_view(folder: Path, view: str, prefer: str = "") -> tuple[Path, int] | tuple[None, None]:
-    """그 화면 종류(휴대폰·PC)로 찍은 캡처와 그 폭 — 있는 폭 가운데 앞의 것."""
+    """그 화면 종류(휴대폰·PC)로 찍은 캡처와 그 폭 — 이름에 폭이 있는 것 먼저, 없으면 이름에 화면 종류 말
+    (「1-휴대폰.jpg」「2-PC.jpg」 — 치과 15차가 이렇게 적어 캡처 없음으로 건너뛰었다). 폭은 그림 너비로 짐작한다."""
     for width in VIEWS[view]:
         f = find(folder, width, prefer)
         if f:
             return f, width
+    if folder.is_dir():
+        files = sorted((f for f in folder.iterdir() if f.suffix.lower() in (".png", ".jpg", ".jpeg")
+                        and VIEW_WORDS[view].search(f.stem) and not STATE_WORDS.search(f.name)),
+                       key=lambda f: (prefer not in f.name, len(f.name)))
+        if files:
+            return files[0], css_width(files[0], view)
     return None, None
+
+
+def css_width(path: Path, view: str) -> int:
+    """그림 너비로 CSS 폭 짐작 — 1배·2배 캡처면 그 폭, 아니면(여러 화면을 이어 붙인 그림 등) 기본 폭."""
+    lo, hi = VIEW_RANGE[view]
+    with Image.open(path) as im:
+        w = im.width
+    for k in (1, 2):
+        if lo <= w / k <= hi:
+            return round(w / k)
+    return VIEWS[view][0]
 
 
 def pairs(root: Path):
@@ -188,6 +212,8 @@ BAND_LIGHT = 0.88      # 밝기가 이보다 높으면 옅은 색
 BAND_NOT_WHITE = 0.02  # 흰색과 이만큼 떨어져야 색 띠
 BAND_NOT_BG = 0.03     # 페이지 바탕색과 이만큼 떨어져야 따로 깐 띠
 BAND_IN_BASE = 0.04    # 바탕 띠와 이만큼 가까우면 바탕에 있는 색
+BAND_STRONG_L = 0.75   # 밝기가 이보다 낮으면 진한 띠(색 띠 쌓기)
+STACK_MIN = 2          # 진한 띠가 이만큼 잇달고 바탕보다 많으면 색 띠 쌓기(플리마켓 14차: 갈색·벽돌, 바닥글 빼고) — 시안 16개 중 이것만 걸림
 
 
 def cdist(a, b) -> float:
@@ -215,16 +241,53 @@ def colour_runs(path: Path, width: int) -> list[tuple[tuple[int, int, int], floa
     return runs
 
 
+def page_bg(runs) -> tuple[int, int, int]:
+    """가장 길게 깔린 띠 색 = 페이지 바탕색."""
+    return max((r[0] for r in runs), key=lambda c: sum(h for d, _, h in runs if cdist(c, d) < BAND_SAME))
+
+
+def lightness(c) -> float:
+    return colorsys.rgb_to_hls(*(v / 255 for v in c))[1]
+
+
+def strong_stack(path: Path, width: int) -> list[tuple[int, int, int]]:
+    """진한 색(옅지 않고 흰색 아닌) 폭 가득 띠가 잇달아 쌓인 가장 긴 묶음의 색들. 사이의 페이지 바탕·흰 구역은
+    묶음을 끊지 않고(갈색·벽돌·갈색이 바탕 구역을 끼고 번갈아 나온 것도 쌓기), 다른 옅은 색 띠가 끊는다."""
+    runs = colour_runs(path, width)
+    if not runs:
+        return []
+    bg, best, cur = page_bg(runs), [], []
+    # 맨 아래 띠(바닥글)는 세지 않는다 — 진한 바닥글은 흔해서 셋째 띠로 잘못 셌다(플리마켓 14차의 #2b2225)
+    body = runs[:-1] if len(runs) > 1 else runs
+    for c, _, h in body:
+        if h < BAND_MIN_CSS or cdist(c, bg) < BAND_NOT_BG or cdist(c, (255, 255, 255)) < BAND_NOT_WHITE:
+            continue
+        if lightness(c) < BAND_STRONG_L:
+            cur.append(c)
+            best = max(best, cur, key=len)
+        else:
+            cur = []
+    return list(best)
+
+
+def stacked_bands(base: Path, bw: int, ours: Path, ow: int) -> tuple[list[str], int]:
+    """우리 페이지에 진한 띠가 STACK_MIN 개 이상 잇달고 바탕보다 많으면 (#색들, 바탕 묶음 수). 아니면 ([], 0)."""
+    ours_stack, base_n = strong_stack(ours, ow), len(strong_stack(base, bw))
+    if len(ours_stack) < STACK_MIN or len(ours_stack) <= base_n:
+        return [], 0
+    return ["#%02x%02x%02x" % c for c in ours_stack], base_n
+
+
 def pale_bands(base: Path, bw: int, ours: Path, ow: int) -> list[tuple[str, int]]:
     """우리 페이지의 옅은 색 띠 가운데 바탕에 없는 색 — (#색, 띠 수)."""
     runs = colour_runs(ours, ow)
     if not runs:
         return []
-    bg = max((r[0] for r in runs), key=lambda c: sum(h for d, _, h in runs if cdist(c, d) < BAND_SAME))
+    bg = page_bg(runs)
     base_cols = [c for c, _, h in colour_runs(base, bw) if h >= BAND_MIN_CSS]
     found: list[list] = []
     for c, _, h in runs:
-        light = colorsys.rgb_to_hls(*(v / 255 for v in c))[1] > BAND_LIGHT
+        light = lightness(c) > BAND_LIGHT
         if (h < BAND_MIN_CSS or not light or cdist(c, (255, 255, 255)) < BAND_NOT_WHITE or cdist(c, bg) < BAND_NOT_BG
                 or any(cdist(c, b) < BAND_IN_BASE for b in base_cols)):
             continue
@@ -237,8 +300,13 @@ def pale_bands(base: Path, bw: int, ours: Path, ow: int) -> list[tuple[str, int]
 
 
 def band_lines(view: str, base: Path, bw: int, ours: Path, ow: int) -> list[str]:
-    return [f"옅은 띠({view}): {hex_} 줄 {n}개 — 바탕에 없음. 바탕에 없는 색 띠는 생성 티, 구역은 페이지 바탕 위에(build-rules.md § What reads as generated)"
-            for hex_, n in pale_bands(base, bw, ours, ow)]
+    out = [f"옅은 띠({view}): {hex_} 줄 {n}개 — 바탕에 없음. 바탕에 없는 색 띠는 생성 티, 구역은 페이지 바탕 위에(build-rules.md § What reads as generated)"
+           for hex_, n in pale_bands(base, bw, ours, ow)]
+    stack, base_n = stacked_bands(base, bw, ours, ow)
+    if stack:
+        out.append(f"색 띠 쌓기({view}): 진한 띠 {len(stack)}개 잇달아({'·'.join(stack)}), 바탕은 {base_n}개 — 진한 색 판은 "
+                   "바탕이 깐 자리에만, 나머지 구역은 페이지 바탕 위에(build-rules.md § What reads as generated)")
+    return out
 
 
 def check_project(root: Path) -> list[str]:

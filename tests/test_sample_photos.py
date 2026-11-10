@@ -92,3 +92,29 @@ def test_cli_no_results(monkeypatch: pytest.MonkeyPatch, tmp_path: Path, capsys:
     assert sp.main(["없는 주제", "--n", "3", "--out", str(tmp_path / "img")]) == 1
     assert "더 넓은 영어 주제" in capsys.readouterr().out
     assert not (tmp_path / "img").exists()  # 아무것도 만들지 않는다
+
+
+
+def test_place_queries_and_words() -> None:
+    assert sp.place_queries("flea market", "") == ["flea market"]
+    assert sp.place_queries("flea market", "Seoul Korea 서울 망원동") == [
+        "flea market Seoul Korea", "flea market Seoul", "flea market 서울 망원동", "flea market"]
+    words = sp.place_words("Seoul Korea 서울 망원동")
+    assert "망원동" in words and "한국" in words and "korean" in words
+
+
+def test_place_match_ranks_local_first(monkeypatch: pytest.MonkeyPatch) -> None:
+    """장소 말이 있는 사진을 앞에 — 베를린 장터 사진이 망원동 장터 첫 화면에 들어갔다(플리마켓 14차)."""
+    berlin = {"title": "Flohmarkt Berlin Mauerpark", "description": "street market", "source": "berlin-page",
+              "ext": "jpg", "width": 1280, "height": 800}
+    seoul = {"title": "Dongmyo flea market", "description": "Seoul, South Korea", "source": "seoul-page",
+             "ext": "jpg", "width": 1280, "height": 800}
+    asked: list[str] = []
+    monkeypatch.setattr(sp, "search_commons", lambda q, want: asked.append(q) or [dict(berlin), dict(seoul)])
+    monkeypatch.setattr(sp, "search_openverse", lambda q, want, orient: [])
+    monkeypatch.setattr(sp, "PAUSE_S", 0)
+    got = sp.collect("flea market", 4, None, False, "Seoul Korea 서울 망원동")
+    assert [c["source"] for c in got] == ["seoul-page", "berlin-page"]
+    assert got[0]["place"] == "seoul" and got[1]["place"] == ""
+    assert asked[0] == "flea market Seoul Korea" and asked[-1] == "flea market"
+    assert sp.place_match({"title": "Seoulful", "description": ""}, ["seoul"]) == ""  # 낱말 속 글자는 맞음 아님

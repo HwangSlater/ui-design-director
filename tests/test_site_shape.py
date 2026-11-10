@@ -86,3 +86,50 @@ def test_hero_box_over_photo(tmp_path: Path) -> None:
     assert "hero-box" in rules(project(tmp_path / "a", HERO, HERO_CSS))
     assert "hero-box" not in rules(project(tmp_path / "b", HERO, HERO_PLAIN_CSS))
     assert "hero-box" not in rules(project(tmp_path / "c", HERO, HERO_CSS, base="| 2 첫 화면 | 사진 위 흰 글상자에 제목 |\n"))
+
+
+
+DOCTORS = HEAD + """<main><section><h2>의료진</h2>
+<div class="doc"><div class="cover"><span>정</span></div><b>정한결 <small>대표원장</small></b></div>
+<div class="doc"><div class="cover"><span>윤</span></div><b>윤서하 <small>원장</small></b></div>
+<p><span class="tag">휴진</span><span class="tag">야간</span></p>
+<a class="logo" href="index.html"><i>한</i></a></section></main></body></html>"""
+DOCTORS_CSS = (":root { --r-pill: 999px; }\n.doc .cover span { width: 44%; aspect-ratio: 1; border-radius: 50%; }\n"
+               ".tag { padding: 0 10px; border-radius: var(--r-pill); }\n.logo i { border-radius: 50%; }\n")
+ICON_ROW = HEAD + """<main><section><h2>이런 분을 찾아요</h2><ul class="cols">
+<li><svg class="i"></svg><h3>핸드메이드 작가</h3><p>직접 만든 물건을 파는 분</p></li>
+<li><svg class="i"></svg><h3>빈티지 셀러</h3><p>오래된 옷과 그릇을 다시 내놓는 분</p></li>
+<li><svg class="i"></svg><h3>동네 공방</h3><p>근처에서 공방을 꾸리는 분</p></li></ul></section></main></body></html>"""
+PHOTO_ROW = ICON_ROW.replace('<svg class="i"></svg>', '<img src="a.jpg" alt="">')
+
+
+def snapshot(root: Path, html: str) -> None:
+    snap = root / "formats" / "snapshot" / "base-home-1280"
+    snap.mkdir(parents=True, exist_ok=True)
+    (snap / "index.html").write_text(html, encoding="utf-8")
+
+
+def test_letter_circles_flagged_but_pills_and_logo_pass(tmp_path: Path) -> None:
+    lines = site_shape.check_project(project(tmp_path / "a", DOCTORS, DOCTORS_CSS))
+    assert any("letter-circle" in x and "(정·윤)" in x for x in lines)  # 알약 꼬리표 「휴진」, 링크 안 로고 「한」은 빼고
+    one = DOCTORS.replace('<div class="doc"><div class="cover"><span>윤</span></div><b>윤서하 <small>원장</small></b></div>', "")
+    assert "letter-circle" not in rules(project(tmp_path / "b", one, DOCTORS_CSS))
+
+
+def test_icon_row_flagged_unless_base_has_it(tmp_path: Path) -> None:
+    assert "icon-row" in rules(project(tmp_path / "a", ICON_ROW))
+    assert "icon-row" not in rules(project(tmp_path / "b", PHOTO_ROW))  # 사진 칸 줄은 아이콘 줄이 아니다
+    root = project(tmp_path / "c", ICON_ROW)
+    snapshot(root, ICON_ROW.replace("핸드메이드 작가", "Planning"))
+    assert "icon-row" not in rules(root)
+
+
+def test_numbered_steps_the_base_snapshot_has_pass(tmp_path: Path) -> None:
+    """바탕 저장본에 01·02·03 이 CSS content 로 있으면 번호 단계를 보지 않는다(세종스타치과, 치과 15차)."""
+    root = project(tmp_path / "a", STEPS)
+    snapshot(root, '<style>.one::before { content: "01"; } .one::before { content: "01"; } .two::before { content: "02"; }'
+                   ' .thr::before { content: "03"; }</style><body></body>')
+    assert "numbered-steps" not in rules(root)
+    root = project(tmp_path / "b", STEPS)
+    snapshot(root, "<body><p>1</p><p>전화 2,987건</p><p>3</p></body>")  # 1·2·3 이 잇달지 않음
+    assert "numbered-steps" in rules(root)

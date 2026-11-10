@@ -24,7 +24,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 import check_site  # noqa: E402  (접근성 바닥·토큰 어긋남은 check_site.py 하나로 — 마지막 점검 뒤 고친 것도 보낼 때 다시 잡게)
 import copy_check  # noqa: E402  (베낀 티 판단은 copy_check.py 하나로)
 import fonts  # noqa: E402  (AI 글꼴 판단은 fonts.py 하나로)
-import site_shape  # noqa: E402  (메인 페이지 짜임 — 메뉴 내려 담기·구역 수·번호 단계·첫 화면 글상자)
+import site_shape  # noqa: E402  (메인 페이지 짜임 — 메뉴 내려 담기·구역 수·번호 단계·첫 화면 글상자·원 안 글자·아이콘 줄)
 from common import TOOL_DIRS, mock_dir, read, utf8_console  # noqa: E402  (read 는 권한 오류에도 빈 글 — stage.read 와 같게)
 
 # 의뢰인 글에 나오는 말 → 참고·시안에서 찾을 주소 조각
