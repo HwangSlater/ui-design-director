@@ -19,6 +19,10 @@ Do not dump the entire workflow, a large questionnaire, or all unresolved choice
 
 **Read the dislikes back.** After writing `concept-brief.md`, repeat the client's likes and dislikes in one line each and ask them to correct it ("싫은 것: 큰 서점 느낌, 꾸민 감성 카페 — 맞나요?").
 
+## Site type
+
+`concept-brief.md` carries one line `사이트 꼴: 여러 쪽` or `사이트 꼴: 한 쪽 홍보·모집`; `stage.py` does not count the brief as done without it. Infer it from the main job, do not ask a separate question: a shop, service, business, studio, records or information site is 여러 쪽 (each menu item is its own page; the main page only previews, like the base's main page); one event, one recruitment drive or one campaign is 한 쪽 홍보·모집 (one long page, menu links jump down the page). Say it in the same read-back as the dislikes, in the client's words (「메뉴마다 따로 페이지가 있는 가게 홈페이지로 만들어요 — 맞나요?」). Ask outright only when the main job fits both (a shop that mainly wants to advertise one opening event).
+
 ## At each gate
 
 Follow the SKILL.md workflow and `site-plan.md` § Gates (whole site); skip resolved ones. What to ask the user:

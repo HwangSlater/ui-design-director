@@ -1,11 +1,28 @@
 """점검 도구들이 함께 쓰는 파일 읽기와 건너뛸 폴더."""
 from __future__ import annotations
 
+import re
 import sys
 from pathlib import Path
 
 # 어느 점검이든 보지 않는 도구·꾸러미 폴더. 도구마다 더 건너뛸 것은 여기에 합쳐 쓴다
 TOOL_DIRS = frozenset({"node_modules", ".git", "__pycache__"})
+
+
+# concept-brief.md 의 사이트 꼴 줄 — 「여러 쪽」(가게·서비스·회사·기록) 또는 「한 쪽 홍보·모집」(행사·모집·캠페인 하나)
+SITE_KIND = re.compile(r"사이트 꼴\s*[:：]\s*(여러 쪽|한 쪽)")
+ONE_PAGE = "한 쪽"
+
+
+def site_kind(brief: str) -> str | None:
+    """맥락 정리에 적힌 사이트 꼴(「여러 쪽」·「한 쪽」). 줄이 없으면 None — 점검은 여러 쪽으로 본다."""
+    m = SITE_KIND.search(brief)
+    return m.group(1) if m else None
+
+
+def mock_dir(root: Path) -> Path:
+    """시안 폴더 — mockups/ 가 기본, 없으면 mockup/(깡통구제 시안이 이 이름이라 채널·사장님 화면 검사를 통째로 건너뜀)."""
+    return root / "mockups" if (root / "mockups").is_dir() else root / "mockup"
 
 
 def read(p: Path) -> str:

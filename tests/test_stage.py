@@ -21,7 +21,7 @@ def test_empty_project_starts_at_brief(tmp_path: Path) -> None:
 
 
 def test_own_viewer_and_order_are_flagged(tmp_path: Path) -> None:
-    (tmp_path / "concept-brief.md").write_text("주 업무", encoding="utf-8")
+    (tmp_path / "concept-brief.md").write_text("주 업무\n사이트 꼴: 여러 쪽", encoding="utf-8")
     (tmp_path / "formats").mkdir()
     (tmp_path / "formats" / "own.html").write_text("<iframe src=x></iframe>", encoding="utf-8")
     (tmp_path / "mockups").mkdir()
@@ -32,7 +32,7 @@ def test_own_viewer_and_order_are_flagged(tmp_path: Path) -> None:
 
 
 def test_require_and_decide(tmp_path: Path) -> None:
-    (tmp_path / "concept-brief.md").write_text("주 업무", encoding="utf-8")
+    (tmp_path / "concept-brief.md").write_text("주 업무\n사이트 꼴: 여러 쪽", encoding="utf-8")
     (tmp_path / "formats").mkdir()
     (tmp_path / "formats" / "보기.html").write_text('<script id="board-data">{}</script>', encoding="utf-8")
     assert run(str(tmp_path), "--require", "material").returncode == 1
@@ -43,7 +43,7 @@ def test_require_and_decide(tmp_path: Path) -> None:
 
 
 def test_board_next_shows_chat_fallback(tmp_path: Path) -> None:
-    (tmp_path / "concept-brief.md").write_text("주 업무", encoding="utf-8")
+    (tmp_path / "concept-brief.md").write_text("주 업무\n사이트 꼴: 여러 쪽", encoding="utf-8")
     out = run(str(tmp_path)).stdout
     assert '/stage.py . --decide base "<번호 이름>"' in out
 
@@ -53,3 +53,13 @@ def test_korean_survives_cp949_console(tmp_path: Path) -> None:
     env = {**os.environ, "PYTHONIOENCODING": "cp949", "PYTHONUTF8": "0"}
     r = subprocess.run([sys.executable, str(STAGE), str(tmp_path)], capture_output=True, env=env)
     assert "맥락 정리" in r.stdout.decode("utf-8")
+
+
+def test_brief_needs_site_type(tmp_path: Path) -> None:
+    """사이트 꼴 줄이 없으면 맥락 정리가 덜 된 것 — 여러 쪽 사이트를 한 쪽 랜딩으로 짰다(꽃집 13차)."""
+    (tmp_path / "concept-brief.md").write_text("주 업무: 꽃 주문", encoding="utf-8")
+    out = run(str(tmp_path)).stdout
+    assert "[ ] 맥락 정리" in out and "사이트 꼴이 없음" in out
+    assert run(str(tmp_path), "--require", "board").returncode == 1
+    (tmp_path / "concept-brief.md").write_text("주 업무: 모집\n사이트 꼴: 한 쪽 홍보·모집", encoding="utf-8")
+    assert run(str(tmp_path), "--require", "board").returncode == 0

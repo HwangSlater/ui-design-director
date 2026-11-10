@@ -81,3 +81,35 @@ def test_desktop_width_may_differ(tmp_path: Path) -> None:
     page(tmp_path / "formats" / "base-cap" / "base-home-1280.jpg", "#0b0b0b", "#1c1c1c", "#1a73e8")
     page(tmp_path / "mockups" / "보낼-그림" / "main-1440.jpg", "#0b0b0b", "#1c1c1c", "#1a73e8", width=1440)
     assert any("베낀 티(PC)" in line for line in copy_check.check_project(tmp_path))
+
+
+def long_page(path: Path, band: str | None, width: int = 1280) -> Path:
+    """흰 페이지 전체 — band 가 있으면 폭 가득한 옅은 색 띠(300px)와 그 안 가운데 글줄."""
+    im = Image.new("RGB", (width, 2400), "#ffffff")
+    d = ImageDraw.Draw(im)
+    d.rectangle((0, 0, width, 600), fill="#203040")  # 첫 화면 사진 자리(진한 색)
+    if band:
+        d.rectangle((0, 1200, width, 1500), fill=band)
+        d.rectangle((100, 1260, width - 100, 1290), fill="#333333")  # 띠 안 글은 가운데에
+    path.parent.mkdir(parents=True, exist_ok=True)
+    im.save(path)
+    return path
+
+
+def test_pale_band_missing_in_base_is_flagged(tmp_path: Path) -> None:
+    base = long_page(tmp_path / "formats" / "base-cap" / "base-home-1280.png", None)
+    ours = long_page(tmp_path / "mockups" / "보낼-그림" / "main-1280.png", "#eef4f2")
+    assert copy_check.pale_bands(base, 1280, ours, 1280) == [("#eef4f2", 1)]
+    assert any(line.startswith("옅은 띠(PC): #eef4f2 줄 1개 — 바탕에 없음") for line in copy_check.check_project(tmp_path))
+
+
+def test_pale_band_the_base_has_passes(tmp_path: Path) -> None:
+    base = long_page(tmp_path / "base.png", "#f4f0ef")
+    ours = long_page(tmp_path / "ours.png", "#f3f1ee")
+    assert copy_check.pale_bands(base, 1280, ours, 1280) == []
+
+
+def test_white_and_dark_bands_are_not_pale(tmp_path: Path) -> None:
+    base = long_page(tmp_path / "base.png", None)
+    assert copy_check.pale_bands(base, 1280, long_page(tmp_path / "w.png", "#fcfcfc"), 1280) == []
+    assert copy_check.pale_bands(base, 1280, long_page(tmp_path / "d.png", "#1f4a50"), 1280) == []

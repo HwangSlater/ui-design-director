@@ -24,7 +24,8 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 import check_site  # noqa: E402  (접근성 바닥·토큰 어긋남은 check_site.py 하나로 — 마지막 점검 뒤 고친 것도 보낼 때 다시 잡게)
 import copy_check  # noqa: E402  (베낀 티 판단은 copy_check.py 하나로)
 import fonts  # noqa: E402  (AI 글꼴 판단은 fonts.py 하나로)
-from common import TOOL_DIRS, read, utf8_console  # noqa: E402  (read 는 권한 오류에도 빈 글 — stage.read 와 같게)
+import site_shape  # noqa: E402  (메인 페이지 짜임 — 메뉴 내려 담기·구역 수·번호 단계·첫 화면 글상자)
+from common import TOOL_DIRS, mock_dir, read, utf8_console  # noqa: E402  (read 는 권한 오류에도 빈 글 — stage.read 와 같게)
 
 # 의뢰인 글에 나오는 말 → 참고·시안에서 찾을 주소 조각
 CHANNELS = {
@@ -45,11 +46,6 @@ WORK_PAGE = re.compile(r"owner|admin|login|code|lost|confirm|check|404|not-found
 SKIP = TOOL_DIRS | {"cap", "captures", "blind"}
 HISTORY_NAME = "구성-기록.json"  # compose_metrics.mjs 가 결과 .md 옆에 쌓는 기록(같은 이름을 쓴다)
 SITE_LINES_MAX = 20  # check_site 결과를 이보다 많이 늘어놓지 않는다(나머지는 수만)
-
-
-def mock_dir(root: Path) -> Path:
-    """시안 폴더 — mockups/ 가 기본, 없으면 mockup/(깡통구제 시안이 이 이름이라 채널·사장님 화면 검사를 통째로 건너뜀)."""
-    return root / "mockups" if (root / "mockups").is_dir() else root / "mockup"
 
 
 def files(root: Path, pattern: str) -> list[Path]:
@@ -170,6 +166,7 @@ def check(root: Path) -> list[str]:
                 if hits:
                     out.append(f"AI 글꼴: {p.relative_to(root)} — {', '.join(hits)} · references/fonts.md 대로 fonts.py pick 에서 고를 것")
     out += site_checks(mock_dir(root), root)
+    out += site_shape.check_project(root)
     out += changed_refs(root)
     return out
 

@@ -27,7 +27,7 @@ def run_hook(payload: dict) -> subprocess.CompletedProcess:
 
 
 def test_block_passes_exit_2_and_reason(tmp_path: Path) -> None:
-    (tmp_path / "concept-brief.md").write_text("주 업무", encoding="utf-8")
+    (tmp_path / "concept-brief.md").write_text("주 업무\n사이트 꼴: 여러 쪽", encoding="utf-8")
     r = run_hook({"tool_name": "Write", "tool_input": {"file_path": str(tmp_path / "mockups" / "index.html"), "content": "<p>시안</p>"}})
     assert r.returncode == 2
     assert "먼저" in r.stderr.decode("utf-8")

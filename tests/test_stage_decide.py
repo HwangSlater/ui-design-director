@@ -33,7 +33,7 @@ def test_unknown_stage_rejected(tmp_path: Path) -> None:
 def test_missing_before(tmp_path: Path) -> None:
     assert stage.missing_before(tmp_path, "brief") == []
     assert stage.missing_before(tmp_path, "base") == ["brief", "board"]
-    (tmp_path / "concept-brief.md").write_text("주 업무", encoding="utf-8")
+    (tmp_path / "concept-brief.md").write_text("주 업무\n사이트 꼴: 여러 쪽", encoding="utf-8")
     assert stage.missing_before(tmp_path, "base") == ["board"]
 
 
@@ -57,7 +57,7 @@ def test_decide_only_base_and_palette(tmp_path: Path) -> None:
 
 
 def project_with_board(root: Path) -> None:
-    (root / "concept-brief.md").write_text("주 업무", encoding="utf-8")
+    (root / "concept-brief.md").write_text("주 업무\n사이트 꼴: 여러 쪽", encoding="utf-8")
     (root / "formats").mkdir()
     (root / "formats" / "보기.html").write_text('<script id="board-data">{}</script>', encoding="utf-8")
 

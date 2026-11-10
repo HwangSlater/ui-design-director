@@ -10,10 +10,14 @@
 - 색: 0~1. 2026-11-09 시안 4개로 맞춤 — 베낀 NBA 0.97·1.00, 바탕을 따르되 우리 색을 쓴 시안 0.74~0.88
 - 짜임: 참고로만 찍는다(위아래로 밀어 가며 맞춘 가장자리 배치 상관). 글 내용이 다르면 낮게 나와 판정에 쓰지 못했다
 바탕 캡처: formats/base-cap/ · 우리 캡처: mockups/보낼-그림/ (같은 폭, 상태 화면 제외)
+옅은 띠: 같은 두 캡처의 페이지 전체에서 폭 가득한 옅은 색 띠(높이 120px 이상, 흰색·페이지 바탕색이 아님)를 찾아
+바탕 캡처에 같은 색 띠가 없으면 알린다 — 바탕에 없는 연한 청록 띠를 구역 뒤에 깐 것(꽃집 13차). 띠 안의 글·카드는
+가운데에 있으므로 양쪽 끝(각 20px 안팎)이 같은 색인 줄을 띠로 본다. 가운데만 칠한 상자 띠는 보지 않는다.
 """
 from __future__ import annotations
 
 import argparse
+import colorsys
 import json
 import math
 import re
@@ -176,12 +180,74 @@ def own_finish(root: Path) -> list[str]:
             f"{'·'.join(OWN_LAYERS)} 중 둘 이상을 우리 것으로 정해 적을 것(build-rules.md § Make it ours)"]
 
 
+BAND_COLS = 128        # 띠를 찾을 때 줄인 가로 칸 수
+BAND_EDGE = 2          # 양쪽 끝 이만큼 칸이 같은 색이면 폭 가득 띠의 줄
+BAND_MIN_CSS = 120     # 이 높이(CSS px) 이상만 띠
+BAND_SAME = 0.015      # 이어지는 줄을 같은 띠로 볼 색 거리(jpg 얼룩보다 조금 큼)
+BAND_LIGHT = 0.88      # 밝기가 이보다 높으면 옅은 색
+BAND_NOT_WHITE = 0.02  # 흰색과 이만큼 떨어져야 색 띠
+BAND_NOT_BG = 0.03     # 페이지 바탕색과 이만큼 떨어져야 따로 깐 띠
+BAND_IN_BASE = 0.04    # 바탕 띠와 이만큼 가까우면 바탕에 있는 색
+
+
+def cdist(a, b) -> float:
+    return math.dist(a, b) / 441.7
+
+
+def colour_runs(path: Path, width: int) -> list[tuple[tuple[int, int, int], float, float]]:
+    """페이지 전체에서 폭 가득 같은 색인 줄이 이어진 곳 (색, 위 CSS px, 높이 CSS px) — 높이와 상관없이 전부."""
+    im = Image.open(path).convert("RGB")
+    rows = max(1, round(im.height * BAND_COLS / im.width))
+    px = im.resize((BAND_COLS, rows), Image.BOX).load()
+    css = width / BAND_COLS
+    runs, start, col = [], 0, None
+    for y in range(rows + 1):
+        c = None
+        if y < rows:
+            edge = [px[x, y] for x in (*range(BAND_EDGE), *range(BAND_COLS - BAND_EDGE, BAND_COLS))]
+            mean = tuple(sum(p[i] for p in edge) // len(edge) for i in range(3))
+            c = mean if all(cdist(p, mean) < BAND_SAME * 2 for p in edge) else None
+        if c is not None and col is not None and cdist(c, col) < BAND_SAME:
+            continue
+        if col is not None:
+            runs.append((col, start * css, (y - start) * css))
+        start, col = y, c
+    return runs
+
+
+def pale_bands(base: Path, bw: int, ours: Path, ow: int) -> list[tuple[str, int]]:
+    """우리 페이지의 옅은 색 띠 가운데 바탕에 없는 색 — (#색, 띠 수)."""
+    runs = colour_runs(ours, ow)
+    if not runs:
+        return []
+    bg = max((r[0] for r in runs), key=lambda c: sum(h for d, _, h in runs if cdist(c, d) < BAND_SAME))
+    base_cols = [c for c, _, h in colour_runs(base, bw) if h >= BAND_MIN_CSS]
+    found: list[list] = []
+    for c, _, h in runs:
+        light = colorsys.rgb_to_hls(*(v / 255 for v in c))[1] > BAND_LIGHT
+        if (h < BAND_MIN_CSS or not light or cdist(c, (255, 255, 255)) < BAND_NOT_WHITE or cdist(c, bg) < BAND_NOT_BG
+                or any(cdist(c, b) < BAND_IN_BASE for b in base_cols)):
+            continue
+        same = next((f for f in found if cdist(f[0], c) < BAND_IN_BASE), None)
+        if same:
+            same[1] += 1
+        else:
+            found.append([c, 1])
+    return [("#%02x%02x%02x" % c, n) for c, n in found]
+
+
+def band_lines(view: str, base: Path, bw: int, ours: Path, ow: int) -> list[str]:
+    return [f"옅은 띠({view}): {hex_} 줄 {n}개 — 바탕에 없음. 바탕에 없는 색 띠는 생성 티, 구역은 페이지 바탕 위에(build-rules.md § What reads as generated)"
+            for hex_, n in pale_bands(base, bw, ours, ow)]
+
+
 def check_project(root: Path) -> list[str]:
-    """preflight.py 도 부른다 — 바탕 그대로인 팔레트 후보, 우리 것 마감 수, 베낀 티가 있는 폭마다 한 줄."""
+    """preflight.py 도 부른다 — 바탕 그대로인 팔레트 후보, 우리 것 마감 수, 베낀 티·옅은 띠가 있는 폭마다 한 줄."""
     out = palette_copies(root) + own_finish(root)
     for view, base, bw, ours, ow in pairs(root):
         if not base or not ours:
             continue
+        out += band_lines(view, base, bw, ours, ow)
         lay, col, copied = judge(base, ours, bw, ow, VIEW_HEIGHT[view])
         if copied:
             out.append(f"베낀 티({view}): 색 {col:.2f}(짜임 {lay:.2f}) — 첫 화면 색·마감이 바탕과 거의 같음. "
@@ -210,8 +276,11 @@ def main(argv: list[str]) -> int:
             print(f"{view}: 캡처 없음(바탕 {base.name if base else '-'} · 우리 {ours.name if ours else '-'})")
             continue
         lay, col, copied = judge(base, ours, bw, ow, VIEW_HEIGHT[view])
-        rows += copied
+        bands = band_lines(view, base, bw, ours, ow)
+        rows += copied + len(bands)
         print(f"{view}: 짜임 {lay:.2f} · 색 {col:.2f} → {'베낀 티' if copied else '괜찮음'} ({base.name} ↔ {ours.name})")
+        for line in bands:
+            print(line)
     return 1 if rows else 0
 
 

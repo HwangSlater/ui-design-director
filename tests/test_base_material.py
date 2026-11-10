@@ -84,7 +84,7 @@ SPEC = {"pages": [{"key": "home", "label": "첫 화면"}, {"key": "work", "label
 def decided_project(root: Path) -> Path:
     fm = root / "formats"
     fm.mkdir()
-    (root / "concept-brief.md").write_text("주 업무", encoding="utf-8")
+    (root / "concept-brief.md").write_text("주 업무\n사이트 꼴: 여러 쪽", encoding="utf-8")
     (fm / "보기.html").write_text('<script id="board-data">{}</script>', encoding="utf-8")
     (fm / "board-spec.json").write_text(json.dumps(SPEC), encoding="utf-8")
     return fm

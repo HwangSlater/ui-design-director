@@ -18,7 +18,7 @@ import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from common import utf8_console  # noqa: E402  콘솔 한글 깨짐 막기는 common 하나로
+from common import SITE_KIND, utf8_console  # noqa: E402  콘솔 한글 깨짐 막기·사이트 꼴 줄은 common 하나로
 import knowledge  # noqa: E402  (단계마다 볼 규칙은 knowledge.py 하나로)
 
 SKILL = Path(__file__).resolve().parent.parent
@@ -31,6 +31,7 @@ PALETTE_VIEWER = "palette-switcher.js"
 TEMPLATE_MARK = "<!-- 채우기 전 -->"  # base_material.py 가 만든 빈 틀 표시 — 다 채우고 지우기 전에는 바탕 자료가 안 된 것으로 본다
 DECIDABLE = ("base", "palette")  # --decide 로 남기는 확정은 이 둘뿐 — 「board」로 남겨 바탕이 안 정해진 채 남았다
 PROJECT_MARKS = ("concept-brief.md", "decisions.json", "formats/board-spec.json")  # 스킬 프로젝트 폴더 표시
+KIND_LINE = "사이트 꼴: 여러 쪽」 또는 「사이트 꼴: 한 쪽 홍보·모집"
 BROKEN = "decisions.json 을 읽을 수 없어요(JSON 형식이 깨짐) — 손으로 고치기 전에는 --decide 로 쓰지 않습니다"
 
 
@@ -87,8 +88,10 @@ def status(root: Path) -> tuple[dict, list[str]]:
     filled = TEMPLATE_MARK not in read(material[0])
     snap = any((fm / "snapshot").glob("*/index.html")) if (fm / "snapshot").is_dir() else False
     design = read(root / "DESIGN.md")
+    brief = read(root / "concept-brief.md")
     done = {
-        "brief": bool(read(root / "concept-brief.md").strip()),
+        # 사이트 꼴(여러 쪽·한 쪽)이 없으면 맥락 정리가 덜 됨 — 여러 쪽 사이트를 한 쪽 랜딩으로 짰다(꽃집 13차·건축사무소 10차)
+        "brief": bool(brief.strip()) and bool(SITE_KIND.search(brief)),
         "board": bool(boards),
         "base": "base" in d,
         "material": all(p.is_file() for p in material) and snap and filled,
@@ -97,6 +100,8 @@ def status(root: Path) -> tuple[dict, list[str]]:
         "main": (root / "mockups" / "index.html").is_file(),
     }
     issues = [BROKEN] if saved(root) is None else []
+    if brief.strip() and not SITE_KIND.search(brief):
+        issues.append(f"맥락 정리에 사이트 꼴이 없음 — concept-brief.md 에 「{KIND_LINE}」 줄(guided-conversation.md § Site type)")
     issues += [f"공용 틀이 아님: {p.relative_to(root)} — 보기 화면은 make_live_board.py 로만 만든다" for p in own_boards]
     issues += [f"공용 틀이 아님: {p.relative_to(root)} — 팔레트 화면은 palette-switcher.js 틀로만 만든다(comparison-board.md § Palettes)" for p in own_pals]
     # 순서 어김: 뒤 단계의 결과물이 앞 단계 확정 없이 생겼다
@@ -142,7 +147,7 @@ def output_block(out: Path, need: str) -> str | None:
 
 
 NEXT = {
-    "brief": "concept-brief.md 에 맥락(주 업무·손님·싫은 것·사진 누구 것)을 적는다 — 질문은 한 번에 하나",
+    "brief": f"concept-brief.md 에 맥락(주 업무·손님·싫은 것·사진 누구 것)과 「{KIND_LINE}」 줄을 적는다 — 질문은 한 번에 하나, 사이트 꼴은 주 업무에서 짐작해 되읽기에서 확인",
     "board": f"후보 spec(formats/board-spec.json) → node {S}/live_proxy.mjs formats/board-spec.json (공용 틀 보기 화면을 만들고 OPEN 주소 하나를 찍는다 — 그 주소만 의뢰인에게. 「확정」은 DECISION 줄과 formats/decision.json 으로 온다). 의뢰인이 채팅으로 고르면: python {S}/stage.py . --decide base \"<번호 이름>\"",
     "base": f"의뢰인이 보기 화면에서 「확정」을 누르기를 기다린다(live_proxy.mjs 가 DECISION 줄을 찍고 formats/decision.json 을 쓴다). 채팅으로 답하면: python {S}/stage.py . --decide base \"<번호 이름>\"",
     "material": f"고른 바탕에 대해 먼저: python {S}/base_material.py . (바탕 주소는 확정과 board-spec.json 에서 읽어 「바탕 주소:」로 찍는다 — 그 주소를 아래 <바탕 주소> 에. jobs-base.json·바탕-구성.md 틀) → node {S}/snapshot.mjs formats/jobs-base.json formats/snapshot · node {S}/motion.mjs <바탕 주소> formats/바탕-움직임.md · node {S}/capture.mjs formats/jobs-base.json formats/base-cap · node {S}/extract_styles.mjs <바탕 주소> formats/추출-1280.json --width 1280 → formats/바탕-구성.md 를 채우고 맨 위 「채우기 전」 줄을 지운다",

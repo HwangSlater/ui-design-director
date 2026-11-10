@@ -104,6 +104,7 @@ Some of what changed:
 | Dashed 「… 자리」 empty boxes | "Leave missing content as labelled slots" | Short sample text, flagged in one line at the foot |
 | The same fonts every time | Font candidates offered from memory; a font in the palette template's example | Pick only from a table of 835 fonts (free fonts measured on the 186 most-visited Korean sites, plus company and public-body fonts on 눈누 that allow web embedding); 17 AI-default faces blocked by the hook |
 | Emoji icons, wide tracking, glows | Not in the list | Signs from unslop (CC BY 4.0) added to the rules; `check_site.py` flags them |
+| Every menu item stuffed into a one-page main page, 1·2·3 step rows, pale bands, a text box over the hero photo | No site type chosen; not in the list | 「사이트 꼴」 in the brief, the main page follows the base's main page; `site_shape.py` and `copy_check.py` flag them |
 | Browsers piling up, machine slowing | Edge's main process survived each tool | Tools close the whole process tree; the hook sweeps leftovers after every turn |
 
 Each roleplay — what was checked and what changed — is logged in [docs/역할극-기록.md](docs/역할극-기록.md) (Korean). Tokens are measured too, aiming for one home page within an ordinary plan's limits.

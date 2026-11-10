@@ -13,7 +13,7 @@ const { stageBlock } = await import(pathToFileURL(join(SCRIPTS, "stage_guard.mjs
 
 const project = () => {
   const root = mkdtempSync(join(tmpdir(), "stage-guard-"));
-  writeFileSync(join(root, "concept-brief.md"), "주 업무");
+  writeFileSync(join(root, "concept-brief.md"), "주 업무\n사이트 꼴: 여러 쪽");
   mkdirSync(join(root, "formats"));
   writeFileSync(join(root, "formats", "보기.html"), '<script id="board-data">{}</script>');
   writeFileSync(join(root, "formats", "jobs-base.json"), "[]");

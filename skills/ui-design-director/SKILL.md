@@ -22,7 +22,8 @@ Copy this checklist into your reply when you start and tick it as you go. Before
 
 ```
 - [ ] brief     concept-brief.md: main job, customers, dislikes, 「사진이 있으세요?」 (yes/no; if no, sample_photos.py
-                and letter marks — sample-photos.md), one question at a time;
+                and letter marks — sample-photos.md), one question at a time; 「사이트 꼴: 여러 쪽」 or
+                「사이트 꼴: 한 쪽 홍보·모집」 inferred and read back (guided-conversation.md § Site type);
                 companion-skills.md § Start-of-project check, once, with the machine owner
 - [ ] board     candidates by design-selection.md §§ 2–3 → formats/board-spec.json →
                 node ${CLAUDE_SKILL_DIR}/scripts/live_proxy.mjs formats/board-spec.json   (background)

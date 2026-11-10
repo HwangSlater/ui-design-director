@@ -15,7 +15,7 @@ def hook(tool: str, **inp: object) -> subprocess.CompletedProcess:
 
 
 def brief(root: Path) -> None:
-    (root / "concept-brief.md").write_text("주 업무", encoding="utf-8")
+    (root / "concept-brief.md").write_text("주 업무\n사이트 꼴: 여러 쪽", encoding="utf-8")
 
 
 def test_outside_project_passes(tmp_path: Path) -> None:
