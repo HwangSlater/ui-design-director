@@ -137,8 +137,17 @@ def pairs(root: Path):
     """화면 종류마다 (종류, 바탕, 바탕 폭, 우리, 우리 폭) — 하나라도 없으면 None 자리."""
     for view in VIEWS:
         base, bw = find_view(root / "formats" / "base-cap", view, prefer="home")
-        ours, ow = find_view(root / "mockups" / "보낼-그림", view, prefer="main")
+        # 페이지 전체 캡처(mockups/cap)를 먼저 — 보낼 그림이 화면 이어 붙임·첫 화면뿐이면 띠 점검이 아래쪽을 못 봤다(빵집 35차)
+        ours, ow = find_view(root / "mockups" / "cap", view, prefer="main")
+        if not ours or not full_page(ours):
+            ours, ow = find_view(root / "mockups" / "보낼-그림", view, prefer="main")
         yield view, base, bw, ours, ow
+
+
+def full_page(path: Path) -> bool:
+    """세로로 긴 페이지 전체 캡처인가(화면 이어 붙임·첫 화면만이면 아니다)."""
+    with Image.open(path) as im:
+        return im.height >= im.width * 1.3
 
 
 def find(folder: Path, width: int, prefer: str = "") -> Path | None:
@@ -368,6 +377,8 @@ def check_project(root: Path) -> list[str]:
     out = palette_copies(root) + own_finish(root)
     cache = cached_bands(root)
     for view, base, bw, ours, ow in pairs(root):
+        if ours and not full_page(ours) and (base or view in cache):
+            out.append(f"전체 캡처 없음({view}): {ours.name} 는 첫 화면·이어 붙인 그림뿐 — 띠 점검을 못 함. capture.mjs 로 페이지 전체를 mockups/cap 에 찍는다")
         if ours and not base and view in cache:  # 승인 뒤 캡처를 지웠어도 띠 점검은 남긴 사실로
             out += band_lines(view, cache[view], cache[view]["width"], ours, ow)
         if not base or not ours:

@@ -44,7 +44,8 @@ def test_same_finish_is_copy(tmp_path: Path) -> None:
 
 def test_own_colours_pass(tmp_path: Path) -> None:
     root = project(tmp_path, ("#f4efe6", "#ffffff", "#c2410c"))
-    assert copy_check.check_project(root) == []
+    # 첫 화면만 찍은 그림이라 「전체 캡처 없음」은 남는다(빵집 35차) — 색은 통과
+    assert [line for line in copy_check.check_project(root) if not line.startswith("전체 캡처 없음")] == []
 
 
 def test_palette_candidate_equal_to_base(tmp_path: Path) -> None:
@@ -196,3 +197,11 @@ def test_cream_page_on_white_base(tmp_path: Path) -> None:
     assert any(line.startswith("바탕색(PC)") for line in copy_check.band_lines("PC", white, 1280, ours, 1280))
     cream = page(tmp_path / "c.png", "#faf4e6")
     assert not any(line.startswith("바탕색") for line in copy_check.band_lines("PC", cream, 1280, ours, 1280))
+
+
+def test_full_capture_preferred_over_contact_sheet(tmp_path: Path) -> None:
+    """보낼 그림이 화면 이어 붙임·첫 화면뿐이면 mockups/cap 의 전체 캡처로 띠를 본다(빵집 35차)."""
+    long_page(tmp_path / "formats" / "base-cap" / "base-home-1280.png", None)
+    long_page(tmp_path / "mockups" / "cap" / "main-1280.png", "#ffe6e1")
+    page(tmp_path / "mockups" / "보낼-그림" / "컴퓨터-첫화면.jpg", "#ffffff", "#eeeeee", "#000000", width=1200)
+    assert any(line.startswith("옅은 띠(PC)") for line in copy_check.check_project(tmp_path))
