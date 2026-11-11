@@ -25,161 +25,28 @@ from __future__ import annotations
 
 import re
 import sys
-from html.parser import HTMLParser
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from common import ONE_PAGE, base_marks, base_snapshots, mock_dir, read, save_base_marks, site_kind, utf8_console  # noqa: E402
+# 나무·꼴 판단은 둘로 나눴다(파일 길이 한도) — 예전 이름(site_shape.parse·section_heads …)도 그대로 쓰이게 다시 내보낸다
+from site_tree import *  # noqa: E402,F401,F403
+from site_tree import _next_el, _tree  # noqa: E402,F401
+from site_tells import *  # noqa: E402,F401,F403
+from site_tells import _icon_item, _is_icon  # noqa: E402,F401
 
-VOID = {"area", "base", "br", "col", "embed", "hr", "img", "input", "link", "meta", "source", "track", "wbr"}
+
 SKIP_TARGETS = {"#", "#main", "#top", "#content", "#home", "#body"}
+
+
 FILTER_ATTRS = ("data-cat", "data-filter", "data-tab", "data-sort", "aria-controls")
-STEP_HEADING = re.compile(r"순서|방법|이렇게|과정|단계|\bhow\b|\bsteps?\b", re.I)
-NUMERALS = [("1", "2", "3", "4"), ("01", "02", "03", "04"), ("하나", "둘", "셋", "넷"), ("첫째", "둘째", "셋째", "넷째")]
-# 바탕이 번호 단계를 가졌다는 말. 「순서」만으로는 안 된다 — 바탕-구성.md 표 머리(「순서 | 구획」)와 「같은 순서로」에 늘 나온다
-BASE_STEPS = re.compile(r"(주문|이용|진행|예약|작업)\s*(순서|단계)|순서\s*안내|단계별|\d\s*단계|번호\s*(단계|매긴)|\bsteps?\b|how it works", re.I)
-BASE_HERO_BOX = re.compile(r"글상자|(첫 화면|사진 위|사진에)[^\n|]{0,30}상자")
+
+
 EXTRA_SECTIONS = 2
-PAINT = re.compile(r"^(background|background-color)$")
-NEUTRAL_BG = re.compile(r"^(#fff(fff)?|white|#fefefe|#fafafa|var\(--[\w-]*(bg|surface|paper|page)[\w-]*\))", re.I)  # 바탕·흰 면은 「색을 깐 칸」이 아니다
-NO_PAINT = re.compile(r"^(none|transparent|inherit|initial|unset|rgba\([^)]*,\s*0\)|0)$")
-RULE = re.compile(r"([^{}]+)\{([^{}]*)\}")
-DECL = re.compile(r"([-\w]+)\s*:\s*([^;]+)")
-BARE_TAG = re.compile(r"^[a-z][a-z0-9]*$")
-VAR = re.compile(r"var\(\s*(--[-\w]+)\s*(?:,\s*([^)]+))?\)")
-CUSTOM_PROP = re.compile(r"(--[-\w]+)\s*:\s*([^;{}]+)")
+
+
 # 바탕 저장본의 번호 칸 — CSS content:"01", 또는 글 칸 「01」「1.」
 BASE_NUMBER = re.compile(r"""content\s*:\s*["'](\d{1,2})\.?["']|>\s*(\d{1,2})(?:\.\s|\.?\s*<)""")
-SHORT_LETTERS = re.compile(r"^[가-힣A-Za-z]{1,2}$")
-INTERACTIVE = ("a", "button", "label", "select", "nav")
-ICON_CLASS = re.compile(r"(^|[-_\s])(icon|ico)([-_\s]|$)", re.I)
-ROW_HEAD = ("h2", "h3", "h4", "h5", "strong", "b", "dt")
-ROW_HEAD_MAX = 30   # 아이콘 줄 제목 글자 수
-ROW_TEXT_MAX = 90   # 두 줄 안쪽 설명 글자 수
-LAST_PART = re.compile(r"[^\s>+~]+$")
-
-
-class Node:
-    def __init__(self, tag: str, attrs: dict, line: int, parent: "Node | None") -> None:
-        self.tag, self.attrs, self.line, self.parent = tag, attrs, line, parent
-        self.kids: list[Node] = []
-        self.items: list = []  # 글과 하위 요소를 나온 차례대로(보이는 글을 순서대로 잇는다)
-
-    def walk(self):
-        yield self
-        for k in self.kids:
-            yield from k.walk()
-
-    def visible(self) -> str:
-        if self.tag in ("script", "style", "svg"):
-            return ""
-        return " ".join(" ".join(i if isinstance(i, str) else i.visible() for i in self.items).split())
-
-    def inside_node(self, node: "Node") -> bool:
-        p = self.parent
-        while p:
-            if p is node:
-                return True
-            p = p.parent
-        return False
-
-    def inside(self, *tags: str) -> bool:
-        p = self.parent
-        while p:
-            if p.tag in tags:
-                return True
-            p = p.parent
-        return False
-
-
-class Tree(HTMLParser):
-    def __init__(self) -> None:
-        super().__init__(convert_charrefs=True)
-        self.root = Node("#doc", {}, 0, None)
-        self.cur = self.root
-        self.css: list[str] = []
-        self.links: list[str] = []
-
-    def handle_starttag(self, tag, attrs):
-        a = {k: (v or "") for k, v in attrs}
-        node = Node(tag, a, self.getpos()[0], self.cur)
-        self.cur.kids.append(node)
-        self.cur.items.append(node)
-        if tag == "link" and "stylesheet" in a.get("rel", ""):
-            self.links.append(a.get("href", ""))
-        if tag not in VOID:
-            self.cur = node
-
-    def handle_startendtag(self, tag, attrs):
-        self.handle_starttag(tag, attrs)
-        if tag not in VOID and self.cur.tag == tag:
-            self.cur = self.cur.parent or self.root
-
-    def handle_endtag(self, tag):
-        n = self.cur
-        while n is not self.root and n.tag != tag:
-            n = n.parent
-        if n is not self.root:
-            self.cur = n.parent or self.root
-
-    def handle_data(self, data):
-        if self.cur.tag == "style":
-            self.css.append(data)
-        self.cur.items.append(data)
-
-
-def parse(page: Path) -> Tree:
-    t = Tree()
-    t.feed(read(page))
-    t.close()
-    for href in t.links:  # 같은 폴더의 CSS 만(주소로 받는 글꼴 CSS 등은 건너뜀)
-        if href and "://" not in href and not href.startswith("//"):
-            t.css.append(read(page.parent / href.split("?")[0]))
-    return t
-
-
-def css_index(texts: list[str]) -> dict[str, dict[str, str]]:
-    """「.클래스」·「#id」 → 선언. 선택자의 마지막 조각만 보고, :hover 같은 상태 선택자는 뺀다."""
-    out: dict[str, dict[str, str]] = {}
-    for text in texts:
-        text = re.sub(r"/\*.*?\*/", "", text, flags=re.S)
-        for m in RULE.finditer(text):
-            decls = {p.lower(): v.strip().lower() for p, v in DECL.findall(m.group(2))}
-            for sel in m.group(1).split(","):
-                last = LAST_PART.search(sel.strip())
-                if not last or ":" in last.group(0) or "@" in sel:
-                    continue
-                keys = re.findall(r"[.#][-\w]+", last.group(0))
-                before = sel.strip()[:last.start()].split()
-                if not keys and BARE_TAG.match(last.group(0)) and before:  # 「.cover span」 → 부모 클래스 아래 태그 열쇠
-                    keys = [f"{k} {last.group(0)}" for k in re.findall(r"\.[-\w]+", before[-1])[-1:]]
-                for key in keys:
-                    out.setdefault(key, {}).update(decls)
-    return out
-
-
-def custom_props(texts: list[str]) -> dict[str, str]:
-    """CSS 변수(--이름: 값) — 둥근 모서리가 var(--r-pill) 로 적혀 있어 값을 풀어 본다."""
-    out: dict[str, str] = {}
-    for text in texts:
-        out.update({k: v.strip().lower() for k, v in CUSTOM_PROP.findall(re.sub(r"/\*.*?\*/", "", text, flags=re.S))})
-    return out
-
-
-def style_of(node: Node, css: dict) -> dict[str, str]:
-    s: dict[str, str] = {}
-    p, depth = node.parent, 0
-    while p and depth < 3:  # 「.부모 태그」 규칙 — 가까운 부모 것이 이기게 먼 부모 것은 빈 자리만 채운다
-        for c in p.attrs.get("class", "").split():
-            for k, v in css.get(f".{c} {node.tag}", {}).items():
-                s.setdefault(k, v)
-        p, depth = p.parent, depth + 1
-    for c in node.attrs.get("class", "").split():
-        s.update(css.get("." + c, {}))
-    if node.attrs.get("id"):
-        s.update(css.get("#" + node.attrs["id"], {}))
-    s.update({p.lower(): v.strip().lower() for p, v in DECL.findall(node.attrs.get("style", ""))})
-    return s
 
 
 def menu_links(tree: Tree) -> list[str]:
@@ -218,25 +85,6 @@ def base_rows(text: str) -> int:
     return count
 
 
-def step_rows(tree: Tree) -> Node | None:
-    for n in tree.root.walk():
-        kids = [k for k in n.kids if k.tag not in ("script", "style")]
-        if 3 <= len(kids) <= 4 and len({k.tag for k in kids}) == 1 and not n.inside("nav") and n.tag != "nav":
-            texts = [k.visible() for k in kids]
-            for nums in NUMERALS:
-                if all(t.startswith(num) and not re.match(r"[\d,.:/]", t[len(num):len(num) + 1]) and len(t) > len(num) + 2
-                       for t, num in zip(texts, nums)):
-                    return n
-        if n.tag == "ol" and 3 <= len([k for k in n.kids if k.tag == "li"]) <= 4:
-            sec = n.parent
-            while sec and sec.tag not in ("section", "article", "main", "#doc"):
-                sec = sec.parent
-            heads = [h.visible() for h in (sec.walk() if sec else []) if h.tag in ("h1", "h2", "h3")][:1]
-            if heads and STEP_HEADING.search(heads[0]):
-                return n
-    return None
-
-
 def base_facts(root: Path) -> dict:
     """바탕 저장본이 있으면 재서 formats/바탕-표지.json 에 남기고, 지워졌으면 남긴 것을 읽는다."""
     if not base_snapshots(root):
@@ -273,218 +121,6 @@ def _numbered(root: Path) -> bool:
     return False
 
 
-def is_round(s: dict[str, str], props: dict[str, str]) -> bool:
-    r = s.get("border-radius", "")
-    for _ in range(3):  # var() 를 몇 겹까지 푼다
-        r = VAR.sub(lambda m: props.get(m.group(1), m.group(2) or ""), r)
-    m = re.match(r"\s*([\d.]+)(%|px|r?em)", r)
-    if not m:
-        return False
-    v, unit = float(m.group(1)), m.group(2)
-    if unit == "%":
-        return v >= 40
-    # 999px 는 알약 꼬리표(「휴진」)에도 쓴다 — 가로세로가 같다고 적힌 것만 원으로
-    square = s.get("aspect-ratio", "").replace(" ", "") in ("1", "1/1") or (s.get("width") and s.get("width") == s.get("height"))
-    return bool(square) and v >= (999 if unit == "px" else 50)
-
-
-def letter_circles(tree: Tree, css: dict, props: dict[str, str]) -> list[Node]:
-    """둥근 칸 안 한두 글자. 링크·단추·메뉴 안은 뺀다. 원 안의 span 처럼 겹친 것은 하나로."""
-    out: list[Node] = []
-    for n in tree.root.walk():
-        if n.tag in INTERACTIVE or n.inside(*INTERACTIVE) or not SHORT_LETTERS.match(n.visible()):
-            continue
-        if is_round(style_of(n, css), props) and not any(o is n or n in list(o.walk()) for o in out):
-            out.append(n)
-    return out
-
-
-def _is_icon(n: Node) -> bool:
-    if n.tag == "svg":
-        return True
-    cls = n.attrs.get("class", "")
-    if n.tag == "img":
-        return bool(ICON_CLASS.search(cls) or re.search(r"icon|\.svg($|\?)", n.attrs.get("src", ""), re.I))
-    return not n.visible() and (bool(ICON_CLASS.search(cls)) or any(k.tag == "svg" for k in n.walk()))
-
-
-def _icon_item(n: Node) -> bool:
-    """아이콘 → 짧은 제목 → (두 줄 안쪽 글) 한 칸."""
-    kids = [k for k in n.kids if k.tag not in ("script", "style")]
-    if not 2 <= len(kids) <= 3 or not _is_icon(kids[0]):
-        return False
-    head = kids[1]
-    if head.tag not in ROW_HEAD or not 0 < len(head.visible()) <= ROW_HEAD_MAX:
-        return False
-    return len(kids) == 2 or (not any(k.tag in ROW_HEAD for k in kids[2].walk()) and len(kids[2].visible()) <= ROW_TEXT_MAX)
-
-
-LEAD_MAX = 45      # 제목 바로 밑 이 글자 수 이하 = 「회색 한 줄 설명」
-EYEBROW_MAX = 24   # 제목 바로 위 이 글자 수 이하 = 작은 윗줄
-HEADS_MIN = 3      # 이만큼 구역이 같은 머리(윗줄·제목·한 줄)로 열리면 생성 티 — 2 로는 주소·안내 칸(수학학원 29차)까지 걸렸다
-CTA_MAX = 3        # 같은 곳으로 가는 채운 단추가 이보다 많으면 단추 되풀이
-
-
-def _tree(page: Path) -> Tree:
-    t = Tree()
-    t.feed(read(page))
-    t.close()
-    return t
-
-
-def _next_el(n: Node, step: int) -> Node | None:
-    if not n.parent:
-        return None
-    kids = n.parent.kids
-    i = kids.index(n) + step
-    return kids[i] if 0 <= i < len(kids) else None
-
-
-def section_heads(tree: Tree) -> list[Node]:
-    """제목(h2) 바로 밑 짧은 한 줄, 또는 바로 위 작은 윗줄로 여는 구역 머리 — 애견미용 19차 4번, 스킬 없는 AI 시안은 윗줄 5번."""
-    out = []
-    for h in (n for n in tree.root.walk() if n.tag == "h2" and not n.inside("a")):  # 링크 칸 안 제목은 구역 머리가 아니다
-        after, before = _next_el(h, 1), _next_el(h, -1)
-        lead = after is not None and after.tag == "p" and 0 < len(after.visible()) <= LEAD_MAX
-        brow = before is not None and before.tag in ("p", "span", "div", "small") and 0 < len(before.visible()) <= EYEBROW_MAX and not before.kids
-        if lead or brow:
-            out.append(h)
-    return out
-
-
-def cta_repeat(tree: Tree) -> tuple[str, int]:
-    """같은 주소로 가는 단추 꼴 링크가 가장 많은 것 (주소, 수) — 19차는 네이버 예약 단추 5개, 바탕은 2개."""
-    count: dict[str, int] = {}
-    for n in tree.root.walk():
-        cls = n.attrs.get("class", "")
-        if n.tag in ("a", "button") and re.search(r"btn|button|cta", cls, re.I) and n.attrs.get("href", "#") not in ("", "#"):
-            count[n.attrs["href"]] = count.get(n.attrs["href"], 0) + 1
-    return max(count.items(), key=lambda kv: kv[1], default=("", 0))
-
-
-PLACEHOLDER_NAME = re.compile(r"가게\s*이름|상호\s*명|업체\s*명|브랜드\s*명|회사\s*이름|your\s*(brand|company|logo)|\blogo\b|사이트\s*이름", re.I)
-
-
-FAQ_MAX = 6   # 메인 페이지의 펼침 질문이 이보다 많고 바탕보다 많으면 — 21차는 11개, 바탕·스킬 없는 AI 는 0
-
-
-def faq_items(tree: Tree) -> int:
-    """펼침 질문 수 — details, aria-expanded 단추."""
-    return sum(1 for n in tree.root.walk() if n.tag == "details" or (n.tag == "button" and "aria-expanded" in n.attrs))
-
-
-REVIEW_HEAD = re.compile(r"후기|리뷰|review|testimonial|고객\s*(이야기|한마디)|보호자\s*이야기", re.I)
-REVIEW_GIVEN = re.compile(r"(실제|받은|보내 준|준)\s*후기|후기\s*[:：]|리뷰\s*[:：]")
-
-
-def made_up_reviews(tree: Tree, brief: str) -> Node | None:
-    """후기 제목이 있는데 맥락 정리에 의뢰인이 준 후기가 없으면 그 제목(애견미용 24차 「보호자 후기」 견본)."""
-    if REVIEW_GIVEN.search(brief):
-        return None
-    return next((n for n in tree.root.walk() if n.tag in ("h2", "h3") and REVIEW_HEAD.search(n.visible())), None)
-
-
-STAT_TEXT = re.compile(r"^[^\s]{0,3}\d[\d,.]*\s?[^\s]{0,4}$")  # 「8명」「주 3회」「6년」「120+」
-
-
-STEP_NO = re.compile(r"^(0?\d|\d단계|step\d)$", re.I)
-
-
-def stat_tiles(tree: Tree) -> Node | None:
-    """형제 3~6개가 저마다 짧은 숫자 글(「8명」「주 3회」)로 시작하는 큰 숫자 칸 줄 — 바탕·스킬 없는 AI 둘 다 없던 것(수학학원 26·28차)."""
-    for par in tree.root.walk():
-        kids = [k for k in par.kids if k.tag in ("li", "div", "article", "dl", "figure")]
-        if not 3 <= len(kids) <= 6:
-            continue
-        hits = 0
-        for k in kids:
-            first = next((n for n in k.walk() if n is not k and not n.kids and n.visible()), None)
-            t = first.visible().replace(" ", "") if first is not None else ""
-            if STEP_NO.match(t):  # 1·2·3, 01, 1단계 는 번호 단계(numbered-steps 가 본다)
-                continue
-            if t and STAT_TEXT.match(t[:10]) and any(ch.isdigit() for ch in t):
-                hits += 1
-        if hits >= 3 and hits >= len(kids) - 1:
-            return par
-    return None
-
-
-OVERLINE_MAX = 30  # 제목 바로 위 이 글자 수 이하의 글 한 줄 = 작은 윗줄
-
-
-def overline(tree: Tree) -> Node | None:
-    """h1·h2 바로 위 짧은 글 한 줄(「11월 11일 수요일 · 오늘 나오는 시간」) — 한 곳만 있어도 생성 티(빵집 34차). 그 제목을 돌려준다."""
-    for h in tree.root.walk():
-        if h.tag not in ("h1", "h2") or h.inside("a", "header", "footer"):
-            continue
-        before = _next_el(h, -1)
-        if before is not None and before.tag in ("p", "span", "small", "div") and not before.kids and 0 < len(before.visible()) <= OVERLINE_MAX:
-            return h
-    return None
-
-
-def cta_box(tree: Tree, css: dict) -> Node | None:
-    """첫 화면·머리·바닥 밖에서 색을 깐 칸 안에 제목과 단추 — 「단체 주문 / 전화하기」 남색 칸(빵집 30차). 끝 띠가 아니어도, 안쪽으로 들여도."""
-    tops = [n for n in tree.root.walk() if n.tag == "section" and not n.inside("section", "article", "header", "footer")]
-    first = tops[0] if tops else None
-    for n in tree.root.walk():
-        if n.tag not in ("section", "div", "aside") or n.inside("header", "footer") or n is first or (first is not None and n.inside_node(first)):
-            continue
-        s = style_of(n, css)
-        painted = any(PAINT.match(p) and not NO_PAINT.match(v) and "url(" not in v and not NEUTRAL_BG.match(v) for p, v in s.items())
-        if not painted:
-            continue
-        heads = [k for k in n.walk() if k.tag in ("h2", "h3")]
-        btns = [k for k in n.walk() if k.tag in ("a", "button") and re.search(r"btn|button|cta", k.attrs.get("class", ""), re.I)]
-        links = [k for k in n.walk() if k.tag == "a"]
-        if heads and btns and len(links) <= 3 and len(heads) <= 2:
-            return n
-    return None
-
-
-def closing_band(tree: Tree, css: dict) -> Node | None:
-    """바닥글 바로 앞 덩어리가 색을 깐 칸에 제목·단추를 담은 마무리 띠면 그 칸 — 스킬 없는 AI 시안의 끝맺음(애견미용 25차·수학학원 26차)."""
-    foot = next((n for n in tree.root.walk() if n.tag == "footer" and not n.inside("footer")), None)
-    if not foot or not foot.parent:
-        return None
-    sibs = [k for k in foot.parent.kids if k.tag not in ("script", "style", "link")]
-    i = sibs.index(foot)
-    prev = sibs[i - 1] if i else None
-    if prev is not None and prev.tag == "main":
-        inner = [k for k in prev.kids if k.tag not in ("script", "style")]
-        prev = inner[-1] if inner else None
-    if prev is None:
-        return None
-    for n in prev.walk():
-        if n.tag not in ("section", "div", "aside"):
-            continue
-        s = style_of(n, css)
-        painted = any(PAINT.match(p) and not NO_PAINT.match(v) and "url(" not in v for p, v in s.items())
-        has_head = any(k.tag in ("h2", "h3") for k in n.walk())
-        has_btn = any(k.tag in ("a", "button") and re.search(r"btn|button|cta", k.attrs.get("class", ""), re.I) for k in n.walk())
-        if painted and has_head and has_btn:
-            return n
-    return None
-
-
-def placeholder_name(tree: Tree) -> str | None:
-    """제목(title)·머리 로고 글에 이름 대신 빈칸 말(「가게 이름」)이 있으면 그 말."""
-    for n in tree.root.walk():
-        if n.tag == "title" or (n.tag == "header" and not n.inside("header")):
-            m = PLACEHOLDER_NAME.search(" ".join(i for i in n.items if isinstance(i, str)) if n.tag == "title" else n.visible())
-            if m:
-                return m.group(0)
-    return None
-
-
-def icon_row(tree: Tree) -> Node | None:
-    for n in tree.root.walk():
-        kids = [k for k in n.kids if k.tag not in ("script", "style")]
-        if 3 <= len(kids) <= 4 and len({k.tag for k in kids}) == 1 and all(_icon_item(k) for k in kids):
-            return n
-    return None
-
-
 def _icon_row(root: Path) -> bool:
     """바탕 저장본에 같은 짜임(아이콘·제목·짧은 글 3~4칸)의 줄이 있는가."""
     for page in base_snapshots(root):
@@ -494,46 +130,6 @@ def _icon_row(root: Path) -> bool:
         if icon_row(t):
             return True
     return False
-
-
-def sample_marks(tree: Tree) -> list[Node]:
-    """페이지 끝 「견본」 한 줄 밖에서 글로 「견본」을 단 곳(사진 밑 「진료실 — 견본 사진」, 「…(견본)」).
-    바닥글 안과 맨 마지막 「견본」 글(바닥글 태그가 없는 쪽의 끝 줄)은 그 한 줄로 본다. alt·aria 글은 보이지 않으니 세지 않는다."""
-    found = []
-    for n in tree.root.walk():
-        own = " ".join(i for i in n.items if isinstance(i, str))
-        if "견본" in own and n.tag not in ("script", "style", "title") and not n.inside("script", "style", "title"):
-            found.append(n)
-    return [n for n in found[:-1] if n.tag != "footer" and not n.inside("footer")]
-
-
-def overlaps(s: dict[str, str]) -> bool:
-    return (s.get("position") in ("absolute", "fixed") or s.get("margin-top", "").startswith("-")
-            or "grid-area" in s or ("grid-row" in s and "grid-column" in s))
-
-
-def hero_box(tree: Tree, css: dict) -> Node | None:
-    first = next((n for n in tree.root.walk() if n.tag == "section"), None)
-    if not first:
-        return None
-    pics = [n for n in first.walk() if n.tag in ("img", "picture", "video")
-            or "url(" in style_of(n, css).get("background", "") + style_of(n, css).get("background-image", "")]
-    if not pics:
-        return None
-    for n in first.walk():
-        if n is first or n in pics:
-            continue
-        s = style_of(n, css)
-        paint = [v for p, v in s.items() if PAINT.match(p) and not NO_PAINT.match(v) and "gradient" not in v and "url(" not in v]
-        inner = list(n.walk())
-        if not paint or any(k in pics for k in inner):
-            continue
-        has_head = any(k.tag in ("h1", "h2", "h3") for k in inner)
-        has_act = any(k.tag in ("a", "button") for k in inner)
-        pic_over = any(overlaps(style_of(p, css)) or (p.parent and p.parent is not first and overlaps(style_of(p.parent, css))) for p in pics)
-        if has_head and has_act and (overlaps(s) or pic_over):
-            return n
-    return None
 
 
 def check_project(root: Path) -> list[str]:
@@ -571,6 +167,9 @@ def check_project(root: Path) -> list[str]:
     if row:
         out.append(f"DRIFT {where}:{row.line} icon-row — 아이콘·제목·짧은 글 칸 3~4개 줄은 생성 티, 바탕에 없으면 "
                    "바탕의 같은 자리 짜임으로(build-rules.md § What reads as generated)")
+    for item in section_map(tree, base):
+        line, msg = item.split("|", 1)
+        out.append(f"DRIFT {where}:{line} section-map — {msg}(build-rules.md § Follow the base 2)")
     stats = stat_tiles(tree)
     if stats is not None:
         out.append(f"DRIFT {where}:{stats.line} stat-tiles — 큰 숫자 칸 줄(「8명 · 주 3회 · 3명」)은 생성 티 — 바탕에 없으면 숫자는 문장 속에"

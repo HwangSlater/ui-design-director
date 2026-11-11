@@ -1,0 +1,11 @@
+{
+ "about": "세 쪽 비교(scripts/triad.mjs)를 고칠 때마다 다시 돌려 판정이 바뀌는지 보는 정답표 — 사용자가 판별했거나 그림으로 함께 확인한 회차만. 폴더는 <시안 폴더> 아래 이름.",
+ "cases": [
+  {"label": "빵집 37차", "base": "https://tartinebakery.com/", "ours": "빵집-37차/mockups/index.html", "ai": "빵집-30차-스킬없음/시안01-A-메뉴판.html", "expect": "통과", "why": "그림 확인: 사진이 이끄는 흰 바탕, 크림·색 칸·회색 한 줄 없음"},
+  {"label": "맥주집 42차", "base": "https://www.magpiebrewing.com/", "ours": "맥주집-42차/mockups/index.html", "ai": "맥주집-40차-스킬없음/광안탭룸-메인.html", "expect": "통과", "why": "그림 확인: 짙은 바탕·맥주 사진 격자"},
+  {"label": "자전거 39차", "base": "https://swapfiets.nl/en-NL", "ours": "자전거-39차/mockups/index.html", "ai": "자전거-38차-스킬없음/시안1-가격표판.html", "expect": "실패", "why": "사용자 결정(2026-11-11): 바탕에 있어도 키트 꼴(아이콘 줄·번호 단계·색 칸)은 안 됨"},
+  {"label": "애견미용 19차", "base": "https://www.barkbus.com/", "ours": "애견미용-19차/mockups/index.html", "ai": "애견미용-20차-스킬없음/시안1-A-글자중심.html", "expect": "실패", "why": "사용자 판별: 색과 레이아웃이 AI 티"},
+  {"label": "빵집 32차", "base": "https://tartinebakery.com/", "ours": "빵집-32차/mockups/index.html", "ai": "빵집-30차-스킬없음/시안01-A-메뉴판.html", "expect": "실패", "why": "흰 바탕 바탕에 크림 페이지"},
+  {"label": "맥주집 41차", "base": "https://otherhalfbrewing.com/", "ours": "맥주집-41차/mockups/index.html", "ai": "맥주집-40차-스킬없음/광안탭룸-메인.html", "expect": "실패", "why": "먹색 바탕 바탕에 흰 페이지"}
+ ]
+}

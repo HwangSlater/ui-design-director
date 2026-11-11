@@ -91,6 +91,7 @@ On entry, the stage table above shows the first open step; resume there and do n
 
 ## Always
 
+- Never offer the client a choice that breaks a check (a cream page on a white base, fewer photos, keeping a flagged part, skipping a check). Fix the page; a check you believe is wrong goes in the handover as a note after everything else is fixed.
 - Verify every candidate before presenting it: state prices, licences, coverage and responsiveness only from what you inspected; never invent or imply inspection.
 - Licences from the published text. For commercial use, a licence that forbids or charges for it disqualifies the candidate.
 - Use proven UI for date pickers, bottom sheets, galleries, steppers, tabs and checkout forms — a known design system or the pattern a leading site uses, named in `DESIGN.md`.

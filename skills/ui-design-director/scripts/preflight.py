@@ -24,6 +24,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 import check_site  # noqa: E402  (접근성 바닥·토큰 어긋남은 check_site.py 하나로 — 마지막 점검 뒤 고친 것도 보낼 때 다시 잡게)
 import copy_check  # noqa: E402  (베낀 티 판단은 copy_check.py 하나로)
 import fonts  # noqa: E402  (AI 글꼴 판단은 fonts.py 하나로)
+import facts  # noqa: E402
 import site_shape  # noqa: E402  (메인 페이지 짜임 — 메뉴 내려 담기·구역 수·번호 단계·첫 화면 글상자·원 안 글자·아이콘 줄)
 from common import TOOL_DIRS, mock_dir, read, utf8_console  # noqa: E402  (read 는 권한 오류에도 빈 글 — stage.read 와 같게)
 
@@ -163,6 +164,7 @@ def check(root: Path) -> list[str]:
                     out.append(f"AI 글꼴: {p.relative_to(root)} — {', '.join(hits)} · references/fonts.md 대로 fonts.py pick 에서 고를 것")
     out += site_checks(mock_dir(root), root)
     out += site_shape.check_project(root)
+    out += facts.check_project(root)  # 의뢰인이 준 값이 시안에 다 있나(네일 43차 「하루 7명」을 뺐다)
     out += probe_lines(root)
     out += changed_refs(root)
     return out

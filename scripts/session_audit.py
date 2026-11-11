@@ -156,34 +156,12 @@ def shell_wrote(cmd: str, pat: str) -> bool:
     return re.search(target, cmd) is not None or re.search(core + r"""["']\)?\s*\.write_text""", cmd) is not None
 
 
-def memo_values(memo: str) -> list[str]:
-    """메모의 사실 값 — 「」 이름과 단위 붙은 숫자. 싫은 것·「그 밖에」 줄은 빼고."""
-    facts = "\n".join(line for line in memo.splitlines() if not re.match(r"\s*-\s*(싫은 것|그 밖에)", line))
-    names = re.findall(r"「([^」]{1,20})」", facts)
-    nums = re.findall(r"\d+\s*(?:만\s*원|원|개|마리|시(?!간)|명|팀|주)", facts)  # 「1시간」은 시각이 아니다
-    return list(dict.fromkeys(names + [re.sub(r"\s+", "", n) for n in nums]))
+# 메모 값 찾기는 스킬의 facts.py 하나로(보내기 전 점검과 같은 판단) — 「4만5천원」·「여섯 마리」·「09:00」 꼴도 맞춘다
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "skills" / "ui-design-director" / "scripts"))
+import facts as _facts  # noqa: E402
 
-
-def in_page(value: str, flat: str) -> bool:
-    """값이 시안 글에 있나 — 「9시」는 09:00·9:00 도, 「40개」는 40 이 다른 단위로 붙어도(40자리·40팀) 있는 것으로."""
-    if re.sub(r"\s+", "", value) in flat:  # 시안 글은 띄어쓰기를 지우고 견준다 — 「털손질 소소」를 못 찾았다
-        return True
-    m = re.fullmatch(r"(\d+)(만원|원|개|마리|시|명|팀|주)", value)
-    if not m:
-        return False
-    n, unit = m.groups()
-    if unit == "시":
-        return re.search(rf"(?<!\d)(0?{n}|{int(n) + 12}):00", flat) is not None
-    if unit == "만원":
-        return f"{n}0,000" in flat or f"{n}만" in flat
-    # 우리말 수로 쓴 것(「하루 여섯 마리」)도 — 25차에서 있는데 없다고 셌다
-    word = NATIVE.get(int(n))
-    if word and unit in ("마리", "명", "개", "팀") and re.search(rf"{word}{unit}", flat):
-        return True
-    return re.search(rf"(?<!\d){n}(?!\d)", flat) is not None
-
-
-NATIVE = {1: "한", 2: "두", 3: "세", 4: "네", 5: "다섯", 6: "여섯", 7: "일곱", 8: "여덟", 9: "아홉", 10: "열"}
+memo_values = _facts.values
+in_page = _facts.in_page
 
 
 def report(folder: Path, main: Path, memo: Path | None) -> int:

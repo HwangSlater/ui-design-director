@@ -209,3 +209,13 @@ def test_single_overline(tmp_path: Path) -> None:
     assert "overline" in rules(project(tmp_path / "a", page))
     ok = HEAD + '<main><section><h1>지금은 소금빵이 나왔어요</h1><p>11월 11일 수요일 · 오늘 나오는 시간</p></section></main></body></html>'
     assert "overline" not in rules(project(tmp_path / "b", ok))
+
+
+def test_section_map_to_base_rows(tmp_path: Path) -> None:
+    """구역마다 바탕 구성표 줄 번호 — 표시가 없거나 표에 없는 줄이면 걸린다(21~43차의 덧붙인 구역)."""
+    base = "| 구역 | 높이 |\n|---|---|\n| 1 머리 | 0.1 |\n| 2 첫 화면 | 1.0 |\n| 3 사진 격자 | 0.8 |\n"
+    ok = HEAD + '<main><section data-base="2"><h1>빵</h1></section><section data-base="3"><h2>사진</h2></section></main></body></html>'
+    assert "section-map" not in rules(project(tmp_path / "a", ok, base=base))
+    extra = HEAD + '<main><section data-base="2"><h1>빵</h1></section><section data-base="7"><h2>단체 주문</h2></section><section><h2>숫자</h2></section></main></body></html>'
+    out = rules(project(tmp_path / "b", extra, base=base))
+    assert out.count("section-map") == 2

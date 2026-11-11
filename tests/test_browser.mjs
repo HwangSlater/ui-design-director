@@ -18,7 +18,8 @@ test("close() 뒤에는 브라우저 본체와 프로필이 남지 않는다", a
   const owner = JSON.parse((await import("node:fs")).readFileSync(join(profile, "owner.json"), "utf8"));
   assert.ok(owner.browser > 0, "본체 번호를 받아야 한다");
   await close();
-  await sleep(500);
+  // 다른 세션이 브라우저를 여럿 띄워 기계가 바쁘면 본체가 늦게 내려가 프로필 지우기가 늦었다 — 5초까지 기다려 본다
+  for (let i = 0; i < 25 && (alive(owner.browser) || existsSync(profile)); i++) await sleep(200);
   assert.equal(alive(owner.browser), false, "본체가 살아 있음");
   assert.equal(existsSync(profile), false, "프로필 폴더가 남음");
   await assert.rejects(fetch(`http://127.0.0.1:${port}/json/version`));
