@@ -112,8 +112,9 @@ function killTree(pid) {
 
 // 꺼진 Edge 가 잠깐 파일을 쥐고 있어 한 번에 안 지워졌다(남은 프로필 255벌, 51GB) — 3초까지 다시 시도, 그래도 안 되면 다음 정리 때
 const pause = (ms) => Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, ms);
+// 다른 세션이 브라우저를 여럿 띄워 바쁠 때는 본체가 늦게 내려가 3초 안에 못 지워 프로필이 남았다 — 8초까지
 function removeDirSync(dir) {
-  for (let i = 0; i < 15 && existsSync(dir); i++) {
+  for (let i = 0; i < 40 && existsSync(dir); i++) {
     try { rmSync(dir, { recursive: true, force: true }); } catch { pause(200); }
   }
 }
@@ -186,6 +187,7 @@ export async function launch(prefix = "capture-") {
           await sleep(300);
           killTree(entry.browser);
           killTree(proc.pid);
+          for (let i = 0; i < 25 && entry.browser && alive(entry.browser); i++) await sleep(200);  // 본체가 내려간 뒤에 지운다
           removeDirSync(profile);
           live.delete(entry);
         };

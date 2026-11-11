@@ -280,6 +280,14 @@ def strong_stack(path: Path, width: int) -> list[tuple[int, int, int]]:
     return list(best)
 
 
+DARK_LUM = 0.25  # 이보다 어두우면 어두운 바탕 — page_probe.mjs 의 바탕밝기와 같은 값
+
+
+def is_dark(c) -> bool:
+    """어두운 바탕(먹색·짙은 남색)인가 — 상대 밝기로. 팔레트 단계와 화면 재기가 같은 기준을 쓴다(검토 2026-11-11)."""
+    return (0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2]) / 255 < DARK_LUM
+
+
 def is_cream(c) -> bool:
     """누런 빛이 도는 밝은 바탕(크림·미색) — 모델 단골 바탕."""
     h, l, s = colorsys.rgb_to_hls(*(v / 255 for v in c))
@@ -321,14 +329,13 @@ def pale_bands(base: Path | dict, bw: int, ours: Path, ow: int) -> list[tuple[st
     if not runs:
         return []
     bg = page_bg(runs)
-    base_cols = [tuple(c) for c in (base if isinstance(base, dict) else band_facts(base, bw))["pale"]]
     found: list[list] = []
     for c, _, h in runs:
         light = lightness(c) > BAND_LIGHT
         # 흰 띠는 페이지가 흰 바탕일 때만 띠가 아니다 — 크림 바탕 위 흰 띠를 놓쳤다(빵집 31차)
         white_band = cdist(c, (255, 255, 255)) < BAND_NOT_WHITE and cdist(bg, (255, 255, 255)) < BAND_NOT_WHITE
         if (h < BAND_MIN_CSS or not light or white_band or cdist(c, bg) < BAND_NOT_BG
-                or any(cdist(c, b) < BAND_IN_BASE for b in base_cols)):
+                ):  # 바탕에 같은 색 띠가 있어도 옅은 띠는 생성 티(사용자 2026-11-11) — 바탕 색 예외를 걷었다
             continue
         same = next((f for f in found if cdist(f[0], c) < BAND_IN_BASE), None)
         if same:

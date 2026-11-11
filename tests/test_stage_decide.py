@@ -98,5 +98,17 @@ def test_facts_stage_before_main(tmp_path: Path) -> None:
     """메인 시안은 「페이지 사실:」을 적은 뒤에만(자전거 38차까지 견본 가격부터 넣음)."""
     (tmp_path / "concept-brief.md").write_text("사이트 꼴: 여러 쪽", encoding="utf-8")
     assert "facts" in stage.missing_before(tmp_path, "main")
-    (tmp_path / "concept-brief.md").write_text("사이트 꼴: 여러 쪽 · 페이지 사실: 이름 송도 바퀴방", encoding="utf-8")
+    (tmp_path / "concept-brief.md").write_text("사이트 꼴: 여러 쪽 · 페이지 사실: 이름 「송도 바퀴방」", encoding="utf-8")
     assert "facts" not in stage.missing_before(tmp_path, "main")
+
+
+def test_empty_facts_and_number_choice(tmp_path: Path) -> None:
+    """빈 「페이지 사실:」은 단계가 끝나지 않고, 「6번」으로 골라도 템플릿을 알아본다(검토 2026-11-11)."""
+    import json
+    (tmp_path / "concept-brief.md").write_text("사이트 꼴: 여러 쪽 · 페이지 사실: (아직)", encoding="utf-8")
+    assert "facts" in stage.missing_before(tmp_path, "main")
+    (tmp_path / "formats").mkdir()
+    (tmp_path / "formats" / "board-spec.json").write_text(json.dumps({"candidates": [
+        {"id": "6", "title": "Tutorwell", "kind": "template"}]}), encoding="utf-8")
+    assert stage.candidate_kind(tmp_path, "6번") == "template"
+    assert stage.candidate_kind(tmp_path, "tutorwell 로 할게요") == "template"

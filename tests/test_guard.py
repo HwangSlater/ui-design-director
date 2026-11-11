@@ -56,3 +56,10 @@ def test_palette_without_published_source_blocked(tmp_path: Path) -> None:
     body = f'palette-switcher.js<script type="application/json" id="palettes">{json.dumps(cands, ensure_ascii=False)}</script>'
     r = hook("Write", file_path=str(tmp_path / "palette" / "index.html"), content=body)
     assert r.returncode == 2 and "palettes.py pick" in r.stderr.decode("utf-8")
+
+
+def test_decisions_file_not_hand_written(tmp_path: Path) -> None:
+    """확정 기록을 손으로 쓰면 막는다 — 「main」을 넣어 점검 없이 사본을 지웠다(검토 2026-11-11)."""
+    brief(tmp_path)
+    r = hook("Write", file_path=str(tmp_path / "decisions.json"), content='{"main": "ok"}')
+    assert r.returncode == 2 and "stage.py" in r.stderr.decode("utf-8")

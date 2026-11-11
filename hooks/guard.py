@@ -56,6 +56,10 @@ def check(tool: str, inp: dict) -> str | None:
     rel = path.relative_to(root).parts
     top = rel[0] if rel else ""
     need = None
+    # 확정 기록은 stage.py --decide 와 보기 화면 「확정」만 쓴다 — 손으로 "main" 을 넣으면 점검 없이 사본이 지워졌다(검토 2026-11-11)
+    if path.name in ("decisions.json", "decision.json"):
+        return (f"확정 기록은 손으로 쓰지 않습니다 — python {stage.S}/stage.py . --decide <base|palette|main> \"<의뢰인 말>\" "
+                "또는 보기 화면의 「확정」으로 남기세요.")
     # 디자인 파일에 AI 글꼴을 넣지 못하게 — 기억으로 고르면 늘 Pretendard·Noto·Wanted Sans·SUIT 였다
     if (top in FONT_DIRS or rel[-1:] and rel[-1] in FONT_FILES) and path.suffix.lower() in FONT_SUFFIXES:
         body = text_after(tool, inp, path)
@@ -92,7 +96,7 @@ def check(tool: str, inp: dict) -> str | None:
                         "(color-selection.md). 의뢰인이 정한 색이면 source 를 「의뢰인 색」으로.")
     elif rel == ("DESIGN.md",):
         need = "design"
-    elif top in ("layouts", "mockups"):
+    elif top in ("layouts", "mockups", "mockup"):  # 단수 mockup/ 도 preflight 가 시안 폴더로 본다
         need = "main"
     if need is None:
         return None

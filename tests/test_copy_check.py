@@ -104,10 +104,11 @@ def test_pale_band_missing_in_base_is_flagged(tmp_path: Path) -> None:
     assert any(line.startswith("옅은 띠(PC): #eef4f2 줄 1개 — 바탕에 없음") for line in copy_check.check_project(tmp_path))
 
 
-def test_pale_band_the_base_has_passes(tmp_path: Path) -> None:
+def test_pale_band_flagged_even_when_the_base_has_it(tmp_path: Path) -> None:
+    """옅은 띠는 바탕에 같은 색이 있어도 생성 티(사용자 2026-11-11)."""
     base = long_page(tmp_path / "base.png", "#f4f0ef")
     ours = long_page(tmp_path / "ours.png", "#f3f1ee")
-    assert copy_check.pale_bands(base, 1280, ours, 1280) == []
+    assert copy_check.pale_bands(base, 1280, ours, 1280) == [("#f3f1ee", 1)]
 
 
 def test_white_and_dark_bands_are_not_pale(tmp_path: Path) -> None:

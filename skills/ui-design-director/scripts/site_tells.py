@@ -160,6 +160,9 @@ STAT_TEXT = re.compile(r"^[^\s]{0,3}\d[\d,.]*\s?[^\s]{0,4}$")  # 「8명」「�
 STEP_NO = re.compile(r"^(0?\d|\d단계|step\d)$", re.I)
 
 
+STAT_CLASS = re.compile(r"num|stat|count|figure|big|metric|kpi", re.I)
+
+
 def stat_tiles(tree: Tree) -> Node | None:
     """형제 3~6개가 저마다 짧은 숫자 글(「8명」「주 3회」)로 시작하는 큰 숫자 칸 줄 — 바탕·스킬 없는 AI 둘 다 없던 것(수학학원 26·28차)."""
     for par in tree.root.walk():
@@ -170,6 +173,9 @@ def stat_tiles(tree: Tree) -> Node | None:
         for k in kids:
             first = next((n for n in k.walk() if n is not k and not n.kids and n.visible()), None)
             t = first.visible().replace(" ", "") if first is not None else ""
+            # 숫자를 크게 보이게 한 칸만 — 날짜 목록·반 목록·「중1 내신반」까지 걸렸다(4건 중 3건, 검토 2026-11-11)
+            if first is None or not (first.tag in ("b", "strong") or STAT_CLASS.search(first.attrs.get("class", ""))):
+                continue
             if STEP_NO.match(t):  # 1·2·3, 01, 1단계 는 번호 단계(numbered-steps 가 본다)
                 continue
             if t and STAT_TEXT.match(t[:10]) and any(ch.isdigit() for ch in t):
@@ -246,8 +252,11 @@ def section_map(tree: Tree, base: str) -> list[str]:
     rows = set(BASE_ROW.findall(base))
     if not rows:
         return []
+    # <div> 로 짠 구역도 본다(main 바로 아래 칸) — section 만 보면 div 로 빠져나갔다(검토 2026-11-11)
+    main = next((n for n in tree.root.walk() if n.tag == "main"), None)
     tops = [n for n in tree.root.walk() if n.tag == "section" and not n.inside("section", "article", "header", "footer")]
-    unmapped = [n for n in tops if not n.attrs.get("data-base")]
+    tops += [k for k in (main.kids if main else []) if k.tag in ("div", "article", "aside") and k not in tops and k.visible()]
+    unmapped = [n for n in tops if not re.search(r"\d", n.attrs.get("data-base", ""))]  # 숫자 없는 data-base("end")는 표시 없음
     unknown = [n for n in tops if n.attrs.get("data-base") and not set(re.findall(r"\d+", n.attrs["data-base"])) <= rows]
     out = []
     if unmapped:

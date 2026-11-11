@@ -80,13 +80,16 @@ def in_family(c, fam: dict) -> bool:
     return hue_ok and fam["light"][0] <= l <= fam["light"][1] and fam["sat"][0] <= s <= fam["sat"][1]
 
 
+def action_colour(colors: list):
+    """팔레트에서 단추가 될 색 — 가장 진한 유채색(roles_hint 와 같은 판단)."""
+    return max(colors, key=chroma) if colors else None
+
+
 def ai_hits(colors: list) -> list[str]:
-    """팔레트 색 가운데 모델 단골 무리(단추 자리 색)에 드는 것."""
-    out = []
-    for fam in families():
-        if fam["role"] == "action" and any(in_family(c, fam) for c in colors):
-            out.append(fam["name"])
-    return out
+    """단추가 될 색이 모델 단골 무리에 드는가. 팔레트의 모든 색을 보니 글자색이 남색이라는 이유만으로 빠지는 팔레트가
+    145개였고 고를 수 있는 것이 35% 로 줄었다(검토 2026-11-11) — 단추 자리 색만 본다."""
+    act = action_colour(colors)
+    return [fam["name"] for fam in families() if fam["role"] == "action" and act is not None and in_family(act, fam)]
 
 
 def roles_hint(colors: list) -> str:
@@ -161,16 +164,19 @@ def base_is_dark(root: Path) -> bool:
     """바탕 페이지가 어두운 바탕(먹색 등)인가 — 남긴 띠 사실의 바탕색으로."""
     import copy_check
     bgs = [tuple(v["bg"]) for v in copy_check.cached_bands(root).values() if v.get("bg")]
-    return bool(bgs) and all(copy_check.lightness(b) < 0.3 for b in bgs)
+    return bool(bgs) and all(copy_check.is_dark(b) for b in bgs)
 
 
 def bg_problems(html: str, root: Path) -> list[str]:
     """바탕이 흰 바탕인데 크림 페이지 바탕을 낸 후보 — 끝에 가서 걸리면 의뢰인이 이미 골라 버렸다(빵집 33차). 팔레트 단계에서 막는다."""
+    import copy_check
+    if not copy_check.cached_bands(root):  # 바탕 캡처도 남긴 사실도 없으면 조용히 통과하던 것(검토 2026-11-11)
+        return ["바탕 페이지 밝기를 못 봄 — 바탕 캡처(formats/base-cap)가 없어요. capture.mjs 로 바탕을 찍은 뒤 팔레트를 만드세요"]
     if base_is_dark(root):  # 어두운 바탕이면 밝은 페이지 바탕 후보를 막는다(맥주집 41차)
         out = []
         for cand in candidates(html):
             bg = rgb(str((cand.get("roles") or {}).get("bg", "")))
-            if bg and hls(bg)[1] >= 0.5:
+            if bg and not copy_check.is_dark(tuple(round(v * 255) for v in bg)):
                 out.append(f"{cand.get('id', '?')} {cand.get('name', '')}: 바탕은 어두운 바탕인데 페이지 바탕 {cand['roles']['bg']} 이 밝음 — bg 는 어둡게")
         return out
     if not base_is_white(root):

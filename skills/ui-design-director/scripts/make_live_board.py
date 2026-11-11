@@ -38,7 +38,9 @@ def normalise(spec: dict) -> dict:
         spec["pages"] = [{"key": keys[lab], "label": lab} for lab in labels]
         spec["candidates"] = [{"id": str(c.get("n", i + 1)), "slug": f'{c.get("n", i + 1)}-live', "title": c.get("name", ""),
                                "meta": c.get("meta", ""), "urls": {keys[k]: u for k, u in c.get("pages", {}).items()},
-                               **({"recommended": True} if c.get("recommended") else {})} for i, c in enumerate(cands)]
+                               **({"recommended": True} if c.get("recommended") else {}),
+                               # 예전 꼴에서도 후보 점검에 쓰는 칸은 넘긴다 — 버려서 예전 꼴 spec 은 늘 거절됐다(검토 2026-11-11)
+                               **{k: c[k] for k in ("kind", "known", "region", "fit", "aliases") if k in c}} for i, c in enumerate(cands)]
     spec.setdefault("pages", [{"key": "home", "label": "첫 화면"}])
     return spec
 
@@ -98,7 +100,8 @@ def kit_issues(spec: dict) -> list[str]:
     try:
         hits = json.loads(r.stdout.strip().splitlines()[-1])["hits"]
     except (ValueError, IndexError, KeyError):
-        return []
+        # 열지 못하면 막지 않고 통과하던 것(검토 2026-11-11) — 못 본 채로 추천하지 않는다
+        return [f"추천 후보 「{rec.get('title', '?')}」를 열어 보지 못해 AI 티 꼴을 못 셈 — 다시 돌리거나 열리는 후보를 추천"]
     if len(hits) > KIT_MAX:
         return [f"추천 후보 「{rec.get('title', '?')}」에 AI 티 꼴이 {len(hits)}가지({', '.join(hits)}) — 요즘 AI 로 만든 사이트일 수 있어 바탕으로 추천하지 않는다. 다른 이름난 후보를 추천"]
     return []

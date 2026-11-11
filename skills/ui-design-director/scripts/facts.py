@@ -22,13 +22,19 @@ FACTS_HEAD = re.compile(r"페이지\s*사실\s*[:：]")
 MONEY = re.compile(r"(\d+)\s*만\s*(?:(\d+)\s*천)?\s*원")  # 「4만5천원」「1만원」
 
 
+# 「」 안 말을 이름으로 읽는 줄 — 「추천하신 1번으로 할게요」 같은 대화 인용을 사실로 읽었다(맥주집 42차, 검토 2026-11-11)
+NAME_LINE = re.compile(r"이름|상호|가게|채널|동네|주소|위치")
+
+
 def values(text: str) -> list[str]:
-    """사실 글의 값 — 「」 이름, 「4만5천원」 같은 돈, 단위 붙은 숫자. 「1시간」은 시각이 아니다."""
+    """사실 글의 값 — 이름 줄의 「」 이름, 「4만5천원」 같은 돈, 「7,000원」 같은 쉼표 숫자, 단위 붙은 숫자. 「1시간」은 시각이 아니다."""
     facts = "\n".join(line for line in text.splitlines() if not SKIP_LINE.match(line))
-    names = re.findall(r"「([^」]{1,20})」", facts)
+    names = [n for line in facts.splitlines() if NAME_LINE.search(line.split("「")[0]) for n in re.findall(r"「([^」]{1,20})」", line)]
     money = [m.group(0).replace(" ", "") for m in MONEY.finditer(facts)]
     rest = MONEY.sub(" ", facts)
-    nums = [re.sub(r"\s+", "", n) for n in re.findall(rf"\d+\s*(?:{UNITS.replace('시', '시(?!간)')})", rest)]
+    # 「7,000원」은 쉼표째 읽는다 — 쉼표 뒤만 「000원」으로 잘라 아무 가격이나 맞았다(검토 2026-11-11)
+    unit = UNITS.replace("시", "시(?!간)")
+    nums = [re.sub(r"[\s,]+", "", n) for n in re.findall(rf"(?<![\d,])\d[\d,]*\s*(?:{unit})", rest)]
     return list(dict.fromkeys(names + money + nums))
 
 
@@ -47,12 +53,17 @@ def in_page(value: str, flat: str) -> bool:
     if money:
         won = int(money.group(1)) * 10000 + int(money.group(2) or 0) * 1000
         return f"{won:,}" in flat or str(won) in flat
-    m = re.fullmatch(rf"(\d+)({UNITS})", v)
+    m = re.fullmatch(rf"(\d+)({UNITS})", v.replace(",", ""))
     if not m:
         return False
     n, unit = m.groups()
+    if unit == "원" and int(n) >= 1000:  # 「7000원」은 7,000원·7천원 꼴로만 — 7 하나로 맞추지 않는다
+        won = int(n)
+        return f"{won:,}원" in flat or f"{won}원" in flat or (won % 1000 == 0 and f"{won // 1000}천원" in flat)
     if unit == "시":
-        return re.search(rf"(?<!\d)(0?{n}|{int(n) + 12}):00", flat) is not None
+        h = int(n)
+        alts = {h, h - 12} if h > 12 else {h, h + 12}  # 「21시」는 21:00·오후9시, 「9시」는 09:00·21:00
+        return any(re.search(rf"(?<!\d)0?{a}:00|(오전|오후|낮|밤|저녁|새벽){a}시", flat) for a in alts if a >= 0)
     word = NATIVE.get(int(n))
     if word and unit in ("마리", "명", "개", "팀", "회") and f"{word}{unit}" in flat:
         return True

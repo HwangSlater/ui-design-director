@@ -9,15 +9,14 @@
   걸러 보기 탭(data-cat·data-filter·role=tab·aria-controls)은 메뉴로 세지 않는다(레시피 9차 종류 탭).
 - too-many-sections: 맨 위 구역(머리·section·바닥) 수가 바탕-구성.md 구역 표 줄 수보다 2 넘게 많음.
 - numbered-steps: 1·2·3(01·02·03, 하나·둘·셋)으로 시작하는 형제 3~4개, 또는 제목에 순서·방법·이렇게·과정·단계가 든
-  구역 안 3~4칸 <ol>. 바탕-구성.md 가 주문 순서·단계별 같은 번호 단계를 적었으면 보지 않는다.
+  구역 안 3~4칸 <ol>.
 - hero-box: 첫 구역에서 사진(img·배경 그림) 위에 겹친(absolute·fixed·같은 grid 칸·음수 여백) 색 상자 안에 제목과
-  단추·링크가 함께 있음. 바탕-구성.md 가 「글상자」(또는 첫 화면·사진 위 상자)를 적었으면 보지 않는다.
-  numbered-steps 는 바탕 통째 저장(formats/snapshot/**/index.html)에 1·2·3(01·02·03, 1.·2.·3.)이 잇달아 나와도
-  (글이든 CSS content 든) 보지 않는다 — 세종스타치과의 01–04 띠가 CSS ::before 에 있었는데 걸렸다(치과 15차).
+  단추·링크가 함께 있음.
 - letter-circle: 둥글게 깎은(border-radius 40% 이상·999px) 칸의 글이 한두 글자(한글·영문)인 것이 2개 이상 —
   사람 사진 대신 이름 첫 글자를 원에 넣은 것(치과 15차 「정」「윤」). 링크·단추·메뉴 안은 세지 않는다(로고·언어 단추).
 - icon-row: 형제 3~4칸이 저마다 아이콘(svg·아이콘 클래스) → 짧은 제목 → 두 줄 안쪽 글로만 된 줄(플리마켓 14차
-  「핸드메이드 작가 / 빈티지 셀러 / 동네 공방」). 바탕 통째 저장에 같은 짜임의 줄이 있으면 보지 않는다.
+  「핸드메이드 작가 / 빈티지 셀러 / 동네 공방」).
+생성 티로 판별한 꼴은 바탕에 있어도 걸린다(사용자 2026-11-11 「요즘 AI 로 만든 사이트가 많으니」).
 한계: 그리지 않고 HTML·CSS 만 읽는다. CSS 는 클래스·id 선택자의 마지막 조각만 맞추고 미디어 쿼리를 가리지 않으며,
 var() 색은 「칠함」으로 본다. 스크립트가 만드는 마크업, 겹침을 transform 이나 큰 z-index 로만 만든 경우는 못 본다.
 """
@@ -191,7 +190,7 @@ def check_project(root: Path) -> list[str]:
         out.append(f"DRIFT {where}:{reviews.line} made-up-reviews — 「{reviews.visible()[:20]}」 — 의뢰인이 준 후기가 없으면 후기 칸은 빼고 「견본」으로도 지어 넣지 않는다"
                    "(build-rules.md § Content and samples)")
     faq = faq_items(tree)
-    if faq > max(FAQ_MAX, base_facts(root).get("faq", 0)):
+    if faq > FAQ_MAX:
         out.append(f"DRIFT {where}:1 faq-long — 메인 페이지에 펼침 질문 {faq}개 — 바탕 수만큼(많아도 {FAQ_MAX}개), 나머지는 자주 묻는 질문 쪽(링크)으로")
     name = placeholder_name(tree)
     if name:
@@ -202,7 +201,7 @@ def check_project(root: Path) -> list[str]:
         out.append(f"DRIFT {where}:{heads[0].line} section-heads — 구역 {len(heads)}곳이 제목 밑 회색 한 줄(또는 제목 위 작은 윗줄)로 열림 — "
                    "바탕에 없으면 생성 티, 제목만 두거나 바탕의 구역 머리대로(build-rules.md § What reads as generated)")
     href, n_cta = cta_repeat(tree)
-    if n_cta > max(CTA_MAX, base_facts(root).get("cta_repeat", 0)):
+    if n_cta > CTA_MAX:
         out.append(f"DRIFT {where}:1 cta-repeat — 같은 곳({href[:40]})으로 가는 단추 {n_cta}개 — 바탕 수만큼만, 머리와 첫 화면·끝에 하나씩")
     marks = sample_marks(tree)
     if marks:

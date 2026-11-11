@@ -95,13 +95,14 @@ def status(root: Path) -> tuple[dict, list[str]]:
     done = {
         # 사이트 꼴(여러 쪽·한 쪽)이 없으면 맥락 정리가 덜 됨 — 여러 쪽 사이트를 한 쪽 랜딩으로 짰다(꽃집 13차·건축사무소 10차)
         "brief": bool(brief.strip()) and bool(SITE_KIND.search(brief)),
-        "board": bool(boards),
+        # make_board.py 를 바로 불러 후보 점검을 건너뛰어도 보기 화면이 된 것으로 보지 않는다(검토 2026-11-11)
+        "board": bool(boards) and not board_issues(root),
         "base": "base" in d and candidate_kind(root, str(d["base"])) != "template",
         "material": all(p.is_file() for p in material) and snap and filled,
         "palette": "palette" in d,
         "design": "바탕에서 바꾼 곳" in design and "부품 출처" in design,
         # 이름·가격·영업시간을 묻기 전에 견본 값부터 넣고 의뢰인이 바로잡는 일이 다섯 번 되풀이됐다(빵집 33~37차·자전거 38차)
-        "facts": bool(FACTS.search(brief)),
+        "facts": has_facts(brief),
         "main": (root / "mockups" / "index.html").is_file(),
     }
     issues = [BROKEN] if saved(root) is None else []
@@ -126,6 +127,23 @@ def _missing(done: dict, stage: str) -> list[str]:
     return [s for s in STAGES[:STAGES.index(stage)] if not done[s]]
 
 
+def board_issues(root: Path) -> list[str]:
+    """board-spec.json 후보 점검(make_live_board.candidate_issues, 화면 재기 없이)."""
+    import make_live_board
+    try:
+        spec = json.loads(read(root / "formats" / "board-spec.json") or "{}")
+    except ValueError:
+        return ["board-spec.json 을 읽을 수 없음"]
+    return make_live_board.candidate_issues(make_live_board.normalise(spec)) if spec.get("candidates") else []
+
+
+def has_facts(brief: str) -> bool:
+    """「페이지 사실:」 아래 실제 값(숫자나 「이름」)이 하나라도 — 빈 제목 줄만으로는 단계가 끝나지 않는다(검토 2026-11-11)."""
+    import facts
+    block = facts.brief_facts(brief)
+    return bool(re.search(r"\d|「[^」]+」", block))
+
+
 def candidate_kind(root: Path, chosen: str) -> str | None:
     """「6 Tutorwell」 같은 확정 글에서 후보를 찾아 그 kind. 의뢰인이 정한 템플릿(맥락 정리 「의뢰인 템플릿:」)이면 None."""
     if "의뢰인 템플릿" in read(root / "concept-brief.md"):
@@ -134,9 +152,11 @@ def candidate_kind(root: Path, chosen: str) -> str | None:
         cands = json.loads(read(root / "formats" / "board-spec.json") or "{}").get("candidates") or []
     except ValueError:
         return None
-    first = chosen.strip().split()[0] if chosen.strip() else ""
+    # 「6 Tutorwell」만 알아보던 것을 「6번」「튜터웰 템플릿」「6) …」 꼴도 — 숫자 낱말이나 이름·별칭(meta) 어디든(검토 2026-11-11)
+    nums = set(re.findall(r"\d+", chosen))
     for c in cands:
-        if str(c.get("id")) == first or (c.get("title") and c["title"] in chosen):
+        names = [c.get("title"), c.get("meta"), *(c.get("aliases") or [])]
+        if str(c.get("id")) in nums or any(n and n.lower() in chosen.lower() for n in names):
             return c.get("kind")
     return None
 

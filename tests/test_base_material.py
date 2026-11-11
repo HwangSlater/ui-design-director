@@ -77,8 +77,11 @@ def test_rejects_non_http(tmp_path: Path) -> None:
 A = "https://a.example"  # lint:allow url 시험용 가짜 주소(접속하지 않음)
 B = "https://b.example"  # lint:allow url 시험용 가짜 주소(접속하지 않음)
 SPEC = {"pages": [{"key": "home", "label": "첫 화면"}, {"key": "work", "label": "작업"}],
-        "candidates": [{"id": "1", "title": "가람", "urls": {"home": f"{A}/ko/home", "work": f"{A}/work"}},
-                       {"id": "2", "title": "Norm Architects", "urls": {"work": f"{B}/w", "home": f"{B}/studio"}}]}
+        "market": "한국",
+        "candidates": [{"id": "1", "title": "가람", "kind": "real", "known": "x", "region": "한국", "recommended": True,
+                        "urls": {"home": f"{A}/ko/home", "work": f"{A}/work"}},
+                       {"id": "2", "title": "Norm Architects", "kind": "real", "known": "x", "region": "한국", "urls": {"work": f"{B}/w", "home": f"{B}/studio"}},
+                       {"id": "3", "title": "셋째", "kind": "real", "known": "x", "region": "한국", "urls": {"home": f"{A}/3"}}]}
 
 
 def decided_project(root: Path) -> Path:
@@ -111,7 +114,10 @@ def test_url_from_decide_text(tmp_path: Path) -> None:
 
 def test_url_from_old_spec_form(tmp_path: Path) -> None:
     fm = decided_project(tmp_path)
-    (fm / "board-spec.json").write_text(json.dumps({"candidates": [{"n": "3", "name": "오후", "pages": {"홈": f"{A}/shop/home"}}]}, ensure_ascii=False), encoding="utf-8")
+    (fm / "board-spec.json").write_text(json.dumps({"market": "한국", "candidates": [
+        {"n": "3", "name": "오후", "pages": {"홈": f"{A}/shop/home"}, "kind": "real", "known": "x", "region": "한국", "recommended": True},
+        {"n": "4", "name": "넷", "pages": {"홈": f"{A}/4"}, "kind": "real", "known": "x", "region": "한국"},
+        {"n": "5", "name": "다섯", "pages": {"홈": f"{A}/5"}, "kind": "real", "known": "x", "region": "한국"}]}, ensure_ascii=False), encoding="utf-8")
     (fm / "decision.json").write_text(json.dumps({"label": "3 오후", "choice": {"candidate": "3"}}, ensure_ascii=False), encoding="utf-8")
     assert f"바탕 주소: {A}/shop/home" in run(str(tmp_path)).stdout
 

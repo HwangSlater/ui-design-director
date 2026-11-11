@@ -4,6 +4,7 @@
 // 판정 도구와 점검이 따로 재서 점검은 통과하고 판정에서 떨어지는 일이 되풀이됐다(빵집 32~36차).
 //   node page_probe.mjs --check <project folder>   # 바탕(바탕-구성.md 「주소:」)과 우리 시안을 390·1280 에서 재서 바탕보다 넘치거나 모자란 것만 DRIFT 로
 // 바탕 값은 formats/바탕-표지.json 의 "probe" 에 남겨 두고 다시 쓴다(사본을 지운 뒤에도, 다시 재지 않게).
+import { createHash } from "node:crypto";
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { pathToFileURL } from "node:url";
@@ -200,7 +201,11 @@ export function driftLines(width, base, ours) {
     if (ours[key] > base[key] + tol) out.push(`DRIFT ${width}px ${key} — ${LABEL[key] || key} ${ours[key]}개(바탕 ${base[key]}개) — 바탕에 없는 만큼 걷어 낸다(build-rules.md § What reads as generated)`);
   }
   if (base.사진비율 > 0.05 && ours.사진비율 < base.사진비율 * PHOTO_RATIO) out.push(`DRIFT ${width}px 사진비율 — 사진 ${ours.사진비율.toFixed(2)}(바탕 ${base.사진비율.toFixed(2)}) — 바탕의 85% 넘게 사진으로`);
-  const white = (c) => c.every((v) => v >= 248), cream = (c) => !white(c) && c[0] >= 235 && c[0] - c[2] >= 12;
+  // 크림은 copy_check.is_cream 과 같은 식(색상 30~60°, 밝기 ≥0.88, 채도 ≥0.2) — 둘이 달라 분홍도 크림으로 봤다(검토 2026-11-11)
+  const hls = (c) => { const [r, g, b] = c.map((v) => v / 255), mx = Math.max(r, g, b), mn = Math.min(r, g, b), l = (mx + mn) / 2, d = mx - mn;
+    if (!d) return [0, l, 0]; const s = l > 0.5 ? d / (2 - mx - mn) : d / (mx + mn);
+    const h = mx === r ? ((g - b) / d + (g < b ? 6 : 0)) : mx === g ? (b - r) / d + 2 : (r - g) / d + 4; return [h * 60, l, s]; };
+  const white = (c) => c.every((v) => v >= 248), cream = (c) => { const [h, l, s] = hls(c); return !white(c) && h >= 30 && h <= 60 && l >= 0.88 && s >= 0.2; };
   // 어두운 바탕(먹색 페이지)인데 우리는 밝은 바탕 — 또는 그 반대(맥주집 41차: Other Half #181c1c 에 흰 바탕)
   const lum = (c) => (0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2]) / 255;
   if ((lum(base.바탕색) < 0.25) !== (lum(ours.바탕색) < 0.25)) out.push(`DRIFT ${width}px 바탕밝기 — 바탕 페이지는 ${lum(base.바탕색) < 0.25 ? "어두운" : "밝은"} 바탕(rgb(${base.바탕색.join(",")}))인데 우리는 ${lum(ours.바탕색) < 0.25 ? "어두운" : "밝은"} 바탕 — 페이지 바탕의 밝기는 바탕을 따른다`);
@@ -214,7 +219,10 @@ async function check(root) {
   const page = join(root, "mockups", "index.html");
   if (!url || !existsSync(page)) { console.log("짜임 재기 못 함: 바탕 주소(formats/바탕-구성.md 「주소:」) 또는 mockups/index.html 없음"); return 0; }
   const marks = readJson(join(root, MARKS));
-  const cached = marks.probe && marks.probe.url === url ? marks.probe : { url, widths: {} };
+  // 측정 코드가 바뀌면 바탕을 다시 잰다 — 주소만 열쇠로 써서 사진 격자로 고치기 전 값(타르틴 0.53)을 계속 썼다(검토 2026-11-11)
+  const version = createHash("sha1").update(PROBE).digest("hex").slice(0, 12);
+  const fresh = marks.probe && marks.probe.url === url && marks.probe.version === version;
+  const cached = fresh ? marks.probe : { url, version, measured: new Date().toISOString(), widths: {} };
   const { port, close } = await launch("probe-");
   const lines = [];
   try {

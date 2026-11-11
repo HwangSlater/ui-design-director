@@ -56,6 +56,7 @@ DONT = [
     ("남의 사이트 사본을 손으로 지움", r"\brm\b[^|;&]*formats/(snapshot|base-cap|pal-cap)|Remove-Item[^|;&]*formats[\\/](snapshot|base-cap)", "run"),
     ("보기 화면을 손으로 씀(make_live_board.py 가 만든다)", r"^formats/[^/]*\.html$", "write"),
 ]
+SHELL_EDIT = re.compile(r"sed\s+-i|>\s*[\"']?[^|;&>]*mockups/|write_text|Out-File|Set-Content|\.replace\(")
 SCRIPT = re.compile(r"[\w-]+\.(?:py|mjs)\b")
 
 
@@ -99,7 +100,12 @@ def events(main: Path, folder: Path):
                 if c.get("type") == "tool_use":
                     name, inp = c["name"], c.get("input", {})
                     if name in ("Bash", "PowerShell"):
-                        yield when, sub, "run", inp.get("command", "")
+                        cmd = inp.get("command", "")
+                        yield when, sub, "run", cmd
+                        # 셸로 시안을 고친 것(sed -i·> 로 쓰기·파이썬 write_text)도 시안 고침 — Write·Edit 만 세니 맥주집 42차의
+                        # 마지막 고침이 25분으로 잡혔다(실제 75분, 검토 2026-11-11)
+                        if SHELL_EDIT.search(cmd) and "mockups/" in cmd.replace("\\", "/"):
+                            yield when, sub, "write", "mockups/index.html"
                     elif name in ("Write", "Edit", "NotebookEdit"):
                         p = str(inp.get("file_path", "")).replace("\\", "/")
                         low = p.lower()
