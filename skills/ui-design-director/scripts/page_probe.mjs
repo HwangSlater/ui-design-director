@@ -75,12 +75,19 @@ export const PROBE = `(() => {
   // 제목 위 작은 윗줄(「소소는 이렇게 해요」 같은 색 글자) — 오답지에 구역마다 있었다
   let eyebrow = 0;
   for (const h of h2) { const pr = h.previousElementSibling; if (pr && pr.textContent.trim().length <= 24 && parseFloat(getComputedStyle(pr).fontSize) < parseFloat(getComputedStyle(h).fontSize) * 0.6) eyebrow++; }
-  let cards = 0, bands = 0, pale = 0, ctas = 0, photo = 0; const btnCols = {};
+  let cards = 0, bands = 0, pale = 0, ctas = 0; const btnCols = {};
+  const GRID = 16, gw = Math.ceil(W / GRID), gh = Math.ceil(PH / GRID), cover = new Uint8Array(gw * gh);
   for (const el of document.querySelectorAll("body *")) {
     if (!vis(el)) continue;
     const r = el.getBoundingClientRect(), top = r.top + scrollY; if (top > PH || !r.width) continue;
     const cs = getComputedStyle(el), bg = rgb(cs.backgroundColor), filled = bg && (bg[3] ?? 1) > 0.5;
-    if (["IMG", "VIDEO", "PICTURE"].includes(el.tagName) || /url\\(/.test(cs.backgroundImage)) { photo += r.width * r.height; continue; }
+    // 사진은 칸 격자에 칠해 겹친 곳은 한 번만, 화면 밖(넘기는 띠의 숨은 장)은 빼고 센다 — 넓이를 더하니 맥파이가 3.75 로 나왔다(맥주집 40차)
+    if (["IMG", "VIDEO", "PICTURE"].includes(el.tagName) || /url\\(/.test(cs.backgroundImage)) {
+      const x0 = Math.max(0, Math.floor(r.left / GRID)), x1 = Math.min(gw, Math.ceil(r.right / GRID));
+      const y0 = Math.max(0, Math.floor(top / GRID)), y1 = Math.min(gh, Math.ceil((top + r.height) / GRID));
+      for (let y = y0; y < y1; y++) for (let x = x0; x < x1; x++) cover[y * gw + x] = 1;
+      continue;
+    }
     const radius = parseFloat(cs.borderTopLeftRadius) || 0, framed = parseFloat(cs.borderTopWidth) > 0;
     if ((filled || framed) && radius >= ${CARD_RADIUS} && r.width * r.height >= ${CARD_AREA} && r.width < W * 0.95) cards++;
     if (filled && lum(bg) < 0.32 && r.width >= W * 0.95 && r.height >= ${BAND_MIN_H}) bands++;
@@ -132,7 +139,7 @@ export const PROBE = `(() => {
       b.querySelector("a[class*=btn],button") ? "단추" : "", body ? body.tagName : "", imgs > 2 ? "사진여럿" : imgs ? "사진" : ""].join("·"); });
   let run = 1, best = 1; for (let i = 1; i < sig.length; i++) { if (sig[i] !== "-" && sig[i] === sig[i - 1]) { run++; best = Math.max(best, run); } else run = 1; }
   return { 제목수: h2.length, 제목가운데: h2.length ? centred / h2.length : 0, 회색한줄: lead, 제목글꼴수: fonts.size, 제목본문같은글꼴: fonts.size === 1 && fonts.has(bodyFont) ? 1 : 0,
-    펼침질문: acc, 둥근카드: cards, 진한띠: bands, 단추: ctas, 사진비율: photo / (W * PH), 첫화면가운데사진위: heroCentredOnPhoto ? 1 : 0,
+    펼침질문: acc, 둥근카드: cards, 진한띠: bands, 단추: ctas, 사진비율: cover.reduce((a, v) => a + v, 0) / cover.length, 첫화면가운데사진위: heroCentredOnPhoto ? 1 : 0,
     같은짜임잇달음: best, 제목위윗줄: eyebrow, 옅은띠: pale, 큰숫자칸: stats, 끝단추띠: closing,
     바탕색: pageBg.slice(0, 3), 단추색: (Object.entries(btnCols).sort((a, b) => b[1] - a[1])[0]?.[0] || "255,255,255").split(",").map(Number) };
 })()`;
