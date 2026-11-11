@@ -86,3 +86,10 @@ def test_exactly_one_recommendation() -> None:
                                              {"title": "CMS", "kind": "real", "known": "x", "region": "한국"},
                                              {"title": "눈높이", "kind": "neighbour", "known": "x", "region": "한국"}]}
     assert any("추천 후보가 0개" in line for line in mlb.candidate_issues(spec))
+
+
+def test_kit_check_skipped_without_probe(monkeypatch) -> None:
+    """화면 재기를 끈 시험에서는 키트 점검이 아무것도 내지 않는다(실제 판단은 page_probe 시험)."""
+    import make_live_board as mlb
+    monkeypatch.setenv("UIDD_NO_PROBE", "1")
+    assert mlb.kit_issues({"candidates": [{"title": "x", "recommended": True, "urls": {"home": "https://example.com"}}]}) == []

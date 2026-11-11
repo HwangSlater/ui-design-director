@@ -555,12 +555,11 @@ def check_project(root: Path) -> list[str]:
     ours = top_sections(tree)
     if rows and ours > rows + EXTRA_SECTIONS:
         out.append(f"DRIFT {where}:1 too-many-sections — 구역이 바탕보다 많음 ({ours}/{rows}) — 메인은 바탕 메인의 구역과 순서대로")
-    steps = None if BASE_STEPS.search(base) else step_rows(tree)
-    if steps and base_numbered(root):
-        steps = None
+    # AI 티로 판별한 꼴은 바탕에 있어도 걸린다(사용자 2026-11-11 「요즘 AI 로 만든 사이트가 많으니」, 자전거 39차의 Swapfiets)
+    steps = step_rows(tree)
     if steps:
         out.append(f"DRIFT {where}:{steps.line} numbered-steps — 1·2·3 번호 단계 줄은 생성 티, 바탕에 없으면 뺀다(build-rules.md § What reads as generated)")
-    box = None if BASE_HERO_BOX.search(base) else hero_box(tree, css)
+    box = hero_box(tree, css)
     if box:
         out.append(f"DRIFT {where}:{box.line} hero-box — 첫 화면 사진 위 글상자(제목·단추를 담은 색 상자)는 바탕에 없으면 생성 티, 글은 사진 위에 바로 또는 사진 옆에")
     circles = letter_circles(tree, css, custom_props(tree.css))
@@ -569,23 +568,23 @@ def check_project(root: Path) -> list[str]:
         out.append(f"DRIFT {where}:{circles[0].line} letter-circle — 원 안 이름 첫 글자({shown})는 생성 티 — 사람 사진이 없으면 "
                    "이름·역할·한 줄을 글로만 두거나 그 칸을 빼고 「견본」 줄에 적는다(build-rules.md § Content and samples)")
     row = icon_row(tree)
-    if row and not base_icon_row(root):
+    if row:
         out.append(f"DRIFT {where}:{row.line} icon-row — 아이콘·제목·짧은 글 칸 3~4개 줄은 생성 티, 바탕에 없으면 "
                    "바탕의 같은 자리 짜임으로(build-rules.md § What reads as generated)")
     stats = stat_tiles(tree)
-    if stats is not None and not base_facts(root).get("stats"):
+    if stats is not None:
         out.append(f"DRIFT {where}:{stats.line} stat-tiles — 큰 숫자 칸 줄(「8명 · 주 3회 · 3명」)은 생성 티 — 바탕에 없으면 숫자는 문장 속에"
                    "(build-rules.md § What reads as generated)")
     over = overline(tree)
-    if over is not None and not base_facts(root).get("overline"):
+    if over is not None:
         out.append(f"DRIFT {where}:{over.line} overline — 제목 「{over.visible()[:16]}」 위 작은 윗줄은 생성 티 — 바탕에 없으면 그 말은 제목 아래 문장이나 제목 안으로"
                    "(build-rules.md § What reads as generated)")
     box = cta_box(tree, css)
-    if box is not None and not base_facts(root).get("cta_box") and not base_facts(root).get("closing"):
+    if box is not None:
         out.append(f"DRIFT {where}:{box.line} cta-box — 색을 깐 칸 안의 제목·단추(「단체 주문 / 전화하기」 칸)는 생성 티 — 바탕에 없으면 "
                    "칸을 걷고 바탕 구역처럼 페이지 위에 글과 링크로(build-rules.md § What reads as generated)")
     close = closing_band(tree, css)
-    if close is not None and not base_facts(root).get("closing"):
+    if close is not None:
         out.append(f"DRIFT {where}:{close.line} closing-band — 바닥글 바로 위 색 칸에 제목·단추(「…로 먼저 만나요」 띠)는 스킬 없는 AI 시안의 끝맺음 — "
                    "바탕에 없으면 빼고 바탕의 마지막 구역대로(build-rules.md § What reads as generated)")
     reviews = made_up_reviews(tree, read(root / "concept-brief.md"))
@@ -600,7 +599,7 @@ def check_project(root: Path) -> list[str]:
         out.append(f"DRIFT {where}:1 placeholder-name — 이름 자리에 「{name}」 — 의뢰인에게 이름(임시라도)·가격·영업시간·예약처를 한 번에 묻고 넣는다"
                    "(guided-conversation.md § Ask for the page's facts)")
     heads = section_heads(tree)
-    if len(heads) >= HEADS_MIN and base_facts(root).get("section_heads", 0) < HEADS_MIN:
+    if len(heads) >= HEADS_MIN:
         out.append(f"DRIFT {where}:{heads[0].line} section-heads — 구역 {len(heads)}곳이 제목 밑 회색 한 줄(또는 제목 위 작은 윗줄)로 열림 — "
                    "바탕에 없으면 생성 티, 제목만 두거나 바탕의 구역 머리대로(build-rules.md § What reads as generated)")
     href, n_cta = cta_repeat(tree)

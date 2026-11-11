@@ -80,6 +80,30 @@ def candidate_issues(spec: dict) -> list[str]:
     return out
 
 
+KIT_MAX = 1  # 추천 후보에 AI 티 꼴이 이보다 많으면 추천하지 않는다
+
+
+def kit_issues(spec: dict) -> list[str]:
+    """추천 후보를 띄워 AI 티 꼴(회색 한 줄·윗줄·옅은 띠·끝 단추 띠·큰 숫자 칸·사진 위 가운데 제목)을 센다.
+    요즘 AI 로 만든 사이트가 많아 바탕 자체가 키트 꼴일 수 있다(사용자 2026-11-11, 자전거 39차의 Swapfiets). UIDD_NO_PROBE=1 이면 건너뛴다."""
+    import os
+    import shutil
+    import subprocess
+    rec = next((c for c in spec.get("candidates") or [] if c.get("recommended")), None)
+    url = next(iter((rec or {}).get("urls", {}).values()), None)
+    if not url or os.environ.get("UIDD_NO_PROBE") or not shutil.which("node"):
+        return []
+    r = subprocess.run(["node", str(Path(__file__).resolve().parent / "page_probe.mjs"), "--kit", url],
+                       capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=300)
+    try:
+        hits = json.loads(r.stdout.strip().splitlines()[-1])["hits"]
+    except (ValueError, IndexError, KeyError):
+        return []
+    if len(hits) > KIT_MAX:
+        return [f"추천 후보 「{rec.get('title', '?')}」에 AI 티 꼴이 {len(hits)}가지({', '.join(hits)}) — 요즘 AI 로 만든 사이트일 수 있어 바탕으로 추천하지 않는다. 다른 이름난 후보를 추천"]
+    return []
+
+
 def main(argv: list[str]) -> int:
     utf8_console()
     if len(argv) != 2:
@@ -90,7 +114,7 @@ def main(argv: list[str]) -> int:
     # make_board 는 spec 파일 위치 기준으로 캡처를 찾는다 — 바꾼 spec 을 원래 자리 옆에 두고 넘긴다(live_proxy.mjs 에도 그대로 쓴다)
     live_spec = spec_path.with_name(spec_path.stem + "-live.json")
     live_spec.write_text(json.dumps(spec, ensure_ascii=False, indent=1), encoding="utf-8")
-    issues = candidate_issues(spec)
+    issues = candidate_issues(spec) + kit_issues(spec)
     if issues:  # 알리기만 하면 넘어갔다 — 23차는 「이름난 근거 없음」을 보고도 템플릿을 추천했다. 고칠 때까지 화면을 만들지 않는다
         for line in issues:
             print(f"후보 점검: {line}", file=sys.stderr)

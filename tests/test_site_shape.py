@@ -77,7 +77,7 @@ def test_numbered_steps_and_step_list(tmp_path: Path) -> None:
 
 def test_numbered_steps_the_base_has_pass(tmp_path: Path) -> None:
     base = "| 순서 | 구획 |\n|---|---|\n| 1 | 주문 순서 3단계 |\n"
-    assert "numbered-steps" not in rules(project(tmp_path / "a", STEPS, base=base))
+    assert "numbered-steps" in rules(project(tmp_path / "a", STEPS, base=base))  # 바탕에 있어도 걸린다(사용자 2026-11-11)
     # 표 머리의 「순서」만으로는 바탕에 번호 단계가 있다고 보지 않는다
     assert "numbered-steps" in rules(project(tmp_path / "b", STEPS, base="| 순서 | 구획 |\n|---|---|\n| 1 | 작업 목록 |\n"))
 
@@ -85,7 +85,7 @@ def test_numbered_steps_the_base_has_pass(tmp_path: Path) -> None:
 def test_hero_box_over_photo(tmp_path: Path) -> None:
     assert "hero-box" in rules(project(tmp_path / "a", HERO, HERO_CSS))
     assert "hero-box" not in rules(project(tmp_path / "b", HERO, HERO_PLAIN_CSS))
-    assert "hero-box" not in rules(project(tmp_path / "c", HERO, HERO_CSS, base="| 2 첫 화면 | 사진 위 흰 글상자에 제목 |\n"))
+    assert "hero-box" in rules(project(tmp_path / "c", HERO, HERO_CSS, base="| 2 첫 화면 | 사진 위 흰 글상자에 제목 |\n"))  # 바탕에 있어도 걸린다(사용자 2026-11-11)
 
 
 
@@ -121,7 +121,7 @@ def test_icon_row_flagged_unless_base_has_it(tmp_path: Path) -> None:
     assert "icon-row" not in rules(project(tmp_path / "b", PHOTO_ROW))  # 사진 칸 줄은 아이콘 줄이 아니다
     root = project(tmp_path / "c", ICON_ROW)
     snapshot(root, ICON_ROW.replace("핸드메이드 작가", "Planning"))
-    assert "icon-row" not in rules(root)
+    assert "icon-row" in rules(root)  # 바탕에 있어도 걸린다(사용자 2026-11-11)
 
 
 def test_numbered_steps_the_base_snapshot_has_pass(tmp_path: Path) -> None:
@@ -129,7 +129,7 @@ def test_numbered_steps_the_base_snapshot_has_pass(tmp_path: Path) -> None:
     root = project(tmp_path / "a", STEPS)
     snapshot(root, '<style>.one::before { content: "01"; } .one::before { content: "01"; } .two::before { content: "02"; }'
                    ' .thr::before { content: "03"; }</style><body></body>')
-    assert "numbered-steps" not in rules(root)
+    assert "numbered-steps" in rules(root)  # 바탕에 있어도 걸린다(사용자 2026-11-11)
     root = project(tmp_path / "b", STEPS)
     snapshot(root, "<body><p>1</p><p>전화 2,987건</p><p>3</p></body>")  # 1·2·3 이 잇달지 않음
     assert "numbered-steps" in rules(root)

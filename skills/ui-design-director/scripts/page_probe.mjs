@@ -175,6 +175,8 @@ export function side(base, ours, ai, noisy = true) {
 }
 
 const HEADING_KEYS = new Set(["회색한줄", "제목위윗줄"]);
+// 사용자가 AI 티로 판별한 꼴 — 바탕에 있어도 쓰지 않는다(2026-11-11)
+export const TELLS = new Set(["회색한줄", "제목위윗줄", "옅은띠", "끝단추띠", "큰숫자칸", "첫화면가운데사진위"]);
 const MARKS = join("formats", "바탕-표지.json");
 const PHOTO_RATIO = 0.85;
 const LABEL = { 회색한줄: "제목 밑 회색 한 줄", 제목위윗줄: "제목 위 작은 윗줄", 옅은띠: "옅은 띠", 진한띠: "진한 띠", 끝단추띠: "끝 단추 띠",
@@ -185,7 +187,13 @@ function readJson(p) { try { return JSON.parse(readFileSync(p, "utf8")); } catch
 /** 바탕 값과 우리 값을 견줘 걸리는 줄 — 바탕보다 넘치는 것(상자·띠·되풀이), 사진은 바탕의 85% 아래, 흰 바탕에 크림 */
 export function driftLines(width, base, ours) {
   const out = [];
+  // AI 티로 판별한 꼴은 바탕에 있어도 하나부터 걸린다(사용자 2026-11-11) — 바탕 값을 0 으로 본다
+  for (const key of TELLS) {
+    if (HEADING_KEYS.has(key) && !base.제목수) continue;
+    if (ours[key] > 0) out.push(`DRIFT ${width}px ${key} — ${LABEL[key] || key} ${ours[key]}개 — 바탕에 있어도 쓰지 않는 생성 티(build-rules.md § What reads as generated)`);
+  }
   for (const key of BAD_IF_MORE) {
+    if (TELLS.has(key)) continue;
     // 바탕이 제목 태그(h1·h2)를 안 쓰면 제목에 붙는 항목은 견줄 것이 없다 — 세탁특공대가 0개라 「바탕 0개」로 잘못 걸었다(자전거 38차)
     if (HEADING_KEYS.has(key) && !base.제목수) continue;
     const tol = EXACT.has(key) || key === "회색한줄" ? 0 : 1;
@@ -222,7 +230,19 @@ async function check(root) {
   return lines.length ? 1 : 0;
 }
 
-if (isMain(import.meta.url)) {
+/** 한 사이트의 AI 티 꼴 수(1280) — 바탕 후보를 고를 때 키트 꼴이 많은 곳을 추천하지 않으려고 */
+async function kit(url) {
+  const { port, close } = await launch("probe-");
+  try {
+    const v = await measure(port, 1280, url);
+    const hits = [...TELLS].filter((k) => v[k] > 0 && !(HEADING_KEYS.has(k) && !v.제목수));
+    console.log(JSON.stringify({ url, hits }));
+  } finally { await close(); }
+}
+
+if (isMain(import.meta.url) && process.argv.includes("--kit")) {
+  kit(process.argv[process.argv.indexOf("--kit") + 1]).then(() => process.exit(0)).catch((e) => { console.error(`ERROR: ${e.message}`); process.exit(1); });
+} else if (isMain(import.meta.url)) {
   const i = process.argv.indexOf("--check");
   if (i < 0 || !process.argv[i + 1]) { console.error("사용: node page_probe.mjs --check <project folder>"); process.exit(2); }
   check(resolve(process.argv[i + 1])).then((c) => process.exit(c)).catch((e) => { console.error(`ERROR: ${e.message}`); process.exit(1); });
