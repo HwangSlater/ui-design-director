@@ -193,7 +193,10 @@ export function driftLines(width, base, ours) {
   }
   if (base.사진비율 > 0.05 && ours.사진비율 < base.사진비율 * PHOTO_RATIO) out.push(`DRIFT ${width}px 사진비율 — 사진 ${ours.사진비율.toFixed(2)}(바탕 ${base.사진비율.toFixed(2)}) — 바탕의 85% 넘게 사진으로`);
   const white = (c) => c.every((v) => v >= 248), cream = (c) => !white(c) && c[0] >= 235 && c[0] - c[2] >= 12;
-  if (white(base.바탕색) && cream(ours.바탕색)) out.push(`DRIFT ${width}px 바탕색 — 바탕은 흰 바탕인데 우리는 크림 rgb(${ours.바탕색.join(",")}) — 페이지 바탕은 흰색으로`);
+  // 어두운 바탕(먹색 페이지)인데 우리는 밝은 바탕 — 또는 그 반대(맥주집 41차: Other Half #181c1c 에 흰 바탕)
+  const lum = (c) => (0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2]) / 255;
+  if ((lum(base.바탕색) < 0.25) !== (lum(ours.바탕색) < 0.25)) out.push(`DRIFT ${width}px 바탕밝기 — 바탕 페이지는 ${lum(base.바탕색) < 0.25 ? "어두운" : "밝은"} 바탕(rgb(${base.바탕색.join(",")}))인데 우리는 ${lum(ours.바탕색) < 0.25 ? "어두운" : "밝은"} 바탕 — 페이지 바탕의 밝기는 바탕을 따른다`);
+    if (white(base.바탕색) && cream(ours.바탕색)) out.push(`DRIFT ${width}px 바탕색 — 바탕은 흰 바탕인데 우리는 크림 rgb(${ours.바탕색.join(",")}) — 페이지 바탕은 흰색으로`);
   return out;
 }
 

@@ -157,8 +157,22 @@ def base_is_white(root: Path) -> bool:
     return bool(bgs) and all(copy_check.cdist(b, (255, 255, 255)) < copy_check.BAND_NOT_WHITE for b in bgs)
 
 
+def base_is_dark(root: Path) -> bool:
+    """바탕 페이지가 어두운 바탕(먹색 등)인가 — 남긴 띠 사실의 바탕색으로."""
+    import copy_check
+    bgs = [tuple(v["bg"]) for v in copy_check.cached_bands(root).values() if v.get("bg")]
+    return bool(bgs) and all(copy_check.lightness(b) < 0.3 for b in bgs)
+
+
 def bg_problems(html: str, root: Path) -> list[str]:
     """바탕이 흰 바탕인데 크림 페이지 바탕을 낸 후보 — 끝에 가서 걸리면 의뢰인이 이미 골라 버렸다(빵집 33차). 팔레트 단계에서 막는다."""
+    if base_is_dark(root):  # 어두운 바탕이면 밝은 페이지 바탕 후보를 막는다(맥주집 41차)
+        out = []
+        for cand in candidates(html):
+            bg = rgb(str((cand.get("roles") or {}).get("bg", "")))
+            if bg and hls(bg)[1] >= 0.5:
+                out.append(f"{cand.get('id', '?')} {cand.get('name', '')}: 바탕은 어두운 바탕인데 페이지 바탕 {cand['roles']['bg']} 이 밝음 — bg 는 어둡게")
+        return out
     if not base_is_white(root):
         return []
     import copy_check

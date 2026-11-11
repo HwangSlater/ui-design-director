@@ -23,3 +23,9 @@ test("바탕에 제목 태그가 없으면 제목 항목은 견주지 않는다(
   const b = { ...base, 제목수: 0 };
   assert.doesNotMatch(driftLines(390, b, { ...b, 회색한줄: 3, 제목위윗줄: 1 }).join(" "), /회색한줄|제목위윗줄/);
 });
+
+test("어두운 바탕에 밝은 페이지는 걸린다(맥주집 41차)", () => {
+  const dark = { ...base, 바탕색: [24, 28, 28] };
+  assert.match(driftLines(1280, dark, { ...dark, 바탕색: [255, 255, 255] }).join(" "), /바탕밝기/);
+  assert.equal(driftLines(1280, dark, { ...dark, 바탕색: [30, 30, 32] }).length, 0);
+});
