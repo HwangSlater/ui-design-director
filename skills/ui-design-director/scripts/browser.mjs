@@ -1,6 +1,6 @@
 // 캡처·스냅샷이 함께 쓰는 브라우저 띄우기와 DevTools 프로토콜 연결(외부 패키지 없음)
 import { spawn, spawnSync } from "node:child_process";
-import { existsSync, mkdtempSync, readdirSync, readFileSync, realpathSync, rmSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, realpathSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -97,7 +97,8 @@ export class Cdp {
 
 // 브라우저 끄기 — 윈도우에서 proc.kill() 은 처음 띄운 프로세스만 끄고 화면을 그리는 Edge 본체는 남았다
 // (하루 역할극에 headless Edge 75벌, 프로세스 700여 개가 쌓임). 본체 번호를 DevTools 로 받아 그 나무째 끈다.
-const PROFILE_PREFIXES = ["capture-", "styles-", "compose-", "snap-", "motion-", "skeleton-"];
+// launch(prefix) 로 쓰는 이름 전부 — probe-·triad- 가 빠져 남은 프로필을 치우지 못했다(305MB, 2026-11-11)
+const PROFILE_PREFIXES = ["capture-", "styles-", "compose-", "snap-", "motion-", "skeleton-", "probe-", "triad-"];
 const OWNER_FILE = "owner.json"; // 이 브라우저를 띄운 node 번호와 본체 번호 — 주인이 죽고 남은 브라우저를 다음 실행이 찾아 끈다
 const live = new Set();
 
@@ -153,11 +154,15 @@ export async function launch(prefix = "capture-") {
   sweepOrphans();
   const port = await freePort();
   const profile = mkdtempSync(join(tmpdir(), prefix));
+  // 크롬이 화면 없이 뜰 때 Temp 에 따로 만드는 HeadlessChrome… 폴더를 프로필 안으로 — 밖에 두면 프로필을 지워도 회차마다 쌓여
+  // 윈도가 로그인 때 Temp 를 훑느라 느려졌다(2026-11-11 naver 세션이 찾은 원인). 프로필과 함께 지워진다
+  const ownTemp = join(profile, "tmp");
+  mkdirSync(ownTemp, { recursive: true });
   const proc = spawn(exe, [
     "--headless=new", "--disable-gpu", "--hide-scrollbars", "--no-first-run", "--mute-audio",
     "--disable-blink-features=AutomationControlled",
     `--remote-debugging-port=${port}`, `--user-data-dir=${profile}`, "about:blank",
-  ], { stdio: "ignore" });
+  ], { stdio: "ignore", env: { ...process.env, TEMP: ownTemp, TMP: ownTemp } });
   const entry = { proc, profile, browser: 0 };
   live.add(entry);
   hookExit();
